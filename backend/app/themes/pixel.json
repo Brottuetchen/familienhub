@@ -1,0 +1,28 @@
+{
+  "name": "Pixel",
+  "colors": {
+    "primary": "#D9762B", "secondary": "#6B8E4E", "background": "#F3E4C8", "surface": "#FFF4DF",
+    "surfaceHigh": "#F6E0B8", "border": "#4A2F22", "onPrimary": "#FFFFFF",
+    "onBackground": "#3A2418", "onSurface": "#3A2418"
+  },
+  "style": {
+    "background": {"type": "solid", "colors": []},
+    "card": {"radius": 0, "border": 3, "shadow": "hard", "glass": false, "header": "band"},
+    "accents": ["#D9762B", "#6B8E4E", "#5B8BB0", "#B8485A", "#E3B23C"],
+    "layout": "bento",
+    "nav": "floating",
+    "titleWeight": 700,
+    "uppercaseTitles": true,
+    "font": {"title": "pixel", "body": "system", "label": "pixel"}
+  },
+  "variants": {
+    "dark": {
+      "colors": {
+        "primary": "#F0954A", "secondary": "#8DB36B", "background": "#221C33", "surface": "#3A3154",
+        "surfaceHigh": "#463C63", "border": "#0D0A14", "onPrimary": "#1A1426",
+        "onBackground": "#F3E4C8", "onSurface": "#F3E4C8"
+      },
+      "style": {"accents": ["#F0954A", "#8DB36B", "#7FB0D6", "#D9677A", "#F2C85B"]}
+    }
+  }
+}
