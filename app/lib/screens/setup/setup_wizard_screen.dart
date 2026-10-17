@@ -215,8 +215,8 @@ class _FamilyStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(adminUsersProvider);
     return ListView(padding: const EdgeInsets.all(16), children: [
-      const Text('Wer gehört dazu? Personen mit eigenem Login (z. B. über Authentik) erscheinen nach ihrer '
-          'ersten Anmeldung von selbst. Hier kannst du lokale Konten anlegen und später Rollen vergeben.'),
+      const Text('Wer gehört dazu? Lege jede Person hier an. Wer sich über einen Anmeldedienst wie Authentik '
+          'anmeldet, braucht hier ein Konto mit derselben E-Mail-Adresse (außer OIDC_AUTO_CREATE ist eingeschaltet).'),
       const SizedBox(height: 12),
       ...users.when(
         loading: () => [const Center(child: HubLoader())],

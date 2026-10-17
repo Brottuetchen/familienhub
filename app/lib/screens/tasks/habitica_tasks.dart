@@ -102,11 +102,28 @@ Future<void> showNativeEditor(BuildContext context, WidgetRef ref, String accoun
   await refreshTasks(ref);
 }
 
+/// Welcher Teil der Habitica-Bedienung: alles, nur das runde Kästchen (To-do/Daily, links) oder nur die
+/// Knöpfe für Gewohnheiten/Belohnungen (rechts). So sitzt der Haken überall an derselben Stelle.
+enum HabiticaPart { all, check, actions }
+
+/// To-dos und Tägliche hakt man ab; Gewohnheiten (+/−) und Belohnungen nicht.
+bool habiticaCheckable(Task t) => t.isHabitica && t.native['type'] != 'habit' && t.native['type'] != 'reward';
+
+/// Kurze Quelle statt interner Konto-ID: „Habitica · Täglich“.
+String habiticaLabel(Task t) => 'Habitica · ${switch (t.native['type']) {
+      'daily' => 'Täglich',
+      'habit' => 'Gewohnheit',
+      'reward' => 'Belohnung',
+      _ => 'To-do',
+    }}';
+
 class HabiticaTaskButtons extends ConsumerStatefulWidget {
   final Task task;
   final bool enabled;
+  final HabiticaPart part;
   final Future<void> Function() onChanged;
-  const HabiticaTaskButtons({super.key, required this.task, required this.onChanged, this.enabled = true});
+  const HabiticaTaskButtons(
+      {super.key, required this.task, required this.onChanged, this.enabled = true, this.part = HabiticaPart.all});
   @override
   ConsumerState<HabiticaTaskButtons> createState() => _HabiticaButtonsState();
 }
@@ -126,6 +143,10 @@ class _HabiticaButtonsState extends ConsumerState<HabiticaTaskButtons> {
     final task = widget.task, n = task.native;
     final enabled = widget.enabled && !_busy && !ref.read(apiClientProvider).nativeTaskBlocked(task.account);
     final type = n['type'];
+    final checkable = type != 'habit' && type != 'reward';
+    if ((widget.part == HabiticaPart.check && !checkable) || (widget.part == HabiticaPart.actions && checkable)) {
+      return const SizedBox.shrink();
+    }
     return Row(mainAxisSize: MainAxisSize.min, children: [
       if (type == 'habit') ...[
         IconButton(tooltip: 'Habit minus', onPressed: enabled && n['down'] == true && task.actions.contains('down') ? () => _act('down') : null, icon: const Icon(Icons.remove_circle_outline)),

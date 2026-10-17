@@ -116,6 +116,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
       appBar: AppBar(
         title: const Text('Aufgaben'),
         actions: [ReadStatusIcon(result: ref.watch(tasksProvider(ref.watch(taskViewProvider))).valueOrNull),
+          IconButton(
+            key: const Key('tasks-show-done'),
+            tooltip: ref.watch(showDoneTasksProvider) ? 'Erledigte ausblenden' : 'Erledigte zeigen',
+            icon: Icon(ref.watch(showDoneTasksProvider) ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+            onPressed: () => ref.read(showDoneTasksProvider.notifier).state = !ref.read(showDoneTasksProvider),
+          ),
           if (ref.watch(taskAccountsProvider).valueOrNull?.any((p) => p.id == 'habitica') == true)
           IconButton(tooltip: 'Habitica-Konto und Aufgabenauswahl', icon: const Icon(Icons.account_tree_outlined), onPressed: () async {
             await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProtectedReadModal(
@@ -163,6 +169,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     );
   }
 }
+
+/// Erledigte Aufgaben einblenden (wie beim Einkauf). Standard: aus.
+final showDoneTasksProvider = StateProvider<bool>((_) => false);
 
 class _TaskList extends ConsumerStatefulWidget {
   final TaskView view;
@@ -220,8 +229,13 @@ class _TaskListState extends ConsumerState<_TaskList> {
         error: (e, _) => ErrorView(error: e, onRetry: refresh),
         data: (result) {
           final data = result.data;
-          final open = data.items.where((t) => (t.isHabitica || !t.done) && !_gone.contains(t.identity)).toList()
+          // Erledigtes ist ausgeblendet – auch Habitica-Tägliche, die heute schon abgehakt sind
+          final open = data.items.where((t) => !t.done && !_gone.contains(t.identity)).toList()
             ..sort((a, b) => (a.due ?? DateTime(9999)).compareTo(b.due ?? DateTime(9999)));
+          final done = ref.watch(showDoneTasksProvider)
+              ? data.items.where((t) => t.done && !_gone.contains(t.identity)).toList()
+              : const <Task>[];
+          final habiticaEnabled = !result.offline && !result.refreshing && result.refreshError == null;
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 96),
@@ -256,28 +270,60 @@ class _TaskListState extends ConsumerState<_TaskList> {
                     return runAction(context, () => api.deleteTask(t.uid, provider: t.provider, account: t.account));
                   },
                   onDismissed: (dir) => _remove(t, deleted: dir == DismissDirection.endToStart),
-                  child: ListTile(
-                    leading: t.isHabitica ? Icon(t.native['type'] == 'reward' ? Icons.redeem : Icons.auto_awesome_outlined) : Checkbox(
-                      shape: const CircleBorder(),
-                      value: false,
-                      semanticLabel: '„${t.title}“ erledigen',
-                      onChanged: _completing.contains(t.identity) || t.localOnly ? null : (_) async {
-                        if (await _complete(t) && mounted) _remove(t);
-                      },
-                    ),
-                    selected: t.identity == widget.selectedUid,
-                    title: Text(t.title),
-                    subtitle: _subtitle(t, names),
-                    trailing: t.localOnly
-                        ? Tooltip(message: 'Wartet auf Netz', child: Icon(Icons.cloud_upload_outlined, key: Key('pending-task-${t.uid}')))
-                        : t.isHabitica ? HabiticaTaskButtons(task: t, enabled: !result.offline && !result.refreshing && result.refreshError == null, onChanged: () async { await refreshTasks(ref); }) : _dueChip(context, t),
-                    onTap: t.localOnly ? null : () => widget.onOpen(t),
-                  ),
+                  child: _tile(t, names, habiticaEnabled),
                 ),
+              if (done.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+                  child: Text('Erledigt (${done.length})', style: Theme.of(context).textTheme.titleSmall),
+                ),
+                for (final t in done) _tile(t, names, habiticaEnabled),
+              ],
             ],
           );
         },
       ),
+    );
+  }
+
+  /// Eine Zeile für alle Anbieter: Haken immer links (Habitica-Gewohnheiten/Belohnungen: Symbol),
+  /// rechts Fälligkeit bzw. +/−- oder Einlöse-Knopf.
+  Widget _tile(Task t, Map<int, String> names, bool habiticaEnabled) {
+    Future<void> changed() async => refreshTasks(ref);
+    final Widget leading;
+    if (t.isHabitica && habiticaCheckable(t)) {
+      leading = HabiticaTaskButtons(task: t, part: HabiticaPart.check, enabled: habiticaEnabled, onChanged: changed);
+    } else if (t.isHabitica) {
+      leading = SizedBox(
+        width: 48,
+        child: Icon(t.native['type'] == 'reward' ? Icons.redeem : Icons.auto_awesome_outlined,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
+      );
+    } else {
+      leading = Checkbox(
+        shape: const CircleBorder(),
+        value: t.done,
+        semanticLabel: '„${t.title}“ erledigen',
+        onChanged: t.done || _completing.contains(t.identity) || t.localOnly ? null : (_) async {
+          if (await _complete(t) && mounted) _remove(t);
+        },
+      );
+    }
+    final Widget? trailing = t.localOnly
+        ? Tooltip(message: 'Wartet auf Netz', child: Icon(Icons.cloud_upload_outlined, key: Key('pending-task-${t.uid}')))
+        : t.isHabitica && !habiticaCheckable(t)
+            ? HabiticaTaskButtons(task: t, part: HabiticaPart.actions, enabled: habiticaEnabled, onChanged: changed)
+            : _dueChip(context, t);
+    return ListTile(
+      key: ValueKey('task-tile-${view.apiName}-${t.identity}'),
+      contentPadding: const EdgeInsets.only(left: 4, right: 12),
+      leading: leading,
+      selected: t.identity == widget.selectedUid,
+      title: Text(t.title,
+          style: t.done ? TextStyle(decoration: TextDecoration.lineThrough, color: Theme.of(context).colorScheme.onSurfaceVariant) : null),
+      subtitle: _subtitle(t, names),
+      trailing: trailing,
+      onTap: t.localOnly ? null : () => widget.onOpen(t),
     );
   }
 
@@ -294,7 +340,8 @@ class _TaskListState extends ConsumerState<_TaskList> {
       if (view == TaskView.fromMe && t.assignee != null) 'für ${names[t.assignee] ?? 'jemanden'}',
       if (view == TaskView.family && t.assignee != null) 'für ${names[t.assignee] ?? 'jemanden'}',
       if (t.listName != null && view != TaskView.mine) t.listName!,
-      if (t.account.isNotEmpty) '${t.provider} · ${t.account}',
+      // Quelle nur, wenn sie hilft (Habitica-Typ); keine internen Konto-IDs
+      if (t.isHabitica) habiticaLabel(t),
       if (t.isHabitica && t.native['type'] == 'reward') '${t.native['value']} GP',
       if (t.rotation.isNotEmpty) reminderRecurrences[t.recurrence] ?? t.recurrence,
     ];
