@@ -134,10 +134,14 @@ STYLE = {
 }
 
 
+# Seit „Schrift im Theme“: ohne Angabe überall die Systemschrift
+SYSTEM_FONTS = {"title": "system", "body": "system", "label": "system"}
+
+
 def test_style_is_kept_when_valid():
     t = validate_theme({**GOOD, "style": STYLE})
     assert t["style"] == {**STYLE, "background": {"type": "glow", "colors": ["#7C3AED", "#22D3EE"]},
-                          "accents": ["#8B5CF6", "#F59E0B"]}
+                          "accents": ["#8B5CF6", "#F59E0B"], "font": SYSTEM_FONTS}
 
 
 def test_style_defaults_when_missing():
@@ -145,6 +149,7 @@ def test_style_defaults_when_missing():
         "background": {"type": "solid", "colors": []},
         "card": {"radius": 20, "border": 1, "shadow": "none", "glass": False, "header": "plain"},
         "accents": [], "nav": "bar", "layout": "list", "titleWeight": 500, "uppercaseTitles": False,
+        "font": SYSTEM_FONTS,
     }
 
 
@@ -229,3 +234,24 @@ def test_themes_without_variants_still_valid():
 def test_builtin_themes_offer_light_and_dark():
     for t in builtin_themes():
         assert len(t["variants"]) == 1, t["name"]  # Grundfassung + die jeweils andere
+
+
+# ── Schriften ─────────────────────────────────────────────────────────────
+
+
+def test_font_defaults_to_system_and_accepts_known_fonts():
+    assert validate_theme({"name": "X", "colors": _LIGHT})["style"]["font"] == {"title": "system", "body": "system", "label": "system"}
+    t = validate_theme({"name": "X", "colors": _LIGHT, "style": {"font": {"title": "grotesk", "label": "mono"}}})
+    assert t["style"]["font"] == {"title": "grotesk", "body": "system", "label": "mono"}
+
+
+@pytest.mark.parametrize("font", [{"title": "Comic Sans"}, {"title": "https://evil.example/font.ttf"}, {"heading": "pixel"}, "pixel"])
+def test_unknown_fonts_rejected(font):
+    with pytest.raises(ValueError, match="font"):
+        validate_theme({"name": "X", "colors": _LIGHT, "style": {"font": font}})
+
+
+def test_pixel_builtin_uses_pixel_font_in_both_modes():
+    pixel = next(t for t in builtin_themes() if t["name"] == "Pixel")
+    assert pixel["style"]["font"]["title"] == "pixel" and pixel["style"]["card"]["shadow"] == "hard"
+    assert pixel["variants"]["dark"]["style"]["font"]["title"] == "pixel"

@@ -63,10 +63,21 @@ class AppTheme {
     final pageColor = style.transparentPages ? Colors.transparent : background;
     final base = ThemeData(useMaterial3: true, brightness: brightness, colorScheme: scheme);
     final custom = !identical(style, HubStyle.standard); // Standard bleibt exakt wie bisher
-    final text = !custom ? base.textTheme : base.textTheme.copyWith(
-      headlineSmall: base.textTheme.headlineSmall?.copyWith(fontWeight: style.titleWeight),
-      titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: style.titleWeight),
-      titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: style.titleWeight),
+    final body = base.textTheme.apply(fontFamily: style.bodyFont);
+    TextStyle? title(TextStyle? t) => t?.copyWith(fontFamily: style.titleFont ?? style.bodyFont);
+    TextStyle? label(TextStyle? t) => t?.copyWith(fontFamily: style.labelFont ?? style.bodyFont);
+    final text = !custom ? base.textTheme : body.copyWith(
+      displayLarge: title(body.displayLarge),
+      displayMedium: title(body.displayMedium),
+      displaySmall: title(body.displaySmall),
+      headlineLarge: title(body.headlineLarge),
+      headlineMedium: title(body.headlineMedium),
+      headlineSmall: title(body.headlineSmall)?.copyWith(fontWeight: style.titleWeight),
+      titleLarge: title(body.titleLarge)?.copyWith(fontWeight: style.titleWeight),
+      titleMedium: title(body.titleMedium)?.copyWith(fontWeight: style.titleWeight),
+      labelLarge: label(body.labelLarge),
+      labelMedium: label(body.labelMedium),
+      labelSmall: label(body.labelSmall),
     );
     final cardShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(style.radius)),
@@ -77,6 +88,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
+      fontFamily: custom ? style.bodyFont : null,
       textTheme: custom ? text : null,
       extensions: [style],
       scaffoldBackgroundColor: pageColor,
