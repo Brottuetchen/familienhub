@@ -1154,6 +1154,26 @@ class ApiClient {
   Future<void> saveCoreSettings({required String appName, required String timezone}) =>
       _send('PUT', '/api/admin/core', body: {'app_name': appName, 'timezone': timezone});
 
+  // ── Einladungen ───────────────────────────────────────────────────────────
+
+  Future<InviteInfo> createInvite({required String displayName, required String email, String role = 'partner'}) async =>
+      InviteInfo.fromJson(await _send('POST', '/api/admin/invites',
+          body: {'display_name': displayName, 'email': email, 'role': role}) as Map<String, dynamic>);
+
+  Future<List<InviteInfo>> invites() async => (((await _send('GET', '/api/admin/invites')) as Map)['items'] as List)
+      .whereType<Map<String, dynamic>>()
+      .map(InviteInfo.fromJson)
+      .toList();
+
+  Future<InviteInfo> renewInvite(int id) async =>
+      InviteInfo.fromJson(await _send('POST', '/api/admin/invites/$id/renew') as Map<String, dynamic>);
+
+  Future<void> revokeInvite(int id) => _send('DELETE', '/api/admin/invites/$id');
+
+  /// Einladungscode einlösen, eigenes Passwort setzen und anmelden.
+  Future<AppUser> acceptInvite({required String code, required String password}) =>
+      _authenticate('/api/invites/accept', {'code': code, 'password': password, 'client': 'app'});
+
   // ── Verwaltung (nur Admins) ────────────────────────────────────────────────
 
   Future<AdminOverview> adminOverview() async =>

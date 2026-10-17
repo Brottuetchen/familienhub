@@ -225,3 +225,37 @@ class ConnectionResult {
         message: (j['message'] as String?) ?? '',
       );
 }
+
+/// Einladung: Person ist angelegt, Code zum Einlösen (nur direkt nach dem Erzeugen bekannt).
+class InviteInfo {
+  final int id;
+  final String displayName;
+  final String email;
+  final String role;
+  final DateTime? expiresAt;
+  final bool expired;
+  final String? code;
+  final bool oidc;
+
+  const InviteInfo({
+    required this.id,
+    required this.displayName,
+    required this.email,
+    required this.role,
+    this.expiresAt,
+    this.expired = false,
+    this.code,
+    this.oidc = false,
+  });
+
+  factory InviteInfo.fromJson(Map<String, dynamic> j) => InviteInfo(
+        id: j['id'] as int,
+        displayName: (j['display_name'] as String?) ?? '',
+        email: (j['email'] as String?) ?? '',
+        role: (j['role'] as String?) ?? 'partner',
+        expiresAt: DateTime.tryParse((j['expires_at'] as String?) ?? '')?.toLocal(),
+        expired: j['expired'] == true,
+        code: j['code'] as String?,
+        oidc: j['oidc'] == true,
+      );
+}

@@ -7,6 +7,7 @@ import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
+import '../invite/invite_widgets.dart';
 import '../setup/first_admin_form.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -177,6 +178,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   OutlinedButton(onPressed: _busy ? null : _login, child: _loginLabel())
                 else
                   FilledButton(onPressed: _busy ? null : _login, child: _loginLabel()),
+                const SizedBox(height: 4),
+                TextButton(
+                  key: const Key('login-accept-invite'),
+                  onPressed: _busy ? null : () => Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const AcceptInviteScreen())),
+                  child: const Text('Einladung einlösen'),
+                ),
                 ],
                 const SizedBox(height: 8),
                 if (!kIsWeb)

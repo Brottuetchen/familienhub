@@ -6,7 +6,7 @@ import '../../models/themes.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
-import '../admin/admin_users_screen.dart' show CreateUserDialog, adminUsersProvider;
+import '../admin/admin_users_screen.dart' show adminUsersProvider, inviteFlow;
 import '../more/plugins_admin_screen.dart' show PluginSettingsScreen;
 
 /// Häufige Zeitzonen; andere lassen sich frei eintragen.
@@ -215,8 +215,9 @@ class _FamilyStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(adminUsersProvider);
     return ListView(padding: const EdgeInsets.all(16), children: [
-      const Text('Wer gehört dazu? Lege jede Person hier an. Wer sich über einen Anmeldedienst wie Authentik '
-          'anmeldet, braucht hier ein Konto mit derselben E-Mail-Adresse (außer OIDC_AUTO_CREATE ist eingeschaltet).'),
+      const Text('Wer gehört dazu? Lade jede Person ein: Sie bekommt einen Text mit App, Server-Adresse und einem Code, '
+          'mit dem sie ihr eigenes Passwort festlegt. Mit einem Anmeldedienst wie Authentik meldet sie sich einfach mit '
+          'derselben E-Mail-Adresse an.'),
       const SizedBox(height: 12),
       ...users.when(
         loading: () => [const Center(child: HubLoader())],
@@ -236,13 +237,9 @@ class _FamilyStep extends ConsumerWidget {
         alignment: Alignment.centerLeft,
         child: OutlinedButton.icon(
           key: const Key('wizard-add-person'),
-          onPressed: () async {
-            if (await showDialog<bool>(context: context, builder: (_) => const CreateUserDialog()) == true) {
-              ref.invalidate(adminUsersProvider);
-            }
-          },
-          icon: const Icon(Icons.person_add_alt),
-          label: const Text('Person anlegen'),
+          onPressed: () => inviteFlow(context, ref),
+          icon: const Icon(Icons.mail_outline),
+          label: const Text('Person einladen'),
         ),
       ),
     ]);

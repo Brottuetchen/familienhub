@@ -5,9 +5,22 @@ import 'package:intl/intl.dart';
 import '../../models/admin.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../invite/invite_widgets.dart';
 import '../today/today_widgets.dart' show PersonAvatar;
 
 final adminUsersProvider = FutureProvider.autoDispose<List<AdminUser>>((ref) => ref.watch(apiClientProvider).adminUsers());
+final adminInvitesProvider = FutureProvider.autoDispose<List<InviteInfo>>((ref) => ref.watch(apiClientProvider).invites());
+
+/// Einladen und danach den Text zum Teilen zeigen. Gibt true zurück, wenn eingeladen wurde.
+Future<bool> inviteFlow(BuildContext context, WidgetRef ref) async {
+  final invite = await showDialog<InviteInfo>(context: context, builder: (_) => const InviteDialog());
+  if (invite == null || !context.mounted) return false;
+  ref.invalidate(adminUsersProvider);
+  ref.invalidate(adminInvitesProvider);
+  await showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true,
+      builder: (_) => InviteResultSheet(invite: invite));
+  return true;
+}
 
 /// Familie & Rollen: Rolle, aktiv/inaktiv, Verbindungen je Person (ohne Zugangsdaten).
 class AdminUsersScreen extends ConsumerWidget {
@@ -18,16 +31,23 @@ class AdminUsersScreen extends ConsumerWidget {
     final users = ref.watch(adminUsersProvider);
     final me = ref.watch(sessionProvider).user?.id;
     return Scaffold(
-      appBar: AppBar(title: const Text('Familie & Rollen')),
+      appBar: AppBar(title: const Text('Familie & Rollen'), actions: [
+        IconButton(
+          key: const Key('admin-user-add'),
+          tooltip: 'Ohne Einladung anlegen (mit Start-Passwort)',
+          icon: const Icon(Icons.person_add_alt),
+          onPressed: () async {
+            if (await showDialog<bool>(context: context, builder: (_) => const CreateUserDialog()) == true) {
+              ref.invalidate(adminUsersProvider);
+            }
+          },
+        ),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
-        key: const Key('admin-user-add'),
-        onPressed: () async {
-          if (await showDialog<bool>(context: context, builder: (_) => const CreateUserDialog()) == true) {
-            ref.invalidate(adminUsersProvider);
-          }
-        },
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('Person anlegen'),
+        key: const Key('admin-user-invite'),
+        onPressed: () => inviteFlow(context, ref),
+        icon: const Icon(Icons.mail_outline),
+        label: const Text('Person einladen'),
       ),
       body: HubRefresh(
         onRefresh: () => ref.refresh(adminUsersProvider.future),
@@ -38,6 +58,7 @@ class AdminUsersScreen extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 96),
             children: [
+              const _OpenInvites(),
               for (final u in list)
                 _UserTile(key: ValueKey('admin-user-${u.id}'), user: u, isMe: u.id == me),
               const Padding(
@@ -197,5 +218,61 @@ class CreateUserDialogState extends ConsumerState<CreateUserDialog> {
         ),
       ],
     );
+  }
+}
+
+
+/// Offene Einladungen: neuen Code erzeugen (alter wird ungültig) oder zurückziehen.
+class _OpenInvites extends ConsumerWidget {
+  const _OpenInvites();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list = ref.watch(adminInvitesProvider).valueOrNull ?? const <InviteInfo>[];
+    if (list.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: Text('Offene Einladungen', style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+      ),
+      for (final i in list)
+        ListTile(
+          key: ValueKey('invite-${i.id}'),
+          leading: Icon(i.expired ? Icons.timer_off_outlined : Icons.mail_outline),
+          title: Text(i.displayName),
+          subtitle: Text('${i.email} · ${roleLabels[i.role] ?? i.role} · '
+              '${i.expired ? 'abgelaufen' : 'gültig bis ${DateFormat('d.M.', 'de_DE').format(i.expiresAt!)}'}'),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+              tooltip: 'Neuen Code erzeugen',
+              icon: const Icon(Icons.refresh),
+              onPressed: () async {
+                try {
+                  final fresh = await ref.read(apiClientProvider).renewInvite(i.id);
+                  ref.invalidate(adminInvitesProvider);
+                  if (context.mounted) {
+                    await showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true,
+                        builder: (_) => InviteResultSheet(invite: fresh));
+                  }
+                } catch (e) {
+                  if (context.mounted) showError(context, e);
+                }
+              },
+            ),
+            IconButton(
+              tooltip: 'Einladung zurückziehen',
+              icon: const Icon(Icons.close),
+              onPressed: () async {
+                if (await runAction(context, () => ref.read(apiClientProvider).revokeInvite(i.id))) {
+                  ref.invalidate(adminInvitesProvider);
+                  ref.invalidate(adminUsersProvider);
+                }
+              },
+            ),
+          ]),
+        ),
+      const Divider(),
+    ]);
   }
 }
