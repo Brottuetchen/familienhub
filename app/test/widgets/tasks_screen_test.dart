@@ -234,4 +234,46 @@ void main() {
     expect(backend.sent('POST', '/api/tasks'), isEmpty);
   });
 
+
+  testWidgets('Erledigtes ist ausgeblendet – auch Habitica – und lässt sich einblenden', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final backend = backendWithTask();
+    backend.json('GET', '/api/tasks', {'status': 'ok', 'items': [
+      {'uid': 'n1', 'title': 'Nextcloud offen', 'provider': 'nextcloud', 'account': '1', 'done': false},
+      {'uid': 'n2', 'title': 'Nextcloud erledigt', 'provider': 'nextcloud', 'account': '1', 'done': true},
+      {'uid': 'h1', 'title': '2 Liter Wasser', 'provider': 'habitica', 'account': '1:5457159a', 'done': true,
+       'actions': ['down'], 'native': {'type': 'daily'}},
+      {'uid': 'h2', 'title': 'Früh ins Bett', 'provider': 'habitica', 'account': '1:5457159a', 'done': false,
+       'actions': ['up'], 'native': {'type': 'daily'}},
+    ]});
+    await tester.pumpWidget(appWith(backend.api(), const TasksScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Nextcloud offen'), findsOneWidget);
+    expect(find.text('Früh ins Bett'), findsOneWidget);
+    expect(find.text('2 Liter Wasser'), findsNothing);
+    expect(find.text('Nextcloud erledigt'), findsNothing);
+    expect(find.textContaining('1:5457159a'), findsNothing, reason: 'keine internen Konto-IDs');
+    expect(find.text('Habitica · Täglich'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tasks-show-done')));
+    await tester.pumpAndSettle();
+    expect(find.text('Erledigt (2)'), findsOneWidget);
+    expect(find.text('2 Liter Wasser'), findsOneWidget);
+  });
+
+  testWidgets('Haken sitzt bei Nextcloud und Habitica an derselben Stelle (links)', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final backend = backendWithTask();
+    backend.json('GET', '/api/tasks', {'status': 'ok', 'items': [
+      {'uid': 'n1', 'title': 'Nextcloud', 'provider': 'nextcloud', 'account': '1', 'done': false},
+      {'uid': 'h1', 'title': 'Habitica', 'provider': 'habitica', 'account': '1', 'done': false,
+       'actions': ['up'], 'native': {'type': 'todo'}},
+    ]});
+    await tester.pumpWidget(appWith(backend.api(), const TasksScreen()));
+    await tester.pumpAndSettle();
+    final boxes = find.byType(Checkbox);
+    expect(boxes, findsNWidgets(2));
+    final xs = [for (final e in boxes.evaluate()) tester.getCenter(find.byWidget(e.widget)).dx];
+    expect((xs[0] - xs[1]).abs(), lessThan(1), reason: 'gleiche Spalte');
+    expect(xs.first, lessThan(100), reason: 'links');
+  });
 }
