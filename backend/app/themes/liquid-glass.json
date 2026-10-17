@@ -1,17 +1,64 @@
 {
   "name": "Liquid Glass",
   "colors": {
-    "primary": "#8B5CF6", "secondary": "#22D3EE", "background": "#06070F", "surface": "#1A1B2E",
-    "surfaceHigh": "#24264A", "border": "#3A3D66", "onPrimary": "#FFFFFF",
-    "onBackground": "#EEF0FF", "onSurface": "#EEF0FF"
+    "primary": "#8B5CF6",
+    "secondary": "#22D3EE",
+    "background": "#06070F",
+    "surface": "#1A1B2E",
+    "surfaceHigh": "#24264A",
+    "border": "#3A3D66",
+    "onPrimary": "#FFFFFF",
+    "onBackground": "#EEF0FF",
+    "onSurface": "#EEF0FF"
   },
   "style": {
-    "background": {"type": "glow", "colors": ["#7C3AED", "#22D3EE", "#3B82F6"]},
-    "card": {"radius": 22, "border": 1, "shadow": "none", "glass": true, "header": "plain"},
-    "accents": ["#8B5CF6", "#22D3EE"],
+    "background": {
+      "type": "glow",
+      "colors": [
+        "#7C3AED",
+        "#22D3EE",
+        "#3B82F6"
+      ]
+    },
+    "card": {
+      "radius": 22,
+      "border": 1,
+      "shadow": "none",
+      "glass": true,
+      "header": "plain"
+    },
+    "accents": [
+      "#8B5CF6",
+      "#22D3EE"
+    ],
     "layout": "list",
     "nav": "floating",
     "titleWeight": 700,
     "uppercaseTitles": true
+  },
+  "variants": {
+    "light": {
+      "colors": {
+        "primary": "#7C3AED",
+        "secondary": "#0891B2",
+        "background": "#EEF0FB",
+        "surface": "#FFFFFF",
+        "surfaceHigh": "#F2F3FB",
+        "border": "#D8DBF0",
+        "onPrimary": "#FFFFFF",
+        "onBackground": "#15162C",
+        "onSurface": "#15162C"
+      },
+      "style": {
+        "background": {
+          "type": "glow",
+          "colors": [
+            "#C4B5FD",
+            "#A5F3FC",
+            "#BFDBFE"
+          ]
+        }
+      }
+    }
   }
 }
