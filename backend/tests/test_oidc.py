@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from jose import jwt
+import jwt
 
 from app.core.database import SessionLocal
 from app.models.user import User

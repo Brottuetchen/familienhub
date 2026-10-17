@@ -8,8 +8,8 @@ import secrets
 from typing import Dict, Optional
 
 import httpx
-from jose import jwt
-from jose.exceptions import JWTError
+import jwt
+from jwt import PyJWTError as JWTError
 
 from app.config import settings
 
@@ -88,7 +88,7 @@ def verify_id_token(
         # jwt.decode prüft automatisch exp, iss und aud
         payload = jwt.decode(
             id_token,
-            key,
+            jwt.PyJWK(key).key,  # JWK aus dem JWKS des Anbieters → öffentlicher Schlüssel
             algorithms=["RS256"],
             audience=expected_audience,
             issuer=expected_issuer,
