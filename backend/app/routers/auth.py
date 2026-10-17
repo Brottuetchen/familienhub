@@ -473,6 +473,13 @@ async def _finish_oidc_login(code: str, state: str, request: Request, db: Sessio
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User account is disabled")
 
+    # Eingeladene Person meldet sich über den Anmeldedienst an: Einladung gilt als eingelöst
+    from app.models.invite import Invite
+
+    db.query(Invite).filter(Invite.user_id == user.id, Invite.used_at.is_(None), Invite.revoked_at.is_(None)) \
+        .update({Invite.used_at: datetime.utcnow()}, synchronize_session=False)
+    db.commit()
+
     # Aktualisiere last_login
     user.last_login = datetime.utcnow()
     db.commit()
