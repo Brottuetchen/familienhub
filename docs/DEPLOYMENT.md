@@ -27,9 +27,13 @@ Datenbankänderungen laufen beim Start automatisch über Alembic.
 
 ## 3. Anmeldung
 
-- Lokale Konten: erstes Konto über „Einrichten“, weitere Personen im Assistenten oder unter **Verwaltung → Familie & Rollen**.
+- Lokale Konten: erstes Konto über „Einrichten“. Weitere Personen **einladen** (Verwaltung → Familie & Rollen →
+  „Person einladen“): Der Hub erzeugt einen Text mit App-Link, Server-Adresse und einem Code (7 Tage, einmalig), mit dem die
+  Person in der App unter „Einladung einlösen“ ihr eigenes Passwort festlegt.
 - OIDC (optional): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, Redirect-URIs aus `.env.example` beim
   Anbieter eintragen. Bei Authentik muss der Provider die Grant-Types `authorization_code` und `refresh_token` haben.
+  Eingeladene Personen melden sich mit derselben E-Mail an. Mit `OIDC_AUTO_CREATE=true` entsteht das Konto beim ersten
+  Login von selbst – dann die App beim Anbieter auf die Familie beschränken (z. B. Authentik-Gruppe an die App binden).
 
 ## 4. Push-Mitteilungen
 

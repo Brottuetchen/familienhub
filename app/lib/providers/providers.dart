@@ -119,6 +119,13 @@ class SessionNotifier extends StateNotifier<SessionState> {
     if (mounted && revision == _revision) state = SessionState(SessionPhase.loggedIn, user: user, onboarding: true);
   }
 
+  /// Einladung einlösen: eigenes Passwort setzen und anmelden.
+  Future<void> acceptInvite({required String code, required String password}) async {
+    final revision = ++_revision;
+    final user = await api.acceptInvite(code: code, password: password);
+    if (mounted && revision == _revision) state = SessionState(SessionPhase.loggedIn, user: user);
+  }
+
   /// Assistent beendet: weiter in die App.
   void finishOnboarding() {
     if (state.phase == SessionPhase.loggedIn) state = SessionState(SessionPhase.loggedIn, user: state.user);
