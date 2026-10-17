@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/admin.dart';
 import '../../models/themes.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
@@ -76,6 +77,25 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
     for (final f in widget.plugin.fields) f.key: TextEditingController(text: f.secret ? '' : f.value),
   };
   bool _saving = false;
+  bool _testing = false;
+  ConnectionResult? _result;
+
+  /// Echter Test mit den eingegebenen Werten, ohne zu speichern.
+  Future<void> _test() async {
+    setState(() {
+      _testing = true;
+      _result = null;
+    });
+    try {
+      final values = {for (final f in widget.plugin.fields) f.key: _c[f.key]!.text.trim()};
+      final r = await ref.read(apiClientProvider).testPlugin(widget.plugin.id, values);
+      if (mounted) setState(() => _result = r);
+    } catch (e) {
+      if (mounted) showError(context, e);
+    } finally {
+      if (mounted) setState(() => _testing = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -133,8 +153,21 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
                       : (f.help.isEmpty ? null : f.help),
                   helperMaxLines: 3,
                 ),
+                onChanged: (_) {
+                  if (_result != null) setState(() => _result = null); // altes Ergebnis passt nicht mehr
+                },
               ),
             ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const Key('plugin-test'),
+              onPressed: _testing ? null : _test,
+              icon: _testing ? const HubLoader(size: 18) : const Icon(Icons.network_check),
+              label: const Text('Verbindung testen'),
+            ),
+          ),
+          if (_result != null) ConnectionResultCard(result: _result!),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -142,6 +175,38 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
         icon: const Icon(Icons.save_outlined),
         label: const Text('Speichern'),
       ),
+    );
+  }
+}
+
+
+/// Ergebnis von „Verbindung testen“: grün (verbunden), blau (Hinweis), rot (Problem).
+class ConnectionResultCard extends StatelessWidget {
+  final ConnectionResult result;
+  const ConnectionResultCard({super.key, required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final (IconData icon, Color color) = switch (result.level) {
+      'ok' => (Icons.check_circle, Colors.green),
+      'info' => (Icons.info_outline, scheme.primary),
+      _ => (Icons.error_outline, scheme.error),
+    };
+    return Container(
+      key: const Key('plugin-test-result'),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(children: [
+        Icon(icon, color: color),
+        const SizedBox(width: 10),
+        Expanded(child: Text(result.message)),
+      ]),
     );
   }
 }

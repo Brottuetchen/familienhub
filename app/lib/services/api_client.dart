@@ -1119,6 +1119,41 @@ class ApiClient {
   /// Vorschaubild über den Hub (angemeldet), zwischengespeichert wie Profilbilder.
   Future<Uint8List?> paperlessThumb(String path) => avatarBytes(path);
 
+  // ── Ersteinrichtung (#4) ───────────────────────────────────────────────────
+
+  Future<SetupStatus> setupStatus({String? baseUrl}) async =>
+      SetupStatus.fromJson(await _send('GET', '/api/setup/status', auth: false, baseUrl: baseUrl) as Map<String, dynamic>);
+
+  /// Legt das erste Admin-Konto an (Einrichtungscode aus dem Server-Log) und meldet es an.
+  Future<AppUser> createFirstAdmin({
+    required String code,
+    required String username,
+    required String email,
+    required String password,
+    String? displayName,
+  }) =>
+      _authenticate('/api/setup/admin', {
+        'code': code,
+        'username': username,
+        'email': email,
+        'password': password,
+        if (displayName != null && displayName.isNotEmpty) 'display_name': displayName,
+        'client': 'app',
+      });
+
+  /// „Verbindung testen“ mit den eingegebenen Werten (leeres Geheimnis = gespeicherten Wert nutzen).
+  Future<ConnectionResult> testPlugin(String pluginId, Map<String, String> values) async => ConnectionResult.fromJson(
+      await _send('POST', '/api/admin/plugins/${Uri.encodeComponent(pluginId)}/test', body: {'values': values})
+          as Map<String, dynamic>);
+
+  Future<({String appName, String timezone})> coreSettings() async {
+    final j = await _send('GET', '/api/admin/core') as Map<String, dynamic>;
+    return (appName: j['app_name'] as String, timezone: j['timezone'] as String);
+  }
+
+  Future<void> saveCoreSettings({required String appName, required String timezone}) =>
+      _send('PUT', '/api/admin/core', body: {'app_name': appName, 'timezone': timezone});
+
   // ── Verwaltung (nur Admins) ────────────────────────────────────────────────
 
   Future<AdminOverview> adminOverview() async =>

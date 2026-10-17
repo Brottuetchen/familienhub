@@ -22,7 +22,7 @@ class AdminUsersScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('admin-user-add'),
         onPressed: () async {
-          if (await showDialog<bool>(context: context, builder: (_) => const _CreateUserDialog()) == true) {
+          if (await showDialog<bool>(context: context, builder: (_) => const CreateUserDialog()) == true) {
             ref.invalidate(adminUsersProvider);
           }
         },
@@ -121,14 +121,15 @@ class _UserTile extends ConsumerWidget {
   }
 }
 
-class _CreateUserDialog extends ConsumerStatefulWidget {
-  const _CreateUserDialog();
+/// Person mit lokalem Konto anlegen (auch im Einrichtungs-Assistenten).
+class CreateUserDialog extends ConsumerStatefulWidget {
+  const CreateUserDialog({super.key});
 
   @override
-  ConsumerState<_CreateUserDialog> createState() => _CreateUserDialogState();
+  ConsumerState<CreateUserDialog> createState() => CreateUserDialogState();
 }
 
-class _CreateUserDialogState extends ConsumerState<_CreateUserDialog> {
+class CreateUserDialogState extends ConsumerState<CreateUserDialog> {
   final _username = TextEditingController();
   final _name = TextEditingController();
   final _email = TextEditingController();

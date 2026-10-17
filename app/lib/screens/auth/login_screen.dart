@@ -7,6 +7,7 @@ import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
+import '../setup/first_admin_form.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   /// Hinweis von außen, z. B. „Sitzung abgelaufen“.
@@ -25,6 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   HealthInfo? _health;
   String? _server;
+  bool _needsSetup = false; // neuer Hub ohne Admin → Einrichtung statt Anmeldung
 
   @override
   void initState() {
@@ -41,6 +43,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _health = health);
     } catch (_) {
       // Ohne Health bleibt nur die Passwort-Anmeldung sichtbar.
+    }
+    try {
+      final setup = await api.setupStatus();
+      if (mounted) setState(() => _needsSetup = setup.needsSetup);
+    } catch (_) {
+      // Ältere Server kennen /api/setup nicht: normale Anmeldung.
     }
   }
 
@@ -114,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Icon(Icons.family_restroom, size: 56, color: theme.colorScheme.primary),
                 const SizedBox(height: 12),
-                Text('Anmelden', textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
+                Text(_needsSetup ? 'Einrichten' : 'Anmelden', textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
                 if (_server != null)
                   Text(_server!, textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
                 if (widget.message != null) ...[
@@ -122,7 +130,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(widget.message!, textAlign: TextAlign.center),
                 ],
                 const SizedBox(height: 28),
-                if (oidc) ...[
+                if (_needsSetup) const FirstAdminForm(),
+                if (!_needsSetup && oidc) ...[
                   FilledButton.icon(
                     onPressed: _busy ? null : _loginOidc,
                     icon: const Icon(Icons.verified_user),
@@ -136,6 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ]),
                   const SizedBox(height: 20),
                 ],
+                if (!_needsSetup) ...[
                 TextField(
                   controller: _user,
                   autocorrect: false,
@@ -167,6 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   OutlinedButton(onPressed: _busy ? null : _login, child: _loginLabel())
                 else
                   FilledButton(onPressed: _busy ? null : _login, child: _loginLabel()),
+                ],
                 const SizedBox(height: 8),
                 if (!kIsWeb)
                   TextButton(
