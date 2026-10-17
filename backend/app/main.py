@@ -23,6 +23,7 @@ from app.plugins.registry import plugin_registry
 from app.routers import (
     admin,
     admin_panel,
+    setup,
     auth,
     health,
     meals,
@@ -57,9 +58,16 @@ async def lifespan(app: FastAPI):
     finally:
         _cfg_db.close()
     logger.info("Plugins aktiv: %s", ", ".join(p.id for p in plugin_registry.all() if p.active) or "keine")
+    # Ersteinrichtung: ohne Admin einen Einrichtungscode ins Log schreiben (#4)
+    from app.services import setup as setup_service
+
+    _setup_db = SessionLocal()
+    try:
+        setup_service.prepare(_setup_db)
+    finally:
+        _setup_db.close()
     if settings.secret_key == "CHANGE_ME_dev_only_secret_key":
         logger.warning("SECRET_KEY is default – set a strong SECRET_KEY in production!")
-    logger.info("Tip: create the first admin with 'python -m scripts.create_admin'")
     logger.info("=" * 60)
 
     # Hintergrund-Scheduler (fällige Erinnerungen -> Push)
@@ -106,7 +114,7 @@ async def refresh_after_changes(request, call_next):
 
 # Kern-Router; Integrationen bringen ihre Router als Plugin mit
 for module in (health, auth, modules, notifications, today, tasks, reminders, meals, recipes, push, themes, profile, admin,
-               admin_panel):
+               admin_panel, setup):
     app.include_router(module.router)
 plugin_registry.include_routers(app)
 
