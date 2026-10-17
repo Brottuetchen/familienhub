@@ -27,10 +27,19 @@ def get_override(key: str) -> Optional[str]:
     return _extra.get(key.upper())
 
 
+def _core_settings():
+    """Allgemeine Einstellungen aus dem Einrichtungs-Assistenten (keine Plugins)."""
+    from app.plugins.base import Setting
+
+    return (Setting("APP_NAME", "Name des Hubs"), Setting("TIMEZONE", "Zeitzone"))
+
+
 def _specs():
     from app.plugins.registry import plugin_registry
 
-    return {s.key.upper(): s for p in plugin_registry.all() for s in p.settings}
+    specs = {s.key.upper(): s for p in plugin_registry.all() for s in p.settings}
+    specs.update({s.key: s for s in _core_settings()})
+    return specs
 
 
 def _apply(key: str, value: str) -> None:

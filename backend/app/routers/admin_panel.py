@@ -10,8 +10,9 @@ import time
 from typing import Any, Dict, List, Optional
 
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app import __version__
@@ -189,3 +190,46 @@ async def house_entities(_: User = Depends(admin_only)):
 async def log(_: User = Depends(admin_only)):
     """Letzte Warnungen und Fehler seit dem Start (geschwärzt)."""
     return {"items": log_buffer.entries()}
+
+
+class ConnectionTest(BaseModel):
+    values: Dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/plugins/{plugin_id}/test")
+async def test_plugin(plugin_id: str, data: ConnectionTest, _: User = Depends(admin_only)):
+    """„Verbindung testen“ mit den eingegebenen Werten (leeres Geheimnis = gespeicherten Wert nutzen)."""
+    from app.services import connection_test
+
+    plugin = plugin_registry.get(plugin_id)
+    if plugin is None:
+        raise HTTPException(404, "Plugin nicht gefunden")
+    known = {s.key.upper() for s in plugin.settings}
+    if any(k.upper() not in known for k in data.values):
+        raise HTTPException(422, "Unbekannte Einstellung für dieses Plugin")
+    return await connection_test.run(plugin, data.values)
+
+
+class CoreSettings(BaseModel):
+    app_name: str = Field(min_length=1, max_length=40)
+    timezone: str = Field(min_length=1, max_length=60)
+
+
+@router.get("/core")
+async def get_core(_: User = Depends(admin_only)):
+    return {"app_name": settings.app_name, "timezone": settings.timezone}
+
+
+@router.put("/core")
+async def put_core(data: CoreSettings, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    """Name des Hubs und Zeitzone (für Erinnerungen und „Heute“). Gilt sofort."""
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+    from app.services import config_store
+
+    try:
+        ZoneInfo(data.timezone.strip())
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise HTTPException(422, "Unbekannte Zeitzone, z. B. Europe/Berlin") from exc
+    config_store.save_overrides(db, {"APP_NAME": data.app_name.strip(), "TIMEZONE": data.timezone.strip()})
+    return {"app_name": settings.app_name, "timezone": settings.timezone}
