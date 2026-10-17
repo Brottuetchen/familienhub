@@ -9,8 +9,13 @@ cp .env.example .env
 # Mindestens: SECRET_KEY (python3 -c "import secrets;print(secrets.token_urlsafe(48))"),
 #             POSTGRES_PASSWORD, CORS_ORIGINS (eigene Adresse)
 docker compose up -d --build
-docker compose exec familienhub python -m scripts.create_admin
+docker compose logs familienhub | grep Einrichtungscode
 ```
+
+Die App bzw. die Web-Oberfläche zeigt bei einem neuen Hub **„Einrichten“**: Mit dem Einrichtungscode legt man das
+erste Admin-Konto an, danach folgt der Einrichtungs-Assistent. Der Code gilt nur, solange es keinen Admin gibt;
+nach zehn falschen Versuchen und bei jedem Neustart gibt es einen neuen. Alternativ auf der Konsole:
+`docker compose exec familienhub python -m scripts.create_admin`.
 
 Datenbankänderungen laufen beim Start automatisch über Alembic.
 
@@ -22,7 +27,7 @@ Datenbankänderungen laufen beim Start automatisch über Alembic.
 
 ## 3. Anmeldung
 
-- Lokale Konten: `scripts.create_admin`, weitere Personen in der App unter **Verwaltung → Familie & Rollen**.
+- Lokale Konten: erstes Konto über „Einrichten“, weitere Personen im Assistenten oder unter **Verwaltung → Familie & Rollen**.
 - OIDC (optional): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, Redirect-URIs aus `.env.example` beim
   Anbieter eintragen. Bei Authentik muss der Provider die Grant-Types `authorization_code` und `refresh_token` haben.
 
