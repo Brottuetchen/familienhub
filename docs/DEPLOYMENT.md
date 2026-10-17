@@ -29,7 +29,8 @@ Datenbankänderungen laufen beim Start automatisch über Alembic.
 ## 4. Push-Mitteilungen
 
 - **Android:** Firebase-Projekt anlegen, Dienstkonto-JSON herunterladen und in `docker-compose.yml` einbinden,
-  `FCM_PROJECT_ID` und `FCM_SERVICE_ACCOUNT_FILE` setzen. Die `google-services.json` gehört nur in den eigenen
+  `FCM_PROJECT_ID` und `FCM_SERVICE_ACCOUNT_FILE` setzen. Der Container läuft als unprivilegierter Nutzer
+  (UID 10001): `chown 10001:10001 fcm-service-account.json && chmod 600 fcm-service-account.json`. Die `google-services.json` gehört nur in den eigenen
   App-Build, nie ins Repo.
 - **Web/PWA (auch iPhone ab iOS 16.4):** `cd backend && python -m scripts.generate_vapid`, Werte als
   `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` eintragen.
@@ -51,3 +52,9 @@ Persönliche Zugänge (Nextcloud-Konto, Habitica, Paperless-Token) trägt jede P
 
 Gesichert werden muss nur die PostgreSQL-Datenbank (Volume `familienhub_db`) und `.env`. Alle Inhalte wie Aufgaben,
 Einkauf und Dokumente liegen in den angebundenen Diensten.
+
+## 8. Sicherheitsprüfung
+
+Jeder PR, `main` und wöchentlich: `.forgejo/workflows/security.yml` mit gitleaks (Geheimnisse), pip-audit und
+OSV-Scanner (bekannte Lücken in Python- und Flutter-Abhängigkeiten), Trivy (Dockerfile/Compose), Bandit und
+Semgrep (unsichere Muster). Lokal: `.forgejo/ci/security.sh`.

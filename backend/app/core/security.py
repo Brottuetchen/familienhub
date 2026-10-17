@@ -13,7 +13,8 @@ from typing import Dict, Iterable, Optional
 import bcrypt
 from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 from sqlalchemy.orm import Session
 
 from app.config import settings

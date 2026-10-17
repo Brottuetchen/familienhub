@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     app_name: str = Field(default="Familienhub")
     environment: str = Field(default="development")  # development | production
     debug: bool = False
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # nosec B104 – im Container gewollt; erreichbar nur über Docker-Port/Reverse-Proxy
     port: int = 8000
     log_level: str = "info"
     timezone: str = "Europe/Berlin"

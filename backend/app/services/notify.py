@@ -57,7 +57,8 @@ class NotifyService:
             self._fcm_creds.refresh(Request())
             return self._fcm_creds.token
         except Exception as e:
-            logger.warning("FCM token refresh failed: %s", e, exc_info=True)
+            # Nur die Fehlerart loggen: Meldungen der Google-Bibliothek können Zugangsdaten enthalten
+            logger.warning("FCM-Zugang konnte nicht erneuert werden (%s)", type(e).__name__)
             return None
 
     def _is_in_quiet_hours(self, quiet_start: Optional[time], quiet_end: Optional[time]) -> bool:
