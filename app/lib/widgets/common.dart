@@ -275,6 +275,8 @@ class SectionCard extends StatelessWidget {
     final style = HubStyle.of(context);
     final label = style.uppercaseTitles ? title.toUpperCase() : title;
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
+      // Kleine Versal-Titel in der Label-Schrift des Themes (z. B. Monospace)
+      fontFamily: style.uppercaseTitles && style.labelFont != null ? style.labelFont : null,
       letterSpacing: style.uppercaseTitles ? 1.2 : null,
       fontSize: style.uppercaseTitles ? 13 : null,
     );

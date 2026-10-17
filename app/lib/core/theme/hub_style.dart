@@ -28,6 +28,11 @@ class HubStyle extends ThemeExtension<HubStyle> {
   final bool bento; // Kacheln nebeneinander (Clean Cards)
   final FontWeight titleWeight;
   final bool uppercaseTitles;
+  /// Schriften aus dem Theme (Flutter-Familie oder null = Systemschrift): große Überschriften,
+  /// Fließtext und kleine Versal-Titel/Labels.
+  final String? titleFont;
+  final String? bodyFont;
+  final String? labelFont;
 
   const HubStyle({
     this.background = HubBackgroundType.solid,
@@ -45,7 +50,13 @@ class HubStyle extends ThemeExtension<HubStyle> {
     this.bento = false,
     this.titleWeight = FontWeight.w500,
     this.uppercaseTitles = false,
+    this.titleFont,
+    this.bodyFont,
+    this.labelFont,
   });
+
+  /// Erlaubte Schriften (mitgeliefert, SIL OFL). Gleiche Kennungen wie im Theme-Format des Servers.
+  static const fonts = {'pixel': 'PixelifySans', 'mono': 'JetBrainsMono', 'grotesk': 'SpaceGrotesk'};
 
   /// Bisherige Darstellung (dunkel, violett).
   static const standard = HubStyle(base: AppColors.bg, surface: AppColors.surface, border: AppColors.border);
@@ -58,7 +69,11 @@ class HubStyle extends ThemeExtension<HubStyle> {
         raw is List ? raw.map(hexColor).whereType<Color>().toList() : const [];
     num n(Object? v, num d) => v is num ? v : d;
     final weight = n(s['titleWeight'], 500).toInt().clamp(400, 900);
+    final font = (s['font'] as Map?) ?? const {};
     return HubStyle(
+      titleFont: fonts[font['title']],
+      bodyFont: fonts[font['body']],
+      labelFont: fonts[font['label']],
       background: HubBackgroundType.values.firstWhere((t) => t.name == bg['type'], orElse: () => HubBackgroundType.solid),
       backgroundColors: colors(bg['colors']),
       base: spec.color('background') ?? AppColors.bg,
@@ -133,6 +148,9 @@ class HubStyle extends ThemeExtension<HubStyle> {
       bento: base.bento,
       titleWeight: base.titleWeight,
       uppercaseTitles: base.uppercaseTitles,
+      titleFont: base.titleFont,
+      bodyFont: base.bodyFont,
+      labelFont: base.labelFont,
     );
   }
 }

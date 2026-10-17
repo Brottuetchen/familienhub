@@ -146,7 +146,20 @@ def validate_style(raw: Any) -> Dict[str, Any]:
         "layout": _choice(raw.get("layout"), ("list", "bento"), "list", "layout"),
         "titleWeight": _int(raw.get("titleWeight"), 400, 900, 500, "titleWeight", step=100),
         "uppercaseTitles": upper,
+        "font": _font(raw.get("font")),
     }
+
+
+FONTS = ("system", "pixel", "mono", "grotesk")  # in der App mitgeliefert (SIL OFL)
+
+
+def _font(raw: Any) -> Dict[str, str]:
+    """Schriften für Überschriften, Fließtext und kleine Labels – nur aus der festen Auswahl."""
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict) or set(raw) - {"title", "body", "label"}:
+        raise ValueError("font: nur title, body und label")
+    return {k: _choice(raw.get(k), FONTS, "system", f"font.{k}") for k in ("title", "body", "label")}
 
 
 @lru_cache

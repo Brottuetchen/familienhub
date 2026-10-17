@@ -53,3 +53,24 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Theme-Schriften (SIL Open Font License, Lizenztexte daneben): feste Stärken 400/700, offline verfügbar
+  assets:
+    - assets/fonts/PixelifySans/OFL.txt
+    - assets/fonts/SpaceGrotesk/OFL.txt
+    - assets/fonts/JetBrainsMono/OFL.txt
+  fonts:
+    - family: PixelifySans
+      fonts:
+        - asset: assets/fonts/PixelifySans/PixelifySans-Regular.ttf
+        - asset: assets/fonts/PixelifySans/PixelifySans-Bold.ttf
+          weight: 700
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/SpaceGrotesk/SpaceGrotesk-Bold.ttf
+          weight: 700
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Bold.ttf
+          weight: 700

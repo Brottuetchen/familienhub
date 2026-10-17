@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -23,6 +24,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'de_DE';
   await initializeDateFormatting('de_DE');
+  // Lizenzen der mitgelieferten Theme-Schriften (SIL OFL) in der Lizenzübersicht
+  LicenseRegistry.addLicense(() async* {
+    for (final family in ['PixelifySans', 'SpaceGrotesk', 'JetBrainsMono']) {
+      yield LicenseEntryWithLineBreaks([family], await rootBundle.loadString('assets/fonts/$family/OFL.txt'));
+    }
+  });
   runApp(const ProviderScope(child: FamilienhubApp()));
 }
 
