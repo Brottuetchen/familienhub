@@ -32,6 +32,11 @@ COPY --from=web /src/app/build/web/ ./public/
 
 WORKDIR /app/backend
 
+# Nicht als root laufen. Feste UID, damit eingebundene Dateien (z. B. Firebase-Dienstkonto) passend
+# freigegeben werden können: chown 10001:10001 <datei> auf dem Host.
+RUN useradd --system --uid 10001 --user-group --no-create-home --shell /usr/sbin/nologin familienhub
+USER 10001:10001
+
 EXPOSE 8000
 
 # Healthcheck gegen den API-Health-Endpoint
