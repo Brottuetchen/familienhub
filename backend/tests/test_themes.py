@@ -188,3 +188,44 @@ def validate_builtins():
 
     builtin_themes.cache_clear()
     return builtin_themes()
+
+
+# ── Hell/Dunkel-Varianten ─────────────────────────────────────────────────
+
+from app.routers.themes import builtin_themes, validate_theme  # noqa: E402
+
+_LIGHT = {"primary": "#C8381B", "secondary": "#141414", "background": "#EFECE6", "surface": "#F5F3EE",
+          "surfaceHigh": "#E5E1D8", "border": "#D3CEC3"}
+_DARK = {"primary": "#E0482A", "secondary": "#EDEAE3", "background": "#121212", "surface": "#1A1A1A",
+         "surfaceHigh": "#242424", "border": "#2E2E2E"}
+
+
+def test_variant_style_only_overrides_given_fields():
+    t = validate_theme({"name": "Präzision", "colors": _LIGHT,
+                        "style": {"card": {"radius": 0, "border": 1}, "layout": "bento", "titleWeight": 800},
+                        "variants": {"dark": {"colors": _DARK, "style": {"card": {"border": 2}}}}})
+    dark = t["variants"]["dark"]
+    assert dark["colors"]["background"] == "#121212"
+    assert dark["style"]["card"]["radius"] == 0 and dark["style"]["card"]["border"] == 2  # Radius geerbt
+    assert dark["style"]["layout"] == "bento" and dark["style"]["titleWeight"] == 800
+
+
+@pytest.mark.parametrize("variants,msg", [
+    ({"sepia": {"colors": _DARK}}, "variants"),
+    ({}, "variants"),
+    ({"dark": {"colors": {**_DARK, "border": "rot"}}}, "variants.dark.colors"),
+    ({"dark": {"style": {}}}, "variants.dark.colors"),
+    ({"dark": {"colors": _DARK, "style": {"card": {"radius": 99}}}}, "card.radius"),
+])
+def test_invalid_variants_rejected(variants, msg):
+    with pytest.raises(ValueError, match=msg.replace(".", r"\.")):
+        validate_theme({"name": "X", "colors": _LIGHT, "variants": variants})
+
+
+def test_themes_without_variants_still_valid():
+    assert "variants" not in validate_theme({"name": "Alt", "colors": _LIGHT})
+
+
+def test_builtin_themes_offer_light_and_dark():
+    for t in builtin_themes():
+        assert len(t["variants"]) == 1, t["name"]  # Grundfassung + die jeweils andere

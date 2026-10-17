@@ -82,8 +82,21 @@ class AppearanceScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: 96),
           children: [
             const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Text('Gilt nur für dieses Gerät.'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: SegmentedButton<ThemeMode>(
+                key: const Key('theme-mode'),
+                segments: const [
+                  ButtonSegment(value: ThemeMode.system, label: Text('Automatisch'), icon: Icon(Icons.brightness_auto_outlined)),
+                  ButtonSegment(value: ThemeMode.light, label: Text('Hell'), icon: Icon(Icons.light_mode_outlined)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text('Dunkel'), icon: Icon(Icons.dark_mode_outlined)),
+                ],
+                selected: {ref.watch(themeModeProvider)},
+                onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).select(s.first),
+              ),
             ),
             _ThemeTile(
               key: const Key('theme-standard'),
@@ -101,8 +114,15 @@ class AppearanceScreen extends ConsumerWidget {
                   _ThemeTile(
                     key: Key('theme-${t.id}'),
                     name: t.name,
-                    subtitle: t.builtin ? 'Mitgeliefert' : 'Installiert',
-                    swatches: [for (final k in ['background', 'surface', 'primary', 'secondary']) t.color(k)!],
+                    subtitle: [
+                      t.builtin ? 'Mitgeliefert' : 'Installiert',
+                      if (t.hasBothModes) 'Hell + Dunkel' else (t.brightness == Brightness.dark ? 'nur Dunkel' : 'nur Hell'),
+                    ].join(' · '),
+                    // Vorschau in der Fassung, die gerade gilt
+                    swatches: [
+                      for (final k in ['background', 'surface', 'primary', 'secondary'])
+                        t.forBrightness(Theme.of(context).brightness).color(k)!,
+                    ],
                     selected: chosen?.id == t.id,
                     onTap: () => choice.select(t),
                     onDelete: isAdmin && !t.builtin ? () => _delete(context, ref, t) : null,

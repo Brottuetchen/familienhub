@@ -38,25 +38,59 @@ RAW_HOST = "raw.githubusercontent.com"
 SEGMENT = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
-def validate_theme(raw: Any) -> Dict[str, Any]:
-    """Nur bekannte Felder, nur Hex-Farben. Alles andere fällt weg oder führt zu 422."""
-    if not isinstance(raw, dict):
-        raise ValueError("theme.json muss ein Objekt sein")
-    name = raw.get("name")
-    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 60:
-        raise ValueError("Name fehlt oder ist länger als 60 Zeichen")
-    colors = raw.get("colors")
+def _colors(colors: Any, where: str = "colors") -> Dict[str, str]:
     if not isinstance(colors, dict):
-        raise ValueError("colors fehlt")
+        raise ValueError(f"{where} fehlt")
     out = {}
     for key in REQUIRED_COLORS + OPTIONAL_COLORS:
         value = colors.get(key)
         if value is None and key in OPTIONAL_COLORS:
             continue
         if not isinstance(value, str) or not HEX.match(value):
-            raise ValueError(f"Farbe {key} fehlt oder ist kein #RRGGBB-Wert")
+            raise ValueError(f"{where}: Farbe {key} fehlt oder ist kein #RRGGBB-Wert")
         out[key] = value.upper()
-    return {"name": name.strip(), "colors": out, "style": validate_style(raw.get("style") or {})}
+    return out
+
+
+def _merge_style(base: Any, override: Any) -> Dict[str, Any]:
+    """Variante ändert nur, was sie angibt (Hintergrund und Karte werden feldweise ergänzt)."""
+    base = base if isinstance(base, dict) else {}
+    if override is None:
+        return dict(base)
+    if not isinstance(override, dict):
+        raise ValueError("style einer Variante muss ein Objekt sein")
+    merged = {**base, **override}
+    for key in ("background", "card"):
+        if isinstance(base.get(key), dict) and isinstance(override.get(key), dict):
+            merged[key] = {**base[key], **override[key]}
+    return merged
+
+
+def validate_theme(raw: Any) -> Dict[str, Any]:
+    """Nur bekannte Felder, nur Hex-Farben. Alles andere fällt weg oder führt zu 422.
+
+    Optional ``variants`` mit ``light`` und/oder ``dark``: vollständige Farben je Fassung, ``style`` nur
+    mit den Abweichungen. Die App wählt Hell/Dunkel/Automatisch; ohne passende Variante gilt die Grundfassung.
+    """
+    if not isinstance(raw, dict):
+        raise ValueError("theme.json muss ein Objekt sein")
+    name = raw.get("name")
+    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 60:
+        raise ValueError("Name fehlt oder ist länger als 60 Zeichen")
+    base_style = raw.get("style") or {}
+    out = {"name": name.strip(), "colors": _colors(raw.get("colors")), "style": validate_style(base_style)}
+    variants = raw.get("variants")
+    if variants is not None:
+        if not isinstance(variants, dict) or not variants or set(variants) - {"light", "dark"}:
+            raise ValueError("variants: nur „light“ und „dark“ erlaubt")
+        out["variants"] = {
+            mode: {
+                "colors": _colors((v or {}).get("colors") if isinstance(v, dict) else None, f"variants.{mode}.colors"),
+                "style": validate_style(_merge_style(base_style, v.get("style") if isinstance(v, dict) else None)),
+            }
+            for mode, v in variants.items()
+        }
+    return out
 
 
 def _hex_list(value: Any, field: str, limit: int) -> List[str]:

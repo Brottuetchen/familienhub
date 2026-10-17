@@ -1,17 +1,51 @@
 {
   "name": "Clean Cards",
   "colors": {
-    "primary": "#2563EB", "secondary": "#10B981", "background": "#EEF2F8", "surface": "#FFFFFF",
-    "surfaceHigh": "#F1F5F9", "border": "#E2E8F0", "onPrimary": "#FFFFFF",
-    "onBackground": "#0F172A", "onSurface": "#0F172A"
+    "primary": "#2563EB",
+    "secondary": "#10B981",
+    "background": "#EEF2F8",
+    "surface": "#FFFFFF",
+    "surfaceHigh": "#F1F5F9",
+    "border": "#E2E8F0",
+    "onPrimary": "#FFFFFF",
+    "onBackground": "#0F172A",
+    "onSurface": "#0F172A"
   },
   "style": {
-    "background": {"type": "solid", "colors": []},
-    "card": {"radius": 24, "border": 0, "shadow": "soft", "glass": false, "header": "plain"},
-    "accents": ["#8B5CF6", "#22D3EE", "#F43F5E"],
+    "background": {
+      "type": "solid",
+      "colors": []
+    },
+    "card": {
+      "radius": 24,
+      "border": 0,
+      "shadow": "soft",
+      "glass": false,
+      "header": "plain"
+    },
+    "accents": [
+      "#8B5CF6",
+      "#22D3EE",
+      "#F43F5E"
+    ],
     "layout": "bento",
     "nav": "floating",
     "titleWeight": 700,
     "uppercaseTitles": false
+  },
+  "variants": {
+    "dark": {
+      "colors": {
+        "primary": "#60A5FA",
+        "secondary": "#34D399",
+        "background": "#0B1220",
+        "surface": "#131C2E",
+        "surfaceHigh": "#1B263B",
+        "border": "#25324A",
+        "onPrimary": "#0B1220",
+        "onBackground": "#E5ECF6",
+        "onSurface": "#E5ECF6"
+      }
+    }
   }
 }
