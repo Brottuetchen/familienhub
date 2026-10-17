@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/material.dart' show Brightness, ThemeMode;
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,9 +33,21 @@ class ThemeChoice extends StateNotifier<ThemeSpec?> {
     }
   }
 
-  /// Widgets auf dem Startbildschirm im gleichen Stil wie die App.
-  Future<void> _publishStyle() =>
-      HomeWidgets.updateStyle(state == null ? AppTheme.dark : AppTheme.fromSpec(state!));
+  /// Hell/Dunkel für die Widgets: gewählter Modus, bei „Automatisch“ der des Systems.
+  ThemeMode mode = ThemeMode.system;
+
+  /// Widgets auf dem Startbildschirm im gleichen Stil wie die App (passende Fassung hell/dunkel).
+  Future<void> _publishStyle() {
+    final system = SchedulerBinding.instance.platformDispatcher.platformBrightness;
+    final wanted = switch (mode) { ThemeMode.light => Brightness.light, ThemeMode.dark => Brightness.dark, _ => system };
+    return HomeWidgets.updateStyle(state == null ? AppTheme.dark : AppTheme.fromSpec(state!.forBrightness(wanted)));
+  }
+
+  /// Nach einem Moduswechsel die Widgets nachziehen.
+  void modeChanged(ThemeMode m) {
+    mode = m;
+    unawaited(_publishStyle());
+  }
 
   Future<void> select(ThemeSpec? spec) async {
     state = spec;
@@ -48,6 +62,40 @@ class ThemeChoice extends StateNotifier<ThemeSpec?> {
 }
 
 final themeChoiceProvider = StateNotifierProvider<ThemeChoice, ThemeSpec?>((ref) => ThemeChoice());
+
+const _modeKey = 'theme_mode';
+
+/// Hell, Dunkel oder Automatisch (folgt dem System). Pro Gerät gespeichert.
+class ThemeModeChoice extends StateNotifier<ThemeMode> {
+  final void Function(ThemeMode) onChange;
+  ThemeModeChoice(this.onChange) : super(ThemeMode.system) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final raw = (await SharedPreferences.getInstance()).getString(_modeKey);
+      final m = ThemeMode.values.where((m) => m.name == raw).firstOrNull;
+      if (m != null && mounted) {
+        state = m;
+        onChange(m);
+      }
+    } catch (_) {
+      // Standard: Automatisch
+    }
+  }
+
+  Future<void> select(ThemeMode m) async {
+    state = m;
+    onChange(m);
+    try {
+      await (await SharedPreferences.getInstance()).setString(_modeKey, m.name);
+    } catch (_) {}
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeChoice, ThemeMode>(
+    (ref) => ThemeModeChoice((m) => ref.read(themeChoiceProvider.notifier).modeChanged(m)));
 
 final themesProvider = FutureProvider.autoDispose<List<ThemeSpec>>(
     (ref) => ref.watch(apiClientProvider).themes());

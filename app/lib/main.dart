@@ -32,9 +32,13 @@ class FamilienhubApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = ref.watch(themeChoiceProvider);
+    final mode = ref.watch(themeModeProvider);
     return MaterialApp(
       title: 'Familienhub',
-      theme: spec == null ? AppTheme.dark : AppTheme.fromSpec(spec),
+      // Hell/Dunkel/Automatisch: jede Fassung des Themes; ohne Variante bleibt es bei der Grundfassung
+      theme: spec == null ? AppTheme.dark : AppTheme.fromSpec(spec.forBrightness(Brightness.light)),
+      darkTheme: spec == null ? AppTheme.dark : AppTheme.fromSpec(spec.forBrightness(Brightness.dark)),
+      themeMode: mode,
       debugShowCheckedModeBanner: false,
       locale: const Locale('de', 'DE'),
       supportedLocales: const [Locale('de', 'DE')],
