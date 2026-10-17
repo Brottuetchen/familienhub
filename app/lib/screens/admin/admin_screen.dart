@@ -7,6 +7,7 @@ import '../../widgets/common.dart';
 import '../more/appearance_screen.dart';
 import '../more/plugins_admin_screen.dart';
 import '../more/service_keys_screen.dart';
+import '../setup/setup_wizard_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
 import 'admin_users_screen.dart';
@@ -41,6 +42,13 @@ class AdminScreen extends ConsumerWidget {
                 error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(adminOverviewProvider)),
                 data: (o) => _OverviewCard(overview: o),
               ),
+            ),
+            _Area(
+              key: const Key('admin-wizard'),
+              icon: Icons.auto_fix_high_outlined,
+              title: 'Einrichtungs-Assistent',
+              subtitle: 'Name, Zeitzone, Dienste und Familie Schritt für Schritt',
+              onTap: () => open(const SetupWizardScreen(standalone: true)),
             ),
             _Area(
               key: const Key('admin-users'),

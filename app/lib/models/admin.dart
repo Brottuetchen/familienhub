@@ -197,3 +197,31 @@ class LogEntry {
         message: (j['message'] as String?) ?? '',
       );
 }
+
+/// Öffentlicher Einrichtungsstatus (`/api/setup/status`).
+class SetupStatus {
+  final bool needsSetup;
+  final String appName;
+  final bool oidc;
+  const SetupStatus({required this.needsSetup, this.appName = 'Familienhub', this.oidc = false});
+
+  factory SetupStatus.fromJson(Map<String, dynamic> j) => SetupStatus(
+        needsSetup: j['needs_setup'] == true,
+        appName: (j['app_name'] as String?) ?? 'Familienhub',
+        oidc: j['oidc'] == true,
+      );
+}
+
+/// Ergebnis von „Verbindung testen“: ok, info (Hinweis) oder error.
+class ConnectionResult {
+  final bool ok;
+  final String level;
+  final String message;
+  const ConnectionResult({required this.ok, required this.level, required this.message});
+
+  factory ConnectionResult.fromJson(Map<String, dynamic> j) => ConnectionResult(
+        ok: j['ok'] == true,
+        level: (j['level'] as String?) ?? (j['ok'] == true ? 'ok' : 'error'),
+        message: (j['message'] as String?) ?? '',
+      );
+}

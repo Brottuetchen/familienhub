@@ -14,6 +14,7 @@ import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/server_setup_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/setup/setup_wizard_screen.dart';
 import 'services/web_platform.dart' as webp;
 import 'widgets/common.dart';
 import 'widgets/hub_background.dart';
@@ -134,7 +135,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
         const Scaffold(body: Center(child: HubLoader())),
       SessionPhase.needsServer => const ServerSetupScreen(),
       SessionPhase.loggedOut => LoginScreen(message: session.error),
-      SessionPhase.loggedIn => const MainShell(),
+      SessionPhase.loggedIn => session.onboarding ? const SetupWizardScreen() : const MainShell(),
     };
   }
 }

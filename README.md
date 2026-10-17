@@ -31,11 +31,12 @@ an- und abschalten und einrichten (ohne Neustart).
 ```bash
 cp .env.example .env          # SECRET_KEY, POSTGRES_PASSWORD und Adresse eintragen
 docker compose up -d --build
-docker compose exec familienhub python -m scripts.create_admin
+docker compose logs familienhub | grep Einrichtungscode
 ```
 
-Danach die App mit der Adresse des Hubs verbinden (`https://hub.example.org`). Plugins richtet man als Admin
-in der App ein. Hinweise zu Push (Firebase/Web-Push), OIDC und Reverse-Proxy: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Danach die App (oder `https://hub.example.org` im Browser) öffnen: Ein neuer Hub zeigt **„Einrichten“**. Mit dem
+Einrichtungscode aus dem Log legt man das erste Konto an; der **Einrichtungs-Assistent** führt dann durch Name,
+Zeitzone, Dienste (mit „Verbindung testen“) und Familie. Später erneut unter **Mehr → Verwaltung**. Hinweise zu Push (Firebase/Web-Push), OIDC und Reverse-Proxy: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Dokumentation
 

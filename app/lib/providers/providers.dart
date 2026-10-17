@@ -34,8 +34,10 @@ class SessionState {
   final SessionPhase phase;
   final AppUser? user;
   final String? error;
+  /// Gerade das erste Admin-Konto angelegt: Einrichtungs-Assistent statt App zeigen.
+  final bool onboarding;
 
-  const SessionState(this.phase, {this.user, this.error});
+  const SessionState(this.phase, {this.user, this.error, this.onboarding = false});
 }
 
 class SessionNotifier extends StateNotifier<SessionState> {
@@ -103,6 +105,25 @@ class SessionNotifier extends StateNotifier<SessionState> {
     if (mounted && revision == _revision) state = SessionState(SessionPhase.loggedIn, user: user);
   }
 
+  /// Ersteinrichtung: erstes Admin-Konto anlegen, anmelden und den Assistenten starten.
+  Future<void> createFirstAdmin({
+    required String code,
+    required String username,
+    required String email,
+    required String password,
+    String? displayName,
+  }) async {
+    final revision = ++_revision;
+    final user = await api.createFirstAdmin(
+        code: code, username: username, email: email, password: password, displayName: displayName);
+    if (mounted && revision == _revision) state = SessionState(SessionPhase.loggedIn, user: user, onboarding: true);
+  }
+
+  /// Assistent beendet: weiter in die App.
+  void finishOnboarding() {
+    if (state.phase == SessionPhase.loggedIn) state = SessionState(SessionPhase.loggedIn, user: state.user);
+  }
+
   Future<void> loginWithCode(String code) async {
     final revision = ++_revision;
     final user = await api.exchangeOidcCode(code);
@@ -111,7 +132,9 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   /// Nach Profiländerung: neue Nutzerdaten übernehmen (Name, Farbe, Bild) ohne neu anzumelden.
   void updateUser(AppUser user) {
-    if (state.phase == SessionPhase.loggedIn) state = SessionState(SessionPhase.loggedIn, user: user);
+    if (state.phase == SessionPhase.loggedIn) {
+      state = SessionState(SessionPhase.loggedIn, user: user, onboarding: state.onboarding);
+    }
   }
 
   Future<void> logout() async {
