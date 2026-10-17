@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Termine, Aufgaben, Einkauf und Essen für die Familie">
+  <meta name="theme-color" content="#0B0C16">
+  <!-- iOS: als App auf dem Home-Bildschirm (Voraussetzung für Web Push) -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Familienhub">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Familienhub</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0B0C16; }
+    #splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #splash img { width: 96px; height: 96px; border-radius: 22px; }
+  </style>
+</head>
+<body>
+  <div id="splash"><img src="icons/Icon-192.png" alt=""></div>
+  <script>
+    // Push-Service-Worker früh registrieren (Mitteilungen + Tipp auf Mitteilung).
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/push-sw.js').catch(() => {});
+    window.addEventListener('flutter-first-frame', () => document.getElementById('splash')?.remove());
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

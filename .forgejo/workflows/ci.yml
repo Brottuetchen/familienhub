@@ -1,0 +1,43 @@
+# Familienhub CI auf dem Forgejo-Runner (ACEMAGIC CT 140, Label "docker").
+# Die Jobs "backend" und "app" sind im Branch-Schutz von main als Pflicht-Status hinterlegt.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  backend:
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python 3.12 + Abhängigkeiten
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv venv -q --python 3.12 --python-preference only-managed /tmp/venv
+          uv pip install -q -p /tmp/venv -r backend/requirements.txt ruff
+      - name: Tests
+        working-directory: backend
+        run: PYTHONPATH=. /tmp/venv/bin/python -m pytest -q
+      - name: Ruff
+        working-directory: backend
+        run: /tmp/venv/bin/ruff check app tests alembic --select E9,F63,F7,F82,F401
+
+  app:
+    runs-on: docker
+    container:
+      # Lokal auf dem Runner gebaut (.forgejo/ci/flutter.Dockerfile): Node + Flutter ohne Android
+      image: familienhub-ci-flutter:3.47.7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Abhängigkeiten
+        working-directory: app
+        run: flutter pub get
+      - name: Analyse
+        working-directory: app
+        run: flutter analyze --no-fatal-infos
+      - name: Tests
+        working-directory: app
+        run: flutter test

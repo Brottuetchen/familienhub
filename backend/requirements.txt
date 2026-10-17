@@ -1,0 +1,43 @@
+# Hermes Family OS – Backend Dependencies
+
+# --- Web Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+
+# --- Config & Validation ---
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Auth / Security ---
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.1
+cryptography==44.0.0
+
+# --- Database ---
+sqlalchemy==2.0.36
+alembic==1.14.1
+# PostgreSQL-Treiber (für Produktion via docker-compose)
+psycopg2-binary==2.9.10
+
+# --- HTTP client (Connectors) ---
+httpx==0.28.1
+
+# --- MCP-Server (Haushalts-Werkzeuge an hermes-agent) ---
+mcp>=1.9,<2
+
+# --- Push Notifications ---
+pywebpush==2.0.0
+google-auth==2.36.0
+
+# --- Plugin Cookidoo (Wochenplan, Rezeptsuche; braucht Python ≥ 3.12) ---
+cookidoo-api==0.18.4
+
+# --- Kalender (CalDAV/Nextcloud) ---
+caldav==1.4.0
+icalendar==6.1.0
+python-dateutil==2.9.0.post0
+
+# --- Tests (optional) ---
+pytest==8.3.4
+respx==0.21.1

@@ -1,0 +1,55 @@
+name: familienhub
+description: Familienhub - Self-hosted family hub
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  riverpod: ^2.4.9
+  flutter_riverpod: ^2.4.9
+
+  # Networking
+  http: ^1.2.0
+  crypto: ^3.0.7
+  web: ^1.1.0
+
+  # Storage
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # Utilities
+  intl: ^0.20.2
+  url_launcher: ^6.2.4
+  app_links: ^6.1.1
+
+  # Push Notifications
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+  flutter_local_notifications: ^18.0.1
+
+  flutter_localizations:
+    sdk: flutter
+  home_widget: ^0.10.0
+  workmanager: ^0.10.10
+  quick_actions: ^1.1.1
+  expressive_loading_indicator: ^0.0.1
+  image_picker: ^1.1.2
+  crop_your_image: ^2.0.1
+  image: ^4.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

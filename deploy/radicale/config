@@ -1,0 +1,13 @@
+# Radicale-Konfiguration für Hermes Family OS (CalDAV, gebündelt via profile "radicale").
+# Die Zugangsdaten liegen in ./deploy/radicale/users (vom Installer erzeugt,
+# per .gitignore ausgeschlossen). Format je Zeile: benutzer:passwort (Klartext).
+[server]
+hosts = 0.0.0.0:5232
+
+[auth]
+type = htpasswd
+htpasswd_filename = /config/users
+htpasswd_encryption = plain
+
+[storage]
+filesystem_folder = /data/collections

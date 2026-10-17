@@ -1,0 +1,17 @@
+{
+  "name": "Neo-Brutalism",
+  "colors": {
+    "primary": "#7C3AED", "secondary": "#F59E0B", "background": "#FBF4E8", "surface": "#FFFFFF",
+    "surfaceHigh": "#FFF4D6", "border": "#111111", "onPrimary": "#FFFFFF",
+    "onBackground": "#111111", "onSurface": "#111111"
+  },
+  "style": {
+    "background": {"type": "solid", "colors": []},
+    "card": {"radius": 14, "border": 3, "shadow": "hard", "glass": false, "header": "band"},
+    "accents": ["#8B5CF6", "#F59E0B", "#22B8CF", "#EC4899", "#84CC16"],
+    "layout": "list",
+    "nav": "floating",
+    "titleWeight": 900,
+    "uppercaseTitles": false
+  }
+}

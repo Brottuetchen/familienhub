@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.claude/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+backend/.env
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.backup
+*.bak
+
+# Push Notifications - Secrets
+backend/vapid_keys.json
+backend/push_subscriptions.json
+
+
+# Database
+backend/*.db
+backend/*.db-journal
+*.db
+*.db-journal
+hermes.db
+
+# Python venv
+backend/.venv/
+.venv/
+
+# Radicale-Zugangsdaten (vom Installer erzeugt, enthält Klartext-Passwort)
+deploy/radicale/users
+
+# Debug pages
+public/push-test-ios.html
+public/*.broken
+*.backup2
+
+# Flutter / Firebase (keine Geheimnisse ins Repo)
+app/.dart_tool/
+app/build/
+app/.flutter-plugins*
+app/android/app/google-services.json
+app/ios/Runner/GoogleService-Info.plist
+app/android/key.properties
+*.jks
+*.keystore
+firebase-service-account*.json
+backend/vapid_keys.json
+.agent-report-*.md

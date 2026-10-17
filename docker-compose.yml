@@ -1,0 +1,39 @@
+# Familienhub – Backend + Web-App + PostgreSQL. Konfiguration über .env (siehe .env.example).
+#   docker compose up -d --build
+# Die Android-App verbindet sich mit derselben Adresse (http(s)://<host>:8000 oder hinter einem Reverse-Proxy).
+services:
+  familienhub:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-familienhub}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}@db:5432/${POSTGRES_DB:-familienhub}
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      # optional: Firebase-Dienstkonto für Push auf Android
+      # - ./secrets/fcm-service-account.json:/app/secrets/fcm-service-account.json:ro
+      - ./downloads:/app/downloads:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-familienhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      POSTGRES_DB: ${POSTGRES_DB:-familienhub}
+    volumes:
+      - familienhub_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-familienhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  familienhub_db:

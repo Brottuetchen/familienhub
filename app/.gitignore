@@ -1,0 +1,34 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+.idea/
+.DS_Store
+
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/.env
+backend/familyhub.db
+backend/vapid_keys.json
+
+# VS Code
+.vscode/*.log
+.claude/
+
+# iOS/Android
+ios/Pods/
+ios/.symlinks/
+android/.gradle/
+android/local.properties
+google-services.json
+GoogleService-Info.plist
+
+# Newsletters (generated)
+newsletters/*.json

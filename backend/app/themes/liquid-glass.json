@@ -1,0 +1,17 @@
+{
+  "name": "Liquid Glass",
+  "colors": {
+    "primary": "#8B5CF6", "secondary": "#22D3EE", "background": "#06070F", "surface": "#1A1B2E",
+    "surfaceHigh": "#24264A", "border": "#3A3D66", "onPrimary": "#FFFFFF",
+    "onBackground": "#EEF0FF", "onSurface": "#EEF0FF"
+  },
+  "style": {
+    "background": {"type": "glow", "colors": ["#7C3AED", "#22D3EE", "#3B82F6"]},
+    "card": {"radius": 22, "border": 1, "shadow": "none", "glass": true, "header": "plain"},
+    "accents": ["#8B5CF6", "#22D3EE"],
+    "layout": "list",
+    "nav": "floating",
+    "titleWeight": 700,
+    "uppercaseTitles": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Warm",
+  "colors": {
+    "primary": "#C2694A", "secondary": "#F4D9C6", "background": "#F1E5D8", "surface": "#FFF7EA",
+    "surfaceHigh": "#F6E8D4", "border": "#EAD8C0", "onPrimary": "#FFFFFF",
+    "onBackground": "#4A2B23", "onSurface": "#3B2620"
+  },
+  "style": {
+    "background": {"type": "gradient", "colors": ["#DCCFF2", "#F1E3D1"]},
+    "card": {"radius": 28, "border": 0, "shadow": "soft", "glass": false, "header": "plain"},
+    "accents": ["#C2694A", "#8E6BBF"],
+    "layout": "list",
+    "nav": "bar",
+    "titleWeight": 500,
+    "uppercaseTitles": false
+  }
+}

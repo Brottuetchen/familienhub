@@ -1,0 +1,623 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../models/account.dart';
+import '../../models/common.dart';
+import '../../models/task.dart';
+import '../../providers/providers.dart';
+import '../../widgets/common.dart';
+import 'habitica_tasks.dart';
+import '../main_shell.dart';
+import '../more/caldav_account_screen.dart';
+
+/// „überfällig“, „heute“, „morgen“, „Fr, 17.10.“ oder leer.
+String taskDueLabel(Task t, {DateTime? now}) {
+  if (t.due == null) return '';
+  final n = now ?? DateTime.now();
+  if (t.isOverdue(n)) return 'überfällig';
+  final label = dayLabel(t.due!, now: n);
+  if (label == 'Heute' || label == 'Morgen') {
+    final time = t.dueIsDate ? '' : ' ${timeLabel(t.due!)}';
+    return '${label.toLowerCase()}$time';
+  }
+  return DateFormat('E, d.M.', 'de_DE').format(t.due!);
+}
+
+class TasksScreen extends ConsumerStatefulWidget {
+  const TasksScreen({super.key});
+
+  @override
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  Task? _selected;
+  TaskView _selectedView = TaskView.mine;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(
+      length: TaskView.values.length,
+      vsync: this,
+      initialIndex: TaskView.values.indexOf(ref.read(taskViewProvider)),
+    );
+    _tabs.addListener(() {
+      if (!_tabs.indexIsChanging) {
+        ref.read(taskViewProvider.notifier).state = TaskView.values[_tabs.index];
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  Future<void> _create() async {
+    final view = ref.read(taskViewProvider);
+    List<TaskProviderInfo> accounts;
+    try { accounts = await ref.read(taskAccountsProvider.future); }
+    catch (e) { if (mounted) showError(context, e); return; }
+    if (!mounted) return;
+    final available = accounts.where((p) => p.configured).toList();
+    if (available.isEmpty) { showInfo(context, 'Zuerst ein eigenes Aufgabenkonto einrichten'); return; }
+    final provider = available.length == 1 ? available.single : await showModalBottomSheet<TaskProviderInfo>(context: context,
+      builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const ListTile(title: Text('Anbieter und eigenes Konto wählen')),
+        for (final p in available) ListTile(title: Text(p.name), subtitle: Text(p.account), onTap: () => Navigator.pop(ctx, p)),
+      ])));
+    if (provider == null || !mounted) return;
+    if (provider.id == 'habitica') { await showNativeEditor(context, ref, provider.account); return; }
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => ProtectedReadModal(
+        provider: tasksProvider(view),
+        child: TaskCreateSheet(provider: provider.id, account: provider.account),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Push-Ziel „/tasks?view=for_me“ schaltet den Reiter um
+    ref.listen<TaskView>(taskViewProvider, (_, view) {
+      final i = TaskView.values.indexOf(view);
+      if (_tabs.index != i) _tabs.animateTo(i);
+    });
+    final wide = isWide(context);
+    if (_selected != null) {
+      ref.listen(tasksProvider(_selectedView), (_, next) {
+        if (next.valueOrNull == null) setState(() => _selected = null);
+      });
+    }
+
+    final lists = TabBarView(
+      controller: _tabs,
+      children: [
+        for (final v in TaskView.values)
+          _TaskList(
+            view: v,
+            selectedUid: wide ? _selected?.identity : null,
+            onOpen: (t) => t.isHabitica ? showNativeEditor(context, ref, t.account, task: t) : wide ? setState(() {
+              _selected = t;
+              _selectedView = v;
+            }) : _showDetails(t, v),
+          ),
+      ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Aufgaben'),
+        actions: [ReadStatusIcon(result: ref.watch(tasksProvider(ref.watch(taskViewProvider))).valueOrNull),
+          if (ref.watch(taskAccountsProvider).valueOrNull?.any((p) => p.id == 'habitica') == true)
+          IconButton(tooltip: 'Habitica-Konto und Aufgabenauswahl', icon: const Icon(Icons.account_tree_outlined), onPressed: () async {
+            await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProtectedReadModal(
+              provider: tasksProvider(TaskView.mine), child: const HabiticaAccountScreen())));
+            ref.invalidate(taskAccountsProvider); await refreshTasks(ref);
+          })],
+        bottom: TabBar(
+          controller: _tabs,
+          isScrollable: !wide,
+          tabAlignment: wide ? TabAlignment.fill : TabAlignment.start,
+          tabs: [for (final v in TaskView.values) Tab(text: v.label)],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _create,
+        icon: const Icon(Icons.add),
+        label: const Text('Aufgabe'),
+      ),
+      body: wide
+          ? Row(
+              children: [
+                Expanded(flex: 5, child: lists),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  flex: 4,
+                  child: _selected == null
+                      ? const EmptyHint(icon: Icons.touch_app_outlined, text: 'Aufgabe antippen für Details')
+                      : TaskDetails(task: _selected!, view: _selectedView, onClose: () => setState(() => _selected = null)),
+                ),
+              ],
+            )
+          : lists,
+    );
+  }
+
+  void _showDetails(Task t, TaskView view) {
+    if (t.isHabitica) { showNativeEditor(context, ref, t.account, task: t); return; }
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (ctx) => ProtectedReadModal(
+        provider: tasksProvider(view),
+        child: TaskDetails(task: t, view: view, onClose: () => Navigator.pop(ctx)),
+      ),
+    );
+  }
+}
+
+class _TaskList extends ConsumerStatefulWidget {
+  final TaskView view;
+  final String? selectedUid;
+  final ValueChanged<Task> onOpen;
+
+  const _TaskList({
+    required this.view,
+    required this.onOpen,
+    this.selectedUid,
+  });
+
+  @override
+  ConsumerState<_TaskList> createState() => _TaskListState();
+}
+
+class _TaskListState extends ConsumerState<_TaskList> {
+  /// Weggewischte Aufgaben verschwinden sofort, nicht erst nach dem Neuladen.
+  final _gone = <String>{};
+  final _completing = <String>{};
+
+  Future<bool> _complete(Task task) async {
+    if (_completing.contains(task.identity)) return false;
+    if (task.localOnly) {
+      showInfo(context, 'Wird erst angelegt, sobald der Hub erreichbar ist');
+      return false;
+    }
+    setState(() => _completing.add(task.identity));
+    try {
+      return await runChange(context, () => ref.read(apiClientProvider).completeTask(task.uid, provider: task.provider, account: task.account, title: task.title));
+    } finally {
+      if (mounted) setState(() => _completing.remove(task.identity));
+    }
+  }
+
+  void _remove(Task task, {bool deleted = false}) {
+    setState(() => _gone.add(task.identity));
+    showInfo(context, '„${task.title}“ ${deleted ? 'gelöscht' : 'erledigt'}');
+  }
+
+  TaskView get view => widget.view;
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(tasksProvider(view));
+    final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
+    final names = {for (final p in people) p.id: p.displayName};
+    final api = ref.read(apiClientProvider);
+    Future<void> refresh() async { setState(() => _gone.clear()); await ref.read(tasksProvider(view).notifier).refresh(); }
+
+    return HubRefresh(
+      onRefresh: refresh,
+      child: async.when(
+        loading: () => const Center(child: HubLoader()),
+        error: (e, _) => ErrorView(error: e, onRetry: refresh),
+        data: (result) {
+          final data = result.data;
+          final open = data.items.where((t) => (t.isHabitica || !t.done) && !_gone.contains(t.identity)).toList()
+            ..sort((a, b) => (a.due ?? DateTime(9999)).compareTo(b.due ?? DateTime(9999)));
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 96),
+            children: [
+              SourceBanner(source: 'Aufgabenanbieter', status: data.error != null ? SourceStatus.unavailable : data.status, error: data.error),
+              if (data.status == SourceStatus.notConfigured)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: FilledButton.tonal(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const CalDavAccountScreen())),
+                    child: const Text('Nextcloud-Konto eintragen'),
+                  ),
+                ),
+              if (data.isOk && open.isEmpty)
+                EmptyHint(icon: Icons.task_alt, text: _emptyText(view)),
+              for (final t in open)
+                Dismissible(
+                  key: ValueKey('task-${view.apiName}-${t.identity}'),
+                  direction: t.isHabitica || t.localOnly ? DismissDirection.none : DismissDirection.horizontal,
+                  background: _swipeBackground(context, Icons.check, 'Erledigt',
+                      Colors.green.shade700, Alignment.centerLeft),
+                  secondaryBackground: _swipeBackground(context, Icons.delete_outline,
+                      'Löschen', Theme.of(context).colorScheme.error, Alignment.centerRight),
+                  confirmDismiss: (dir) async {
+                    if (_completing.contains(t.identity)) return false;
+                    if (dir == DismissDirection.startToEnd) {
+                      return _complete(t);
+                    }
+                    final sure = await _confirmDelete(context, t);
+                    if (!sure || !context.mounted) return false;
+                    return runAction(context, () => api.deleteTask(t.uid, provider: t.provider, account: t.account));
+                  },
+                  onDismissed: (dir) => _remove(t, deleted: dir == DismissDirection.endToStart),
+                  child: ListTile(
+                    leading: t.isHabitica ? Icon(t.native['type'] == 'reward' ? Icons.redeem : Icons.auto_awesome_outlined) : Checkbox(
+                      shape: const CircleBorder(),
+                      value: false,
+                      semanticLabel: '„${t.title}“ erledigen',
+                      onChanged: _completing.contains(t.identity) || t.localOnly ? null : (_) async {
+                        if (await _complete(t) && mounted) _remove(t);
+                      },
+                    ),
+                    selected: t.identity == widget.selectedUid,
+                    title: Text(t.title),
+                    subtitle: _subtitle(t, names),
+                    trailing: t.localOnly
+                        ? Tooltip(message: 'Wartet auf Netz', child: Icon(Icons.cloud_upload_outlined, key: Key('pending-task-${t.uid}')))
+                        : t.isHabitica ? HabiticaTaskButtons(task: t, enabled: !result.offline && !result.refreshing && result.refreshError == null, onChanged: () async { await refreshTasks(ref); }) : _dueChip(context, t),
+                    onTap: t.localOnly ? null : () => widget.onOpen(t),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  static String _emptyText(TaskView v) => switch (v) {
+        TaskView.mine => 'Keine offenen Aufgaben',
+        TaskView.forMe => 'Niemand hat dir etwas zugewiesen',
+        TaskView.fromMe => 'Du hast niemandem etwas zugewiesen',
+        TaskView.family => 'Keine Familienaufgaben',
+      };
+
+  Widget? _subtitle(Task t, Map<int, String> names) {
+    final parts = <String>[
+      if (view == TaskView.forMe && t.createdBy != null) 'von ${names[t.createdBy] ?? 'jemandem'}',
+      if (view == TaskView.fromMe && t.assignee != null) 'für ${names[t.assignee] ?? 'jemanden'}',
+      if (view == TaskView.family && t.assignee != null) 'für ${names[t.assignee] ?? 'jemanden'}',
+      if (t.listName != null && view != TaskView.mine) t.listName!,
+      if (t.account.isNotEmpty) '${t.provider} · ${t.account}',
+      if (t.isHabitica && t.native['type'] == 'reward') '${t.native['value']} GP',
+      if (t.rotation.isNotEmpty) reminderRecurrences[t.recurrence] ?? t.recurrence,
+    ];
+    return parts.isEmpty ? null : Text(parts.join(' · '));
+  }
+
+  Widget? _dueChip(BuildContext context, Task t) {
+    final label = taskDueLabel(t);
+    if (label.isEmpty) return null;
+    final overdue = t.isOverdue(DateTime.now());
+    return Text(label,
+        style: TextStyle(
+            color: overdue ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant));
+  }
+
+  static Widget _swipeBackground(
+      BuildContext context, IconData icon, String text, Color color, Alignment align) {
+    return Container(
+      color: color,
+      alignment: align,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [Icon(icon, color: Colors.white), const SizedBox(width: 8), Text(text, style: const TextStyle(color: Colors.white))],
+      ),
+    );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, Task t) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => ProtectedReadModal(
+        provider: tasksProvider(view),
+        child: AlertDialog(
+        title: const Text('Aufgabe löschen?'),
+        content: Text('„${t.title}“ wird endgültig gelöscht.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Löschen')),
+        ],
+        ),
+      ),
+    );
+    return ok == true;
+  }
+}
+
+class TaskDetails extends ConsumerWidget {
+  final Task task;
+  final TaskView view;
+  final VoidCallback onClose;
+  const TaskDetails({super.key, required this.task, this.view = TaskView.mine, required this.onClose});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final task = ref.watch(tasksProvider(view)).valueOrNull?.data.items
+        .where((item) => item.identity == this.task.identity).firstOrNull;
+    if (task == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
+    final names = {for (final p in people) p.id: p.displayName};
+    final due = taskDueLabel(task);
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(task.title, style: theme.textTheme.titleLarge)),
+            IconButton(onPressed: onClose, icon: const Icon(Icons.close), tooltip: 'Schließen'),
+          ],
+        ),
+        TextButton.icon(icon: const Icon(Icons.edit_outlined), label: const Text('Aufgabe bearbeiten'), onPressed: () async {
+          final changed = await showModalBottomSheet<bool>(context: context, isScrollControlled: true, useSafeArea: true,
+            builder: (_) => ProtectedReadModal(provider: tasksProvider(view), child: TaskEditSheet(task: task)));
+          if (changed == true) { await refreshTasks(ref); onClose(); }
+        }),
+        if (task.notes.isNotEmpty) ...[const SizedBox(height: 8), Text(task.notes)],
+        const SizedBox(height: 12),
+        if (due.isNotEmpty) _info(Icons.schedule, 'Fällig: $due'),
+        if (task.assignee != null) _info(Icons.person_outline, 'Für: ${names[task.assignee] ?? task.assignee}'),
+        if (task.createdBy != null) _info(Icons.edit_outlined, 'Von: ${names[task.createdBy] ?? task.createdBy}'),
+        if (task.listName != null) _info(Icons.list_alt, 'Liste: ${task.listName}'),
+        if (task.rotation.isNotEmpty) ...[
+          _info(Icons.repeat, reminderRecurrences[task.recurrence] ?? task.recurrence),
+          _info(Icons.people_outline, 'Rotation: ${task.rotation.map((id) => names[id] ?? '#$id').join(' → ')}'),
+          const Text('Nach Erledigung wechselt der nächste Termin zur nächsten Person.'),
+        ],
+      ],
+    );
+  }
+
+  Widget _info(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(children: [Icon(icon, size: 18), const SizedBox(width: 8), Expanded(child: Text(text))]),
+      );
+}
+
+/// Schnell anlegen: Titel, für wen, optional Fälligkeit.
+class TaskCreateSheet extends ConsumerStatefulWidget {
+  final String provider;
+  final String? account;
+  const TaskCreateSheet({super.key, this.provider = 'nextcloud', this.account});
+
+  @override
+  ConsumerState<TaskCreateSheet> createState() => _TaskCreateSheetState();
+}
+
+/// Auswahl „für wen“: ich selbst, eine Person oder die Familienliste.
+sealed class _Target {
+  const _Target();
+}
+
+class _Me extends _Target {
+  const _Me();
+}
+
+class _FamilyList extends _Target {
+  const _FamilyList();
+}
+
+class _PersonTarget extends _Target {
+  final Person person;
+  const _PersonTarget(this.person);
+}
+
+class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
+  final _title = TextEditingController();
+  _Target _target = const _Me();
+  DateTime? _due;
+  bool _saving = false;
+  bool _household = false;
+  String _recurrence = 'weekly';
+  final _rotation = <int>[];
+
+  @override
+  void dispose() {
+    _title.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final title = _title.text.trim();
+    if (title.isEmpty) return;
+    if (_household && _rotation.isEmpty) {
+      showInfo(context, 'Bitte mindestens eine Person für die Rotation auswählen');
+      return;
+    }
+    setState(() => _saving = true);
+    final target = _target;
+    final meId = ref.read(sessionProvider).user?.id;
+    final ok = await runChange(
+      context,
+      () async => await ref.read(apiClientProvider).createTask(
+            title: title,
+            provider: widget.provider, account: widget.account,
+            due: _due,
+            assigneeId: !_household && target is _PersonTarget ? target.person.id : null,
+            family: _household || target is _FamilyList,
+            recurrence: _household ? _recurrence : 'none',
+            rotation: _household ? List.of(_rotation) : const [],
+            meId: meId,
+          ) != null,
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (ok) Navigator.pop(context, true);
+  }
+
+  Future<void> _pickDue() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _due ?? now,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 365 * 3)),
+    );
+    if (picked != null) setState(() => _due = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final me = ref.watch(sessionProvider).user;
+    final allPeople = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
+    final people = allPeople
+        .where((p) => p.id != me?.id)
+        .toList();
+    final chips = <(String, _Target)>[
+      ('Ich', const _Me()),
+      for (final p in people) (p.displayName, _PersonTarget(p)),
+      ('Familie', const _FamilyList()),
+    ];
+    bool isSelected(_Target t) => switch ((t, _target)) {
+          (_Me(), _Me()) => true,
+          (_FamilyList(), _FamilyList()) => true,
+          (_PersonTarget a, _PersonTarget b) => a.person.id == b.person.id,
+          _ => false,
+        };
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+      child: SingleChildScrollView(child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Neue Aufgabe', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('task-title'),
+            controller: _title,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(labelText: 'Was ist zu tun?'),
+            onSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            key: const Key('household-toggle'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Haushaltsrotation'),
+            subtitle: const Text('Gemeinsam sichtbar, reihum nach jeder Erledigung'),
+            value: _household,
+            onChanged: _saving ? null : (value) => setState(() {
+              _household = value;
+              if (value) _due ??= DateTime.now();
+            }),
+          ),
+          if (_household) ...[
+            DropdownButtonFormField<String>(
+              initialValue: _recurrence,
+              decoration: const InputDecoration(labelText: 'Wiederholung'),
+              items: [for (final entry in reminderRecurrences.entries)
+                if (entry.key != 'none') DropdownMenuItem(value: entry.key, child: Text(entry.value))],
+              onChanged: _saving ? null : (value) => setState(() => _recurrence = value!),
+            ),
+            const SizedBox(height: 12),
+            const Text('Personen in gewünschter Reihenfolge antippen. Erneut antippen entfernt die Person.'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final person in allPeople)
+                FilterChip(
+                  key: Key('rotation-${person.id}'),
+                  label: Text('${_rotation.contains(person.id) ? '${_rotation.indexOf(person.id) + 1}. ' : ''}${person.displayName}'),
+                  selected: _rotation.contains(person.id),
+                  onSelected: _saving ? null : (selected) => setState(() {
+                    if (selected) { _rotation.add(person.id); } else { _rotation.remove(person.id); }
+                  }),
+                ),
+            ]),
+          ] else ...[
+          const Text('Für wen?'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (label, target) in chips)
+                ChoiceChip(
+                  label: Text(label),
+                  selected: isSelected(target),
+                  onSelected: (_) => setState(() => _target = target),
+                ),
+            ],
+          ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: _pickDue,
+                icon: const Icon(Icons.event),
+                label: Text(_due == null ? 'Fälligkeit' : DateFormat('EEE, d. MMM', 'de_DE').format(_due!)),
+              ),
+              if (_due != null && !_household)
+                IconButton(
+                  tooltip: 'Fälligkeit entfernen',
+                  onPressed: () => setState(() => _due = null),
+                  icon: const Icon(Icons.clear),
+                ),
+              FilledButton(
+                key: const Key('task-save'),
+                onPressed: _saving ? null : _save,
+                child: const Text('Anlegen'),
+              ),
+            ],
+          ),
+        ],
+      )),
+    );
+  }
+}
+
+
+class TaskEditSheet extends ConsumerStatefulWidget {
+  final Task task;
+  const TaskEditSheet({super.key, required this.task});
+  @override
+  ConsumerState<TaskEditSheet> createState() => _TaskEditState();
+}
+
+class _TaskEditState extends ConsumerState<TaskEditSheet> {
+  late final TextEditingController _title, _notes;
+  late DateTime? _due;
+  late int? _priority;
+  bool _busy = false;
+  @override
+  void initState() { super.initState(); _title = TextEditingController(text: widget.task.title); _notes = TextEditingController(text: widget.task.notes); _due = widget.task.due; _priority = widget.task.priority; }
+  @override
+  void dispose() { _title.dispose(); _notes.dispose(); super.dispose(); }
+  Future<void> _save() async {
+    setState(() => _busy = true);
+    final ok = await runAction(context, () => ref.read(apiClientProvider).updateTask(widget.task, title: _title.text, notes: _notes.text, due: _due, priority: _priority));
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) Navigator.pop(context, true);
+  }
+  @override
+  Widget build(BuildContext context) => Padding(padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom), child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+    const Text('Aufgabe bearbeiten'), TextField(controller: _title, decoration: const InputDecoration(labelText: 'Titel')),
+    TextField(controller: _notes, decoration: const InputDecoration(labelText: 'Notizen')),
+    DropdownButtonFormField<int>(initialValue: _priority ?? 0, decoration: const InputDecoration(labelText: 'CalDAV-Priorität'), items: [for (final p in [0,1,2,3,4,5,6,7,8,9]) DropdownMenuItem(value: p, child: Text('$p'))], onChanged: _busy ? null : (v) => _priority = v),
+    Row(children: [TextButton(onPressed: _busy ? null : () async { final date = await showDatePicker(context: context, initialDate: _due ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100)); if (date != null) setState(() => _due = date); }, child: Text(_due == null ? 'Fälligkeit' : dayLabel(_due!))),
+      IconButton(onPressed: _busy ? null : () => setState(() => _due = null), icon: const Icon(Icons.clear), tooltip: 'Fälligkeit entfernen')]),
+    FilledButton(onPressed: _busy ? null : _save, child: const Text('Speichern')),
+  ])));
+}
