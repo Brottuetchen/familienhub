@@ -1,0 +1,7 @@
+# gitleaks: Standardregeln plus Ausnahmen für bewusste Platzhalter
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Beispielkonfiguration enthält nur leere Platzhalter"
+paths = ['''^\.env\.example$''']

@@ -1,0 +1,23 @@
+# Sicherheitsprüfung: Geheimnisse, bekannte Lücken in Abhängigkeiten, Container-Konfiguration,
+# unsichere Code-Muster. Läuft bei jedem PR, auf main und wöchentlich (neue Lücken in alten Paketen).
+# Lokal: .forgejo/ci/security.sh [gitleaks|osv|pip_audit|trivy|bandit|semgrep]
+name: Sicherheit
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"
+jobs:
+  security:
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks prüft die ganze Historie
+      - name: Prüfen
+        run: |
+          git config --global --add safe.directory "$PWD"
+          .forgejo/ci/security.sh
