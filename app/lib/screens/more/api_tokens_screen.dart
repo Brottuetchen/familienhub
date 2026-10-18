@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final apiTokensProvider = FutureProvider.autoDispose<List<ApiTokenInfo>>(
     (ref) => ref.watch(apiClientProvider).apiTokens());
@@ -15,19 +15,19 @@ class ApiTokensScreen extends ConsumerWidget {
   const ApiTokensScreen({super.key});
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final ctrl = TextEditingController(text: 'Sprachassistent');
+    final ctrl = TextEditingController(text: l10n.voiceAssistant);
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Neuer Zugang'),
+        title: Text(l10n.newAccess),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Wofür?', helperText: 'z. B. Sprachassistent'),
+          decoration: InputDecoration(labelText: l10n.whatFor, helperText: l10n.egVoiceAssistant),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Abbrechen')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Anlegen')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: Text(l10n.create)),
         ],
       ),
     );
@@ -40,12 +40,12 @@ class ApiTokensScreen extends ConsumerWidget {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: Text('Schlüssel für „${created.name}“'),
+          title: Text(l10n.keyFor(created.name)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Wird nur jetzt angezeigt. Im Assistenten bei der Familienhub-Anbindung eintragen.'),
+              Text(l10n.tokenShownOnce),
               const SizedBox(height: 12),
               SelectableText(created.token ?? '', key: const Key('new-token'), style: const TextStyle(fontFamily: 'monospace')),
             ],
@@ -53,13 +53,13 @@ class ApiTokensScreen extends ConsumerWidget {
           actions: [
             TextButton.icon(
               icon: const Icon(Icons.copy),
-              label: const Text('Kopieren'),
+              label: Text(l10n.copy),
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: created.token ?? ''));
-                showInfo(ctx, 'Kopiert');
+                showInfo(ctx, l10n.copied);
               },
             ),
-            FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fertig')),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.finished)),
           ],
         ),
       );
@@ -71,35 +71,34 @@ class ApiTokensScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(apiTokensProvider);
-    final fmt = DateFormat('d.M.yyyy HH:mm', 'de_DE');
+    final fmt = localDate('d.M.yyyy HH:mm');
     return Scaffold(
-      appBar: AppBar(title: const Text('Zugänge für Assistenten')),
+      appBar: AppBar(title: Text(l10n.assistantAccess)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _create(context, ref),
         icon: const Icon(Icons.key),
-        label: const Text('Neuer Zugang'),
+        label: Text(l10n.newAccess),
       ),
       body: async.when(
         loading: () => const Center(child: HubLoader()),
         error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(apiTokensProvider)),
         data: (tokens) => ListView(
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
-              child: Text('Mit einem Zugang kann z. B. ein Sprachassistent deine Aufgaben, Einkäufe und Termine lesen und anlegen – '
-                  'immer nur als du. Widerrufen geht jederzeit.'),
+              child: Text(l10n.assistantAccessExplain),
             ),
-            if (tokens.isEmpty) const EmptyHint(icon: Icons.key_off, text: 'Noch kein Zugang angelegt'),
+            if (tokens.isEmpty) EmptyHint(icon: Icons.key_off, text: l10n.noAccessYet),
             for (final t in tokens)
               ListTile(
                 leading: const Icon(Icons.key),
                 title: Text(t.name),
                 subtitle: Text([
                   '${t.hint}…',
-                  if (t.lastUsedAt != null) 'zuletzt ${fmt.format(t.lastUsedAt!)}' else 'noch nie benutzt',
+                  if (t.lastUsedAt != null) l10n.lastUsed(fmt.format(t.lastUsedAt!)) else l10n.neverUsed,
                 ].join(' · ')),
                 trailing: IconButton(
-                  tooltip: 'Widerrufen',
+                  tooltip: l10n.revoke,
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () async {
                     if (await runAction(context, () => ref.read(apiClientProvider).revokeApiToken(t.id))) {

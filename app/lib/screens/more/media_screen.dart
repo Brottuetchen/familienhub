@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/media.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final mediaRequestsProvider =
     FutureProvider.autoDispose<MediaList<MediaRequestItem>>((ref) => ref.watch(apiClientProvider).mediaRequests());
@@ -53,7 +54,7 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
       final label = await ref.read(apiClientProvider).requestMedia(item);
       if (!mounted) return;
       setState(() => _requested['${item.kind.api}:${item.tmdbId}'] = label);
-      showInfo(context, '${item.kind.label} „${item.title}“ gewünscht · $label');
+      showInfo(context, l10n.requestedKindTitleStatus(item.kind.label, item.title, label));
       ref.invalidate(mediaRequestsProvider);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -63,15 +64,15 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Filme & Serien')),
+      appBar: AppBar(title: Text(l10n.moviesShows)),
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: SegmentedButton<MediaKind?>(
-            segments: const [
-              ButtonSegment(value: null, label: Text('Alles')),
-              ButtonSegment(value: MediaKind.movie, label: Text('Filme'), icon: Icon(Icons.movie_outlined)),
-              ButtonSegment(value: MediaKind.tv, label: Text('Serien'), icon: Icon(Icons.tv)),
+            segments: [
+              ButtonSegment(value: null, label: Text(l10n.all)),
+              ButtonSegment(value: MediaKind.movie, label: Text(l10n.movies), icon: Icon(Icons.movie_outlined)),
+              ButtonSegment(value: MediaKind.tv, label: Text(l10n.shows), icon: Icon(Icons.tv)),
             ],
             selected: {_kind},
             onSelectionChanged: (s) => setState(() => _kind = s.first), // filtert nur
@@ -86,14 +87,14 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
             onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _search(),
             decoration: InputDecoration(
-              hintText: 'Film oder Serie',
-              helperText: 'Suchen mit Enter',
+              hintText: l10n.movieOrShow,
+              helperText: l10n.searchWithEnter,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _query.text.isEmpty
                   ? null
                   : Row(mainAxisSize: MainAxisSize.min, children: [
                       IconButton(
-                        tooltip: 'Leeren',
+                        tooltip: l10n.clear,
                         icon: const Icon(Icons.clear),
                         onPressed: () => setState(() {
                           _query.clear();
@@ -102,7 +103,7 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
                       ),
                       IconButton(
                         key: const Key('media-search-go'),
-                        tooltip: 'Suchen',
+                        tooltip: l10n.search,
                         icon: const Icon(Icons.arrow_forward),
                         onPressed: _searching ? null : _search,
                       ),
@@ -119,7 +120,7 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
   Widget _resultList(MediaList<MediaItem> r) {
     if (!r.ok) return ListView(children: [_StatusHint(list: r)]);
     final shown = [for (final m in r.items) if (_kind == null || m.kind == _kind) m];
-    if (shown.isEmpty) return const EmptyHint(icon: Icons.search_off, text: 'Nichts gefunden');
+    if (shown.isEmpty) return EmptyHint(icon: Icons.search_off, text: l10n.nothingFound);
     return ListView.builder(
       itemCount: shown.length,
       itemBuilder: (context, i) {
@@ -130,14 +131,14 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
         if (justRequested != null) {
           trailing = _StatusChip(label: justRequested, done: true, key: ValueKey('media-done-$key'));
         } else if (!m.requestable) {
-          trailing = _StatusChip(label: m.statusLabel ?? 'Vorhanden', done: m.statusLabel == 'Verfügbar');
+          trailing = _StatusChip(label: m.statusLabel ?? l10n.present, done: m.statusLabel == l10n.available);
         } else if (!ref.watch(canActProvider)) {
           trailing = const SizedBox.shrink(); // Gäste suchen nur, wünschen ab Kind
         } else {
           trailing = FilledButton.tonal(
             key: ValueKey('media-request-$key'),
             onPressed: () => _request(m),
-            child: const Text('Wünschen'),
+            child: Text(l10n.request),
           );
         }
         return ListTile(
@@ -161,11 +162,11 @@ class _StatusHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => switch (list.status) {
-        'not_configured' => const EmptyHint(icon: Icons.movie_outlined, text: 'Seerr ist noch nicht eingerichtet'),
-        'no_account' => const EmptyHint(
+        'not_configured' => EmptyHint(icon: Icons.movie_outlined, text: l10n.seerrNotSetUp),
+        'no_account' => EmptyHint(
             icon: Icons.person_off_outlined,
-            text: 'Für dich gibt es noch keinen Seerr-Zugang.\nEinmal bei Seerr mit deinem Jellyfin-Konto anmelden, dann klappt es hier.'),
-        _ => EmptyHint(icon: Icons.cloud_off, text: 'Seerr gerade nicht erreichbar${list.error == null ? '' : '\n${list.error}'}'),
+            text: l10n.seerrNoUser),
+        _ => EmptyHint(icon: Icons.cloud_off, text: l10n.seerrUnavailable + (list.error == null ? '' : '\n${list.error}')),
       };
 }
 
@@ -231,10 +232,10 @@ class _MyMediaRequests extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text('Meine Wünsche', style: Theme.of(context).textTheme.titleMedium),
+                child: Text(l10n.myRequests, style: Theme.of(context).textTheme.titleMedium),
               ),
               if (shown.isEmpty)
-                const EmptyHint(icon: Icons.local_movies_outlined, text: 'Noch nichts gewünscht. Oben suchen.'),
+                EmptyHint(icon: Icons.local_movies_outlined, text: l10n.noRequestsYet),
               for (final r in shown)
                 ListTile(
                   key: ValueKey('media-req-${r.id}'),
@@ -245,7 +246,7 @@ class _MyMediaRequests extends ConsumerWidget {
                     _StatusChip(label: r.statusLabel, done: r.available, problem: r.isProblem),
                     if (r.canCancel)
                       IconButton(
-                        tooltip: 'Wunsch zurückziehen',
+                        tooltip: l10n.withdrawRequest,
                         icon: const Icon(Icons.close),
                         onPressed: () async {
                           if (await runAction(context, () => ref.read(apiClientProvider).cancelMediaRequest(r.id))) {

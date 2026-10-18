@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 class RemindersScreen extends ConsumerWidget {
   const RemindersScreen({super.key});
@@ -12,13 +12,13 @@ class RemindersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(remindersProvider);
-    final format = DateFormat('EEE, d.M. HH:mm', 'de_DE');
+    final format = localDate('EEE, d.M. HH:mm');
     Future<void> refresh() => ref.refresh(remindersProvider.future);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Erinnerungen')),
+      appBar: AppBar(title: Text(l10n.reminders)),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Erinnerung anlegen',
+        tooltip: l10n.createReminder,
         onPressed: () async {
           final created = await showModalBottomSheet<bool>(
             context: context,
@@ -40,7 +40,7 @@ class RemindersScreen extends ConsumerWidget {
           data: (list) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              if (list.isEmpty) const EmptyHint(icon: Icons.notifications_none, text: 'Keine offenen Erinnerungen'),
+              if (list.isEmpty) EmptyHint(icon: Icons.notifications_none, text: l10n.noOpenReminders),
               for (final r in list)
                 CheckboxListTile(
                   value: false,
@@ -48,19 +48,19 @@ class RemindersScreen extends ConsumerWidget {
                   title: Text(r.title),
                   subtitle: Text([
                     if (r.onArrival && r.dueAt == null)
-                      r.forFamily ? 'Wer zuerst heimkommt' : 'Wenn du heimkommst'
+                      r.forFamily ? l10n.firstHome : l10n.whenYouGetHome
                     else
-                      r.dueAt == null ? 'ohne Zeitpunkt' : format.format(r.dueAt!),
+                      r.dueAt == null ? l10n.noTime : format.format(r.dueAt!),
                     if (r.recurrence != 'none') reminderRecurrences[r.recurrence] ?? r.recurrence,
                   ].join(' · ')),
                   secondary: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (r.forFamily)
-                        const Tooltip(message: 'Für die ganze Familie', child: Icon(Icons.groups_outlined)),
+                        Tooltip(message: l10n.forWholeFamily, child: Icon(Icons.groups_outlined)),
                       PopupMenuButton<int>(
                         key: ValueKey('snooze-${r.id}'),
-                        tooltip: 'Später erinnern',
+                        tooltip: l10n.remindLater,
                         icon: const Icon(Icons.snooze),
                         onSelected: (minutes) async {
                           if (await runAction(context, () => ref.read(apiClientProvider).snoozeReminder(r.id, minutes))) {
@@ -68,9 +68,9 @@ class RemindersScreen extends ConsumerWidget {
                           }
                         },
                         itemBuilder: (_) => [
-                          const PopupMenuItem(value: 60, child: Text('In 1 Stunde')),
-                          const PopupMenuItem(value: 180, child: Text('In 3 Stunden')),
-                          PopupMenuItem(value: _minutesUntilTomorrow8(), child: const Text('Morgen 8 Uhr')),
+                          PopupMenuItem(value: 60, child: Text(l10n.in1Hour)),
+                          PopupMenuItem(value: 180, child: Text(l10n.in3Hours)),
+                          PopupMenuItem(value: _minutesUntilTomorrow8(), child: Text(l10n.tomorrow8)),
                         ],
                       ),
                     ],
@@ -142,14 +142,14 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
             controller: _title,
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Woran erinnern?'),
+            decoration: InputDecoration(labelText: l10n.remindWhat),
           ),
           const SizedBox(height: 12),
           SegmentedButton<bool>(
             key: const Key('reminder-fire-on'),
-            segments: const [
-              ButtonSegment(value: false, icon: Icon(Icons.schedule), label: Text('Zu einer Zeit')),
-              ButtonSegment(value: true, icon: Icon(Icons.home_outlined), label: Text('Beim Heimkommen')),
+            segments: [
+              ButtonSegment(value: false, icon: Icon(Icons.schedule), label: Text(l10n.atATime)),
+              ButtonSegment(value: true, icon: Icon(Icons.home_outlined), label: Text(l10n.onArrival)),
             ],
             selected: {_onArrival},
             onSelectionChanged: (s) => setState(() => _onArrival = s.first),
@@ -158,15 +158,15 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
           SwitchListTile(
             key: const Key('reminder-family'),
             contentPadding: EdgeInsets.zero,
-            title: const Text('Für die ganze Familie'),
-            subtitle: Text(_onArrival ? 'Bekommt, wer zuerst heimkommt' : 'Sonst siehst nur du sie'),
+            title: Text(l10n.forWholeFamily),
+            subtitle: Text(_onArrival ? l10n.firstHomeGets : l10n.otherwiseOnlyYou),
             value: _forFamily,
             onChanged: (v) => setState(() => _forFamily = v),
           ),
           DropdownButtonFormField<String>(
             key: const Key('reminder-recurrence'),
             initialValue: _recurrence,
-            decoration: const InputDecoration(labelText: 'Wiederholen'),
+            decoration: InputDecoration(labelText: l10n.repeatVerb),
             items: [
               for (final e in reminderRecurrences.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
             ],
@@ -179,7 +179,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
                 TextButton.icon(
                   onPressed: _pick,
                   icon: const Icon(Icons.alarm),
-                  label: Text(_due == null ? 'Zeitpunkt' : DateFormat('EEE, d.M. HH:mm', 'de_DE').format(_due!)),
+                  label: Text(_due == null ? l10n.time : localDate('EEE, d.M. HH:mm').format(_due!)),
                 ),
               const Spacer(),
               FilledButton(
@@ -191,7 +191,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
                     if (context.mounted) Navigator.pop(context, true);
                   }
                 },
-                child: const Text('Anlegen'),
+                child: Text(l10n.create),
               ),
             ],
           ),

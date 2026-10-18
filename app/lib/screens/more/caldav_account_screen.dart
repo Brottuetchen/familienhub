@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Eigenes Nextcloud-Konto (CalDAV) für Aufgaben und Termine.
 class CalDavAccountScreen extends ConsumerStatefulWidget {
@@ -50,7 +51,7 @@ class _CalDavAccountScreenState extends ConsumerState<CalDavAccountScreen> {
 
   Future<void> _save() async {
     if (_url.text.trim().isEmpty || _user.text.trim().isEmpty || _password.text.isEmpty) {
-      showInfo(context, 'Bitte Adresse, Benutzer und App-Passwort eintragen');
+      showInfo(context, l10n.caldavFillAll);
       return;
     }
     setState(() => _saving = true);
@@ -61,7 +62,7 @@ class _CalDavAccountScreenState extends ConsumerState<CalDavAccountScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
-      showInfo(context, 'Gespeichert');
+      showInfo(context, l10n.saved);
       Navigator.pop(context);
     }
   }
@@ -69,24 +70,22 @@ class _CalDavAccountScreenState extends ConsumerState<CalDavAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nextcloud-Konto')),
+      appBar: AppBar(title: Text(l10n.nextcloudAccount)),
       body: _loading
           ? const Center(child: HubLoader())
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text(
-                  'Aufgaben und eigene Termine laufen über dein Nextcloud-Konto. '
-                  'So bleiben sie mit den Erinnerungen auf dem iPhone abgeglichen. '
-                  'Lege in Nextcloud unter Einstellungen → Sicherheit ein App-Passwort an und trage es hier ein.',
+                Text(
+                  l10n.caldavExplain,
                 ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _url,
                   keyboardType: TextInputType.url,
                   autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'CalDAV-Adresse',
+                  decoration: InputDecoration(
+                    labelText: l10n.caldavUrl,
                     hintText: 'https://cloud.example.org/remote.php/dav',
                   ),
                 ),
@@ -94,19 +93,19 @@ class _CalDavAccountScreenState extends ConsumerState<CalDavAccountScreen> {
                 TextField(
                   controller: _user,
                   autocorrect: false,
-                  decoration: const InputDecoration(labelText: 'Benutzername'),
+                  decoration: InputDecoration(labelText: l10n.username),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _password,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'App-Passwort',
-                    helperText: _hasAccount ? 'Gespeichert. Zum Ändern neu eingeben.' : null,
+                    labelText: l10n.appPassword,
+                    helperText: _hasAccount ? l10n.savedReenterToChange : null,
                   ),
                 ),
                 const SizedBox(height: 24),
-                FilledButton(onPressed: _saving ? null : _save, child: const Text('Speichern')),
+                FilledButton(onPressed: _saving ? null : _save, child: Text(l10n.save)),
               ],
             ),
     );

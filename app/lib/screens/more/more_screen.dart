@@ -16,6 +16,7 @@ import 'caldav_account_screen.dart';
 import 'notification_settings_screen.dart';
 import 'reminders_screen.dart';
 import 'task_lists_screen.dart';
+import '../../l10n/l10n.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -30,7 +31,7 @@ class MoreScreen extends ConsumerWidget {
     void open(Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mehr')),
+      appBar: AppBar(title: Text(l10n.tabMore)),
       body: ListView(
         children: [
           if (session.user != null)
@@ -44,7 +45,7 @@ class MoreScreen extends ConsumerWidget {
                 imageUrl: session.user!.avatarUrl,
               ),
               title: Text(session.user!.displayName),
-              subtitle: const Text('Profil, Bild und Farbe'),
+              subtitle: Text(l10n.moreProfileHint),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => open(const ProfileScreen()),
             ),
@@ -55,107 +56,106 @@ class MoreScreen extends ConsumerWidget {
               label: Text('$unread'),
               child: const Icon(Icons.inbox_outlined),
             ),
-            title: const Text('Mitteilungen'),
-            subtitle: Text(unread > 0 ? '$unread neu' : 'Verlauf aller Mitteilungen'),
+            title: Text(l10n.notifications),
+            subtitle: Text(unread > 0 ? l10n.unreadCount(unread) : l10n.notificationsHistory),
             onTap: () => open(const NotificationsScreen()),
           ),
           ListTile(
             leading: const Icon(Icons.notifications_active_outlined),
-            title: const Text('Erinnerungen'),
+            title: Text(l10n.reminders),
             onTap: () => open(const RemindersScreen()),
           ),
           if (modules.has('documents'))
             ListTile(
               leading: const Icon(Icons.description_outlined),
-              title: const Text('Dokumente'),
-              subtitle: const Text('Paperless: suchen, Fristen'),
+              title: Text(l10n.documents),
+              subtitle: Text(l10n.documentsHint),
               onTap: () => open(const DocumentsScreen()),
             ),
           if (modules.has('media_requests'))
             ListTile(
               leading: const Icon(Icons.movie_outlined),
-              title: const Text('Filme & Serien'),
-              subtitle: const Text('Wünschen über Seerr'),
+              title: Text(l10n.moviesShows),
+              subtitle: Text(l10n.moviesShowsHint),
               onTap: () => open(const MediaScreen()),
             ),
           if (modules.has('books'))
             ListTile(
               leading: const Icon(Icons.auto_stories_outlined),
-              title: const Text('Bücher & Hörbücher'),
-              subtitle: const Text('Wünschen, auf Deutsch'),
+              title: Text(l10n.booksAudiobooks),
+              subtitle: Text(l10n.booksHint),
               onTap: () => open(const BooksScreen()),
             ),
-          const _Header('Einstellungen'),
+          _Header(l10n.settings),
           if (canAct && (modules.has('tasks') || modules.has('calendar')))
             ListTile(
               leading: const Icon(Icons.cloud_outlined),
-              title: const Text('Nextcloud-Konto'),
-              subtitle: const Text('Für Aufgaben und eigene Termine'),
+              title: Text(l10n.nextcloudAccount),
+              subtitle: Text(l10n.nextcloudAccountHint),
               onTap: () => open(const CalDavAccountScreen()),
             ),
           if (canAct && modules.has('tasks'))
             ListTile(
               leading: const Icon(Icons.list_alt),
-              title: const Text('Aufgabenlisten'),
-              subtitle: const Text('Welche Liste ist privat, welche für die Familie'),
+              title: Text(l10n.taskLists),
+              subtitle: Text(l10n.taskListsHint),
               onTap: () => open(const TaskListsScreen()),
             ),
           ListTile(
             leading: const Icon(Icons.key),
-            title: const Text('Zugänge für Assistenten'),
-            subtitle: const Text('z. B. für einen Sprachassistenten'),
+            title: Text(l10n.assistantAccess),
+            subtitle: Text(l10n.assistantAccessHint),
             onTap: () => open(const ApiTokensScreen()),
           ),
           ListTile(
             leading: const Icon(Icons.tune),
-            title: const Text('Benachrichtigungen & Geräte'),
+            title: Text(l10n.notificationsDevices),
             onTap: () => open(const NotificationSettingsScreen()),
           ),
           ListTile(
             leading: const Icon(Icons.palette_outlined),
-            title: const Text('Darstellung'),
-            subtitle: const Text('Farbschema für dieses Gerät'),
+            title: Text(l10n.appearance),
+            subtitle: Text(l10n.appearanceHint),
             onTap: () => open(const AppearanceScreen()),
           ),
           if (isAdmin)
             ListTile(
               key: const Key('more-admin'),
               leading: const Icon(Icons.admin_panel_settings_outlined),
-              title: const Text('Verwaltung'),
-              subtitle: const Text('Systemzustand, Familie, Haus, Plugins, Protokoll'),
+              title: Text(l10n.administration),
+              subtitle: Text(l10n.administrationHint),
               onTap: () => open(const AdminScreen()),
             ),
           ListTile(
             key: const Key('more-feedback'),
             leading: const Icon(Icons.chat_bubble_outline),
-            title: const Text('Feedback senden'),
-            subtitle: const Text('Fehler, Wünsche – an die Familie oder die Entwickler'),
+            title: Text(l10n.sendFeedback),
+            subtitle: Text(l10n.sendFeedbackHint),
             onTap: () => open(const FeedbackScreen()),
           ),
           FutureBuilder<String?>(
             future: ref.read(apiClientProvider).store.baseUrl(),
             builder: (context, snap) => ListTile(
               leading: const Icon(Icons.dns_outlined),
-              title: const Text('Server'),
+              title: Text(l10n.server),
               subtitle: Text(snap.data ?? ''),
             ),
           ),
           const Divider(),
           ListTile(
             leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-            title: const Text('Abmelden'),
+            title: Text(l10n.logout),
             onTap: () async {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Abmelden?'),
+                  title: Text(l10n.logoutQuestion),
                   content: ref.read(apiClientProvider).pending.isEmpty
                       ? null
-                      : Text('${ref.read(apiClientProvider).pending.length} Änderungen ohne Netz sind noch nicht gesendet '
-                          'und gehen beim Abmelden verloren.', key: const Key('logout-pending-warning')),
+                      : Text(l10n.logoutPendingWarning(ref.read(apiClientProvider).pending.length), key: const Key('logout-pending-warning')),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
-                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Abmelden')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.logout)),
                   ],
                 ),
               );

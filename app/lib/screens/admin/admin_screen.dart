@@ -12,6 +12,7 @@ import 'admin_feedback_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
 import 'admin_users_screen.dart';
+import '../../l10n/l10n.dart';
 
 final adminOverviewProvider =
     FutureProvider.autoDispose<AdminOverview>((ref) => ref.watch(apiClientProvider).adminOverview());
@@ -29,7 +30,7 @@ class AdminScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verwaltung')),
+      appBar: AppBar(title: Text(l10n.administration)),
       body: HubRefresh(
         onRefresh: () => ref.refresh(adminOverviewProvider.future),
         child: ListView(
@@ -47,55 +48,55 @@ class AdminScreen extends ConsumerWidget {
             _Area(
               key: const Key('admin-wizard'),
               icon: Icons.auto_fix_high_outlined,
-              title: 'Einrichtungs-Assistent',
-              subtitle: 'Name, Zeitzone, Dienste und Familie Schritt für Schritt',
+              title: l10n.setupWizard,
+              subtitle: l10n.setupWizardHint,
               onTap: () => open(const SetupWizardScreen(standalone: true)),
             ),
             _Area(
               key: const Key('admin-users'),
               icon: Icons.people_outline,
-              title: 'Familie & Rollen',
-              subtitle: overview.valueOrNull == null ? 'Personen, Rollen, Verbindungen' : '${overview.value!.activeUsers} aktiv',
+              title: l10n.familyRoles,
+              subtitle: overview.valueOrNull == null ? l10n.familyRolesHint : l10n.activeCount(overview.value!.activeUsers),
               onTap: () => open(const AdminUsersScreen()),
             ),
             _Area(
               key: const Key('admin-house'),
               icon: Icons.home_outlined,
-              title: 'Haus',
-              subtitle: 'Geräte für die Haus-Karte auswählen',
+              title: l10n.house,
+              subtitle: l10n.houseAdminHint,
               onTap: () => open(const AdminHouseScreen()),
             ),
             _Area(
               key: const Key('admin-plugins'),
               icon: Icons.extension_outlined,
-              title: 'Plugins & Zugänge',
-              subtitle: 'Anschalten, abschalten, Zugangsdaten',
+              title: l10n.pluginsAccess,
+              subtitle: l10n.pluginsHint,
               onTap: () => open(const PluginsAdminScreen()),
             ),
             _Area(
               icon: Icons.vpn_key_outlined,
-              title: 'Dienst-Schlüssel',
-              subtitle: 'Home Assistant & Co. benachrichtigen über den Hub',
+              title: l10n.serviceKeys,
+              subtitle: l10n.serviceKeysHint,
               onTap: () => open(const ServiceKeysScreen()),
             ),
             _Area(
               icon: Icons.palette_outlined,
-              title: 'Themes',
-              subtitle: 'Designsprachen installieren und entfernen',
+              title: l10n.themes,
+              subtitle: l10n.themesHint,
               onTap: () => open(const AppearanceScreen()),
             ),
             _Area(
               key: const Key('admin-feedback'),
               icon: Icons.chat_bubble_outline,
-              title: 'Feedback',
-              subtitle: 'Rückmeldungen der Familie, weitergeben an GitHub',
+              title: l10n.feedback,
+              subtitle: l10n.feedbackAdminHint,
               onTap: () => open(const AdminFeedbackScreen()),
             ),
             _Area(
               key: const Key('admin-log'),
               icon: Icons.receipt_long_outlined,
-              title: 'Protokoll',
-              subtitle: 'Letzte Warnungen und Fehler',
+              title: l10n.log,
+              subtitle: l10n.logHint,
               onTap: () => open(const AdminLogScreen()),
             ),
           ],
@@ -134,7 +135,7 @@ class _OverviewCard extends StatelessWidget {
     return SectionCard(
       key: const Key('admin-overview'),
       icon: problems == 0 ? Icons.check_circle_outline : Icons.error_outline,
-      title: problems == 0 ? 'Alles läuft' : problems == 1 ? '1 Problem' : '$problems Probleme',
+      title: l10n.problemsCount(problems),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         for (final p in overview.plugins)
           Padding(
@@ -146,7 +147,7 @@ class _OverviewCard extends StatelessWidget {
               Expanded(child: Text(p.name, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
               Flexible(
                 child: Text(
-                  p.status == 'ok' && p.latencyMs != null ? '${p.message} · ${p.latencyMs} ms' : p.message,
+                  p.status == 'ok' && p.latencyMs != null ? l10n.healthLine(p.message, p.latencyMs!) : p.message,
                   textAlign: TextAlign.end,
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
@@ -156,9 +157,9 @@ class _OverviewCard extends StatelessWidget {
         const Divider(height: 20),
         Text(
           [
-            'Server ${overview.version}',
-            overview.fcm ? 'Push Android: ${overview.fcmDevices} Geräte' : 'Push Android: nicht eingerichtet',
-            if (overview.webpush) 'Web-Push: ${overview.webpushDevices}',
+            l10n.serverVersion(overview.version),
+            overview.fcm ? l10n.pushAndroidDevices(overview.fcmDevices) : l10n.pushAndroidOff,
+            if (overview.webpush) l10n.webPushDevices(overview.webpushDevices),
           ].join(' · '),
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),

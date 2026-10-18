@@ -1,4 +1,5 @@
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 const roleLevels = {'guest': 0, 'child': 1, 'partner': 2, 'admin': 3};
 
@@ -213,24 +214,24 @@ class Device {
 }
 
 /// Kategorien wie im Backend (`notify(category=…)`), mit deutschen Namen.
-const notificationCategories = <String, String>{
-  'task_assigned': 'Neue Aufgabe für mich',
-  'task_due': 'Aufgabe fällig',
-  'reminder': 'Erinnerungen',
-  'shopping': 'Einkauf',
-  'house': 'Haus (Waschmaschine, Müll …)',
-  'media': 'Bücher & Medien',
-  'documents': 'Dokumente',
-  'system': 'System',
+Map<String, String> get notificationCategories => <String, String>{
+  'task_assigned': l10n.catTaskAssigned,
+  'task_due': l10n.catTaskDue,
+  'reminder': l10n.reminders,
+  'shopping': l10n.tabShopping,
+  'house': l10n.catHouse,
+  'media': l10n.catMedia,
+  'documents': l10n.documents,
+  'system': l10n.catSystem,
 };
 
 /// Wiederholungen wie im Backend (`recurrence`).
-const reminderRecurrences = <String, String>{
-  'none': 'Einmalig',
-  'daily': 'Täglich',
-  'weekdays': 'Werktags (Mo–Fr)',
-  'weekly': 'Wöchentlich',
-  'monthly': 'Monatlich',
+Map<String, String> get reminderRecurrences => <String, String>{
+  'none': l10n.recurNone,
+  'daily': l10n.recurDaily,
+  'weekdays': l10n.recurWeekdays,
+  'weekly': l10n.recurWeekly,
+  'monthly': l10n.recurMonthly,
 };
 
 class NotificationPref {

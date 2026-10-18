@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/providers.dart';
 import '../../services/app_info.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final adminFeedbackProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) => ref.watch(apiClientProvider).adminFeedback());
@@ -20,14 +20,14 @@ class AdminFeedbackScreen extends ConsumerWidget {
     final list = ref.watch(adminFeedbackProvider);
     final open = openUrl ?? (u) => launchUrl(u, mode: LaunchMode.externalApplication);
     return Scaffold(
-      appBar: AppBar(title: const Text('Feedback')),
+      appBar: AppBar(title: Text(l10n.feedback)),
       body: HubRefresh(
         onRefresh: () => ref.refresh(adminFeedbackProvider.future),
         child: list.when(
           loading: () => const Center(child: HubLoader()),
           error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(adminFeedbackProvider)),
           data: (items) => items.isEmpty
-              ? ListView(children: const [EmptyHint(icon: Icons.chat_bubble_outline, text: 'Noch kein Feedback')])
+              ? ListView(children: [EmptyHint(icon: Icons.chat_bubble_outline, text: l10n.noFeedback)])
               : ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: items.length,
@@ -43,17 +43,17 @@ class AdminFeedbackScreen extends ConsumerWidget {
                       title: Text(f['text'] as String? ?? '', maxLines: 4, overflow: TextOverflow.ellipsis),
                       subtitle: Text([
                         f['from'], f['area'], f['platform'], f['app_version'],
-                        if (when != null) DateFormat('d.M. HH:mm', 'de_DE').format(when),
+                        if (when != null) localDate('d.M. HH:mm').format(when),
                       ].whereType<String>().where((s) => s.isNotEmpty).join(' · ')),
                       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                         IconButton(
-                          tooltip: 'Auf GitHub melden',
+                          tooltip: l10n.reportOnGithub,
                           icon: const Icon(Icons.bug_report_outlined),
                           onPressed: () => open(githubIssueUri(text: f['text'] as String? ?? '', area: f['area'] as String?)),
                         ),
                         if (!done)
                           IconButton(
-                            tooltip: 'Erledigt',
+                            tooltip: l10n.done,
                             icon: const Icon(Icons.done),
                             onPressed: () async {
                               if (await runAction(context, () => ref.read(apiClientProvider).markFeedbackDone(f['id'] as int))) {

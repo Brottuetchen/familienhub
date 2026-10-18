@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Kantenlänge des gespeicherten Profilbilds.
 const avatarPixels = 512;
@@ -12,7 +13,7 @@ const avatarPixels = 512;
 /// Wirft [FormatException], wenn sich das Bild nicht lesen lässt.
 Uint8List prepareAvatar(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
-  if (decoded == null) throw const FormatException('Bild nicht lesbar');
+  if (decoded == null) throw FormatException(l10n.imageUnreadable);
   var out = img.bakeOrientation(decoded);
   final side = out.width < out.height ? out.width : out.height;
   if (out.width != out.height) {
@@ -85,11 +86,11 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Bild zuschneiden'),
+        title: Text(l10n.cropImage),
         actions: [
           IconButton(
             key: const Key('crop-rotate'),
-            tooltip: 'Drehen',
+            tooltip: l10n.rotate,
             onPressed: _busy || !_ready ? null : _rotateImage,
             icon: const Icon(Icons.rotate_90_degrees_cw_outlined),
           ),
@@ -118,7 +119,7 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(children: [
-              Text('Mit zwei Fingern zoomen, mit einem verschieben',
+              Text(l10n.cropHint,
                   style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70)),
               const SizedBox(height: 12),
               Row(children: [
@@ -126,7 +127,7 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
                     onPressed: _busy ? null : () => Navigator.pop(context),
-                    child: const Text('Abbrechen'),
+                    child: Text(l10n.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -139,7 +140,7 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
                             setState(() => _busy = true);
                             _controller.crop();
                           },
-                    child: _busy ? const HubLoader(size: 20) : const Text('Übernehmen'),
+                    child: _busy ? const HubLoader(size: 20) : Text(l10n.apply),
                   ),
                 ),
               ]),

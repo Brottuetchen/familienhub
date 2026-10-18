@@ -1,4 +1,5 @@
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 class ShoppingItem {
   final String uid;
@@ -35,7 +36,7 @@ class ShoppingGroup {
   const ShoppingGroup({required this.key, this.items = const []});
 
   bool get isRecipes => key == 'recipes';
-  String get title => isRecipes ? 'Aus Rezepten' : 'Freie Artikel';
+  String get title => isRecipes ? l10n.fromRecipes : l10n.freeItems;
 
   factory ShoppingGroup.fromJson(Map<String, dynamic> json) => ShoppingGroup(
         key: json['key'] as String,

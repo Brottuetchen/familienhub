@@ -4,12 +4,11 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 
 import 'core/theme/app_theme.dart';
+import 'l10n/l10n.dart';
 import 'providers/providers.dart';
 import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
@@ -23,8 +22,8 @@ import 'widgets/hub_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Intl.defaultLocale = 'de_DE';
-  await initializeDateFormatting('de_DE');
+  await initializeDateFormatting();
+  await loadAppLanguage();
   // Lizenzen der mitgelieferten Theme-Schriften (SIL OFL) in der Lizenzübersicht
   LicenseRegistry.addLicense(() async* {
     for (final family in ['PixelifySans', 'SpaceGrotesk', 'JetBrainsMono']) {
@@ -42,17 +41,21 @@ class FamilienhubApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = ref.watch(themeChoiceProvider);
     final mode = ref.watch(themeModeProvider);
+    final language = resolveLanguage(ref.watch(languageChoiceProvider));
+    setAppLanguage(language);
     ErrorReporter.api = ref.read(apiClientProvider);
     return MaterialApp(
+      // Sprachwechsel baut alles neu auf: Texte kommen auch aus `l10n` ohne BuildContext
+      key: ValueKey('app-$language'),
       title: 'Familienhub',
       // Hell/Dunkel/Automatisch: jede Fassung des Themes; ohne Variante bleibt es bei der Grundfassung
       theme: spec == null ? AppTheme.dark : AppTheme.fromSpec(spec.forBrightness(Brightness.light)),
       darkTheme: spec == null ? AppTheme.dark : AppTheme.fromSpec(spec.forBrightness(Brightness.dark)),
       themeMode: mode,
       debugShowCheckedModeBanner: false,
-      locale: const Locale('de', 'DE'),
-      supportedLocales: const [Locale('de', 'DE')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      locale: Locale(language),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       builder: (context, child) => HubBackground(child: child ?? const SizedBox.shrink()),
       home: const AuthGate(),
     );
@@ -61,12 +64,11 @@ class FamilienhubApp extends ConsumerWidget {
 
 /// Meldung zu `familienhub://auth?error=…` aus dem Backend.
 String oidcErrorText(String code) => switch (code) {
-      'unknown_user' => 'Dein Authentik-Konto ist im Familienhub nicht freigeschaltet. '
-          'Die E-Mail-Adresse muss zu einem Hub-Konto passen.',
-      'disabled' => 'Dein Familienhub-Konto ist deaktiviert.',
-      'cancelled' => 'Anmeldung abgebrochen.',
-      'expired' => 'Die Anmeldung hat zu lange gedauert. Bitte noch einmal versuchen.',
-      _ => 'Anmeldung über Authentik fehlgeschlagen.',
+      'unknown_user' => l10n.oidcUnknownUser,
+      'disabled' => l10n.oidcDisabled,
+      'cancelled' => l10n.oidcCancelled,
+      'expired' => l10n.oidcExpired,
+      _ => l10n.oidcFailed,
     };
 
 /// Entscheidet zwischen Server-Einrichtung, Anmeldung und App.

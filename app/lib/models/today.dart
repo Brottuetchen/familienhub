@@ -1,6 +1,7 @@
 import 'calendar_event.dart';
 import 'common.dart';
 import 'task.dart';
+import '../l10n/l10n.dart';
 
 class TodayMeal {
   final String source;
@@ -41,9 +42,9 @@ class TodayHouseState {
       );
 
   String get displayValue => switch (state) {
-        null => 'Nicht verfügbar',
-        'on' => 'An',
-        'off' => 'Aus',
+        null => l10n.stateUnavailable,
+        'on' => l10n.stateOn,
+        'off' => l10n.stateOff,
         _ => unit == null || unit!.isEmpty ? state! : '$state $unit',
       };
 }

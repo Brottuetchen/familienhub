@@ -3,12 +3,12 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
-import 'package:intl/intl.dart';
 
 import '../core/constants/colors.dart';
 import '../core/theme/hub_style.dart';
 import '../models/shopping.dart';
 import '../models/today.dart';
+import '../l10n/l10n.dart';
 
 /// Android-Startbildschirm-Widgets „Heute“ und „Einkauf“.
 ///
@@ -117,7 +117,7 @@ class HomeWidgets {
   }
 }
 
-String _time(DateTime t) => DateFormat('HH:mm', 'de_DE').format(t.toLocal());
+String _time(DateTime t) => localDate('HH:mm').format(t.toLocal());
 
 /// Texte für das Widget „Heute“ (rein, testbar).
 Map<String, String> todayTexts(TodayData d, {DateTime? now}) {
@@ -132,12 +132,12 @@ Map<String, String> todayTexts(TodayData d, {DateTime? now}) {
   final tasks = d.tasks.items.where((t) => !t.done).take(3).map((t) => '☐ ${t.title}').toList();
   final meal = d.meals.isEmpty ? '' : '🍽 ${d.meals.map((m) => m.title).join(', ')}';
   return {
-    'today_title': DateFormat('EEEE, d. MMMM', 'de_DE').format(n),
-    'today_events': events.isEmpty ? 'Keine Termine' : events.join('\n'),
-    'today_tasks': tasks.isEmpty ? 'Nichts fällig' : tasks.join('\n'),
+    'today_title': localDate('EEEE, d. MMMM').format(n),
+    'today_events': events.isEmpty ? l10n.noEvents : events.join('\n'),
+    'today_tasks': tasks.isEmpty ? l10n.nothingDueShort : tasks.join('\n'),
     'today_meal': meal,
-    'today_shopping': d.shoppingOpen == 0 ? '🛒 Liste leer' : '🛒 ${d.shoppingOpen} offen',
-    'today_updated': 'Stand ${_time(n)}',
+    'today_shopping': d.shoppingOpen == 0 ? l10n.widgetListEmpty : l10n.widgetOpenCount(d.shoppingOpen),
+    'today_updated': l10n.asOfTime(_time(n)),
   };
 }
 
@@ -148,10 +148,10 @@ Map<String, String> shoppingTexts(ShoppingData d, {DateTime? now}) {
       for (final i in g.items.where((i) => !i.done)) i.summary,
   ];
   return {
-    'shopping_count': open.isEmpty ? 'Einkauf' : 'Einkauf · ${open.length}',
-    'shopping_items': open.isEmpty ? 'Nichts auf der Liste' : open.take(8).map((s) => '• $s').join('\n') +
-        (open.length > 8 ? '\n… und ${open.length - 8} weitere' : ''),
-    'shopping_updated': 'Stand ${_time(now ?? DateTime.now())}',
+    'shopping_count': open.isEmpty ? l10n.tabShopping : l10n.shoppingCount(open.length),
+    'shopping_items': open.isEmpty ? l10n.nothingOnList : open.take(8).map((s) => '• $s').join('\n') +
+        (open.length > 8 ? l10n.andMore(open.length - 8) : ''),
+    'shopping_updated': l10n.asOfTime(_time(now ?? DateTime.now())),
   };
 }
 

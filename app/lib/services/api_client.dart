@@ -23,6 +23,7 @@ import '../models/task.dart';
 import '../models/today.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
+import '../l10n/l10n.dart';
 import 'app_info.dart';
 import 'cache.dart';
 import 'session_store.dart';
@@ -193,7 +194,7 @@ class ApiClient {
           continue;
         }
         if (e.statusCode == 0 || e.statusCode == 401 || e.statusCode == 429 || e.statusCode >= 500) return;
-        final reason = e.statusCode == 404 ? 'Gibt es nicht mehr – wurde woanders gelöscht' : e.message;
+        final reason = e.statusCode == 404 ? l10n.goneElsewhere : e.message;
         await _setPending([for (final c in _pending) c.id == change.id ? c.withConflict(reason) : c]);
       }
     }
@@ -268,7 +269,7 @@ class ApiClient {
   Future<Uri> _uri(String path, {String? baseUrl}) async {
     final base = baseUrl ?? await store.baseUrl();
     if (base == null || base.isEmpty) {
-      throw ApiException(0, 'Kein Server eingerichtet');
+      throw ApiException(0, l10n.noServer);
     }
     return Uri.parse('$base$path');
   }
@@ -292,6 +293,7 @@ class ApiClient {
       request.followRedirects = false;
     }
     request.headers['Accept'] = 'application/json';
+    request.headers['Accept-Language'] = appLanguage; // Server-Meldungen in der Sprache der App
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
@@ -340,7 +342,7 @@ class ApiClient {
         if (epoch != _epoch) throw UnauthorizedException();
         if (refreshed) {
           if (!replayOn401) {
-            throw ApiException(401, 'Sitzung erneuert; Aktion nicht wiederholt. Zustand aktualisieren.');
+            throw ApiException(401, l10n.sessionRenewed);
           }
           if (epoch != _epoch) throw UnauthorizedException();
           res = await _raw(method, path, body: body, auth: auth, baseUrl: base, sessionEpoch: epoch, headers: headers);
@@ -494,7 +496,7 @@ class ApiClient {
     }
     final message = detail is String
         ? detail
-        : (code is String ? code : 'Serverfehler (${res.statusCode})');
+        : (code is String ? code : l10n.serverError(res.statusCode));
     throw ApiException(res.statusCode, message);
   }
 
@@ -669,7 +671,7 @@ class ApiClient {
 
   /// Schaltet genau einmal. Liefert den von HA bestätigten neuen Zustand, falls HA ihn sofort meldet.
   Future<HouseControl?> houseAction(String entityId, String action, {int? brightness}) async {
-    if (houseActionPendingFor(entityId)) throw ApiException(409, 'Diese Hausaktion läuft bereits.');
+    if (houseActionPendingFor(entityId)) throw ApiException(409, l10n.houseActionRunning);
     final epoch = _epoch;
     _houseActionEntities[entityId] = epoch;
     _houseActionFailed = false;
@@ -746,14 +748,14 @@ class ApiClient {
     if (mine && due != null && !DateTime(due.year, due.month, due.day).isAfter(today)) views.add('today');
     final change = PendingChange(
       id: PendingChange.newId(), kind: 'task_create', method: 'POST', path: path, body: body,
-      label: '„$title“ angelegt', created: now,
+      label: l10n.createdTitle(title), created: now,
       meta: {
         'views': views,
         'task': {
           'title': title, 'provider': provider, 'account': account ?? '', 'done': false,
           if (due != null) 'due': _dateOnly(due),
           if (assigneeId != null) 'assignee': assigneeId,
-          if (family) 'list': {'name': 'Familie', 'kind': 'family'},
+          if (family) 'list': {'name': l10n.family, 'kind': 'family'},
         },
       },
     );
@@ -789,7 +791,7 @@ class ApiClient {
     return _sendOrQueue(PendingChange(
         id: PendingChange.newId(), kind: 'task_complete', method: 'POST',
         path: _taskPath('/${Uri.encodeComponent(uid)}/complete', provider, account), target: uid,
-        label: '„${title ?? 'Aufgabe'}“ erledigt', created: DateTime.now()));
+        label: l10n.completedTitle(title ?? l10n.task), created: DateTime.now()));
   }
 
   Future<void> deleteTask(String uid, {String provider = 'nextcloud', String? account}) async {
@@ -819,8 +821,8 @@ class ApiClient {
   }
 
   Future<T> _nativeTaskOperation<T>(String account, Future<T> Function() operation) async {
-    if (account.isEmpty) throw ApiException(403, 'Kein eigenes Aufgabenkonto gewählt');
-    if (nativeTaskBlocked(account)) throw ApiException(409, 'Aktion läuft oder Ergebnis unklar. Fachsystem prüfen; nicht wiederholen.');
+    if (account.isEmpty) throw ApiException(403, l10n.noTaskAccount);
+    if (nativeTaskBlocked(account)) throw ApiException(409, l10n.actionRunningUnclear);
     final epoch = _epoch;
     // ponytail: pro Konto serialisiert; per-account locks keep unrelated accounts independent.
     _nativeTaskLocks[account] = epoch;
@@ -906,9 +908,9 @@ class ApiClient {
       });
 
   Future<SourceResult<Task>> reconcileHabiticaTasks(String account) async {
-    if (account.isEmpty) throw ApiException(403, 'Kein eigenes Aufgabenkonto gewählt');
+    if (account.isEmpty) throw ApiException(403, l10n.noTaskAccount);
     final epoch = _epoch;
-    if (_nativeTaskLocks[account] == epoch) throw ApiException(409, 'Aktion läuft. Fachsystem prüfen; nicht wiederholen.');
+    if (_nativeTaskLocks[account] == epoch) throw ApiException(409, l10n.actionRunning);
     _nativeTaskLocks[account] = epoch;
     try {
       final result = await habiticaTasks();
@@ -982,7 +984,7 @@ class ApiClient {
 
   Future<bool> addShoppingItem(String item) => _sendOrQueue(PendingChange(
       id: PendingChange.newId(), kind: 'shopping_add', method: 'POST', path: '/api/shopping',
-      body: {'item': item}, label: '„$item“ auf die Einkaufsliste', created: DateTime.now()));
+      body: {'item': item}, label: l10n.addedToList(item), created: DateTime.now()));
 
   Future<bool> setShoppingDone(String uid, bool done, {String? name}) => _sendOrQueue(PendingChange(
       id: PendingChange.newId(), kind: 'shopping_done', method: 'PATCH',
@@ -992,7 +994,7 @@ class ApiClient {
   Future<bool> deleteShoppingItem(String uid, {String? name}) => _sendOrQueue(PendingChange(
       id: PendingChange.newId(), kind: 'shopping_delete', method: 'DELETE',
       path: '/api/shopping/${Uri.encodeComponent(uid)}', target: uid,
-      label: '„${name ?? 'Artikel'}“ gelöscht', created: DateTime.now()));
+      label: l10n.deletedTitle(name ?? l10n.item), created: DateTime.now()));
 
   // ── Essen ──────────────────────────────────────────────────────────────────
 
@@ -1008,7 +1010,7 @@ class ApiClient {
   /// Zutaten der geplanten Hub-Rezepte auf die Einkaufsliste. Liefert die Meldung des Servers.
   Future<String> mealsToShoppingList() async {
     final json = await _send('POST', '/api/meals/shopping-list') as Map<String, dynamic>;
-    return (json['message'] as String?) ?? '${json['added'] ?? 0} Zutaten hinzugefügt';
+    return (json['message'] as String?) ?? l10n.ingredientsAdded(json['added'] ?? 0);
   }
 
   // ── Termine ────────────────────────────────────────────────────────────────
@@ -1271,7 +1273,7 @@ class ApiClient {
   Future<String> requestMedia(MediaItem item) async {
     final json = await _send('POST', '/api/media/requests',
         body: {'media_type': item.kind.api, 'tmdb_id': item.tmdbId}) as Map<String, dynamic>;
-    return (json['status_label'] as String?) ?? 'Gewünscht';
+    return (json['status_label'] as String?) ?? l10n.requested;
   }
 
   Future<void> cancelMediaRequest(int id) => _send('DELETE', '/api/media/requests/$id');
@@ -1342,7 +1344,7 @@ class ApiClient {
       if (book.year != null) 'year': book.year,
     }) as Map<String, dynamic>;
     return [
-      if (json['queued'] == true) 'Wird im Hintergrund angelegt',
+      if (json['queued'] == true) l10n.creatingInBackground,
       ...((json['warnings'] as List?) ?? const []).map((w) => '$w'),
     ];
   }

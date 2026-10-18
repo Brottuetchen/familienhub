@@ -5,6 +5,7 @@ import '../../models/admin.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../today/house_controls.dart' show houseIcon;
+import '../../l10n/l10n.dart';
 
 /// Haus: Geräte aus Home Assistant für die Haus-Karte auswählen, statt Entitäts-IDs zu tippen.
 /// Je Gerät: aus · anzeigen · schalten (nur Licht, Schalter, Szene, Skript). Je höchstens 6.
@@ -60,7 +61,7 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
     final max = _choices?.max ?? 6;
     if (mode == _Mode.show && !_display.contains(e.entityId) && _display.length >= max ||
         mode == _Mode.control && !_control.contains(e.entityId) && _control.length >= max) {
-      showInfo(context, 'Höchstens $max – erst ein anderes Gerät abwählen');
+      showInfo(context, l10n.maxDevices(max));
       return;
     }
     setState(() {
@@ -82,7 +83,7 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
       if (ok) _dirty = false;
     });
     if (ok) {
-      showInfo(context, 'Haus-Karte gespeichert');
+      showInfo(context, l10n.houseCardSaved);
       ref.read(todayProvider.notifier).refresh().ignore();
     }
   }
@@ -92,12 +93,12 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
     final c = _choices;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Haus'),
+        title: Text(l10n.house),
         actions: [
           TextButton(
             key: const Key('admin-house-save'),
             onPressed: _dirty && !_saving ? _save : null,
-            child: const Text('Speichern'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -109,8 +110,8 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
                   ? EmptyHint(
                       icon: Icons.home_outlined,
                       text: c.status == 'not_configured'
-                          ? 'Home Assistant ist noch nicht eingerichtet (Plugins & Zugänge)'
-                          : 'Home Assistant gerade nicht erreichbar')
+                          ? l10n.haNotSetUp
+                          : l10n.haUnavailable)
                   : _body(c),
     );
   }
@@ -130,7 +131,7 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
                 style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
           ),
           if (ids.isEmpty)
-            Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: Text('Noch nichts ausgewählt', style: theme.textTheme.bodySmall)),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: Text(l10n.nothingSelected, style: theme.textTheme.bodySmall)),
           ReorderableListView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -146,20 +147,19 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
                   dense: true,
                   leading: Icon(houseIcon(id, byId[id]?.name ?? id, byId[id]?.unit, byId[id]?.state)),
                   title: Text(byId[id]?.name ?? id),
-                  subtitle: byId[id] == null ? const Text('Nicht mehr in Home Assistant') : null,
+                  subtitle: byId[id] == null ? Text(l10n.notInHa) : null,
                 ),
             ],
           ),
         ]);
 
     return ListView(padding: const EdgeInsets.only(bottom: 32), children: [
-      const Padding(
+      Padding(
         padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-        child: Text('„Schalten“ zeigt das Gerät als Kachel zum Antippen. „Anzeigen“ zeigt nur den Zustand. '
-            'Reihenfolge per Ziehen.'),
+        child: Text(l10n.houseAdminExplain),
       ),
-      selected('Schalten', _control),
-      selected('Anzeigen', _display),
+      selected(l10n.control, _control),
+      selected(l10n.show, _display),
       const Divider(height: 24),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -167,7 +167,7 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
           key: const Key('admin-house-search'),
           controller: _query,
           onChanged: (_) => setState(() {}), // lokal gefiltert, keine Anfrage
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Gerät oder Sensor suchen'),
+          decoration: InputDecoration(prefixIcon: Icon(Icons.search), hintText: l10n.searchDevice),
         ),
       ),
       for (final e in shown.take(200))
@@ -181,17 +181,17 @@ class _AdminHouseScreenState extends ConsumerState<AdminHouseScreen> {
             showSelectedIcon: false,
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             segments: [
-              const ButtonSegment(value: _Mode.off, icon: Icon(Icons.close, size: 16), tooltip: 'Nicht auf der Karte'),
-              const ButtonSegment(value: _Mode.show, icon: Icon(Icons.visibility_outlined, size: 16), tooltip: 'Anzeigen'),
+              ButtonSegment(value: _Mode.off, icon: Icon(Icons.close, size: 16), tooltip: l10n.notOnCard),
+              ButtonSegment(value: _Mode.show, icon: Icon(Icons.visibility_outlined, size: 16), tooltip: l10n.show),
               if (e.controllable)
-                const ButtonSegment(value: _Mode.control, icon: Icon(Icons.touch_app_outlined, size: 16), tooltip: 'Schalten'),
+                ButtonSegment(value: _Mode.control, icon: Icon(Icons.touch_app_outlined, size: 16), tooltip: l10n.control),
             ],
             selected: {_modeOf(e.entityId)},
             onSelectionChanged: (s) => _set(e, s.first),
           ),
         ),
       if (shown.length > 200)
-        const Padding(padding: EdgeInsets.all(16), child: Text('Weitere Treffer: Suche genauer eingeben')),
+        Padding(padding: EdgeInsets.all(16), child: Text(l10n.moreHits)),
     ]);
   }
 }

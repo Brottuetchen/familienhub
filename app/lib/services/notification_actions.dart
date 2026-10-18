@@ -9,13 +9,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/account.dart';
 import 'background.dart';
+import '../l10n/l10n.dart';
 
 /// Knöpfe in Erinnerungs-Mitteilungen (Android). Kommt als FCM-Datennachricht mit
 /// `actions` und `action_token`; die App stellt sie selbst dar – auch im Hintergrund.
-const reminderActions = <String, String>{
-  'done': 'Erledigt',
-  'snooze_1h': 'In 1 Std.',
-  'tomorrow': 'Morgen',
+Map<String, String> get reminderActions => <String, String>{
+  'done': l10n.done,
+  'snooze_1h': l10n.in1HourShort,
+  'tomorrow': l10n.tomorrow,
 };
 
 /// Payload, die an der lokalen Mitteilung hängt (Ziel + Aktionsdaten).
@@ -106,6 +107,7 @@ Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
   }
   if (message.notification != null) return; // zeigt Android selbst an
   DartPluginRegistrant.ensureInitialized();
+  await loadAppLanguage(); // Knopf-Beschriftungen in der Sprache der App
   final plugin = FlutterLocalNotificationsPlugin();
   await plugin.initialize(
     const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),

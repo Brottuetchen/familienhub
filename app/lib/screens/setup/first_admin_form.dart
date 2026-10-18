@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Neuer Hub: erstes Admin-Konto anlegen. Der Einrichtungscode steht im Server-Log
 /// (`docker compose logs familienhub`), damit nicht jeder, der den Server zuerst erreicht, Admin wird.
@@ -33,13 +34,13 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
   }
 
   String? _problem() {
-    if (_code.text.trim().length < 8) return 'Einrichtungscode aus dem Server-Log eingeben';
+    if (_code.text.trim().length < 8) return l10n.enterSetupCode;
     if (!RegExp(r'^[a-z0-9._-]{2,40}$').hasMatch(_username.text.trim().toLowerCase())) {
-      return 'Benutzername: klein, ohne Leerzeichen (a–z, 0–9, . _ -)';
+      return l10n.usernameRule;
     }
-    if (!_email.text.contains('@')) return 'E-Mail-Adresse eingeben';
-    if (_password.text.length < 10) return 'Passwort: mindestens 10 Zeichen';
-    if (_password.text != _repeat.text) return 'Die Passwörter stimmen nicht überein';
+    if (!_email.text.contains('@')) return l10n.enterEmail;
+    if (_password.text.length < 10) return l10n.passwordRule;
+    if (_password.text != _repeat.text) return l10n.passwordsMismatch;
     return null;
   }
 
@@ -74,11 +75,10 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('Willkommen! Dieser Hub ist neu.', style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+      Text(l10n.welcomeNewHub, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
       const SizedBox(height: 8),
-      const Text(
-        'Lege das erste Konto an – es verwaltet den Hub. Den Einrichtungscode findest du im Server-Log, '
-        'z. B. mit „docker compose logs familienhub“.',
+      Text(
+        l10n.firstAdminExplain,
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
@@ -87,16 +87,16 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
         controller: _code,
         textCapitalization: TextCapitalization.characters,
         autocorrect: false,
-        decoration: const InputDecoration(labelText: 'Einrichtungscode', hintText: 'ABCD-EFGH'),
+        decoration: InputDecoration(labelText: l10n.setupCode, hintText: 'ABCD-EFGH'),
       ),
       const SizedBox(height: 12),
-      TextField(key: const Key('setup-name'), controller: _name, decoration: const InputDecoration(labelText: 'Dein Name')),
+      TextField(key: const Key('setup-name'), controller: _name, decoration: InputDecoration(labelText: l10n.yourName)),
       const SizedBox(height: 12),
       TextField(
         key: const Key('setup-username'),
         controller: _username,
         autocorrect: false,
-        decoration: const InputDecoration(labelText: 'Benutzername', helperText: 'klein, ohne Leerzeichen'),
+        decoration: InputDecoration(labelText: l10n.username, helperText: l10n.usernameHint),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -104,21 +104,21 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
         controller: _email,
         keyboardType: TextInputType.emailAddress,
         autocorrect: false,
-        decoration: const InputDecoration(labelText: 'E-Mail'),
+        decoration: InputDecoration(labelText: l10n.email),
       ),
       const SizedBox(height: 12),
       TextField(
         key: const Key('setup-password'),
         controller: _password,
         obscureText: true,
-        decoration: const InputDecoration(labelText: 'Passwort', helperText: 'mindestens 10 Zeichen'),
+        decoration: InputDecoration(labelText: l10n.password, helperText: l10n.min10Chars),
       ),
       const SizedBox(height: 12),
       TextField(
         key: const Key('setup-repeat'),
         controller: _repeat,
         obscureText: true,
-        decoration: const InputDecoration(labelText: 'Passwort wiederholen'),
+        decoration: InputDecoration(labelText: l10n.repeatPassword),
         onSubmitted: (_) => _submit(),
       ),
       if (_error != null) ...[
@@ -129,7 +129,7 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
       FilledButton(
         key: const Key('setup-submit'),
         onPressed: _busy ? null : _submit,
-        child: _busy ? const HubLoader(size: 20) : const Text('Konto anlegen und einrichten'),
+        child: _busy ? const HubLoader(size: 20) : Text(l10n.createAccountSetUp),
       ),
     ]);
   }

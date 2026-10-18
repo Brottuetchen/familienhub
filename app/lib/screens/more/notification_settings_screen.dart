@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Kategorien an/aus, Ruhezeiten, registrierte Geräte, Test-Nachricht.
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
@@ -43,7 +43,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
     if (!mounted) return;
     setState(() {});
     ref.invalidate(devicesProvider);
-    showInfo(context, ok ? 'Mitteilungen auf diesem Gerät aktiviert' : (push.lastError ?? 'Nicht aktiviert'));
+    showInfo(context, ok ? l10n.pushEnabledHere : (push.lastError ?? l10n.notEnabled));
   }
 
   Future<void> _load() async {
@@ -86,7 +86,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
     if (await runAction(context, () => ref.read(apiClientProvider).saveNotificationPrefs(prefs))) {
       if (!mounted) return;
       setState(() => _dirty = false);
-      showInfo(context, 'Gespeichert');
+      showInfo(context, l10n.saved);
     }
   }
 
@@ -113,9 +113,9 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
     final prefs = _prefs;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Benachrichtigungen'),
+        title: Text(l10n.notificationSettings),
         actions: [
-          if (_dirty) TextButton(onPressed: _save, child: const Text('Speichern')),
+          if (_dirty) TextButton(onPressed: _save, child: Text(l10n.save)),
         ],
       ),
       body: _error != null
@@ -138,7 +138,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                             FilledButton.icon(
                               key: const Key('enable-web-push'),
                               icon: const Icon(Icons.notifications_active),
-                              label: const Text('Mitteilungen auf diesem Gerät aktivieren'),
+                              label: Text(l10n.enablePushHere),
                               onPressed: _vapidKey == null ? null : _enableWebPush,
                             ),
                           ],
@@ -148,7 +148,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          'Push auf diesem Gerät ist aus: ${push.lastError ?? 'Firebase nicht eingerichtet'}.',
+                          l10n.pushOffHere(push.lastError ?? l10n.firebaseNotSetUp),
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ),
@@ -164,14 +164,14 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                     const Divider(),
                     ListTile(
                       leading: const Icon(Icons.bedtime_outlined),
-                      title: const Text('Ruhezeit'),
+                      title: Text(l10n.quietHours),
                       subtitle: Text(_quietStart == null || _quietEnd == null
-                          ? 'Aus'
+                          ? l10n.stateOff
                           : '${_fmt(_quietStart!)} – ${_fmt(_quietEnd!)}'),
                       trailing: _quietStart == null
                           ? null
                           : IconButton(
-                              tooltip: 'Ruhezeit aus',
+                              tooltip: l10n.quietHoursOff,
                               icon: const Icon(Icons.clear),
                               onPressed: () => setState(() {
                                 _quietStart = null;
@@ -184,9 +184,9 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
-                          OutlinedButton(onPressed: () => _pickQuiet(true), child: Text('Von ${_quietStart == null ? '–' : _fmt(_quietStart!)}')),
+                          OutlinedButton(onPressed: () => _pickQuiet(true), child: Text(l10n.fromTime(_quietStart == null ? '–' : _fmt(_quietStart!)))),
                           const SizedBox(width: 8),
-                          OutlinedButton(onPressed: () => _pickQuiet(false), child: Text('Bis ${_quietEnd == null ? '–' : _fmt(_quietEnd!)}')),
+                          OutlinedButton(onPressed: () => _pickQuiet(false), child: Text(l10n.untilTime(_quietEnd == null ? '–' : _fmt(_quietEnd!)))),
                         ],
                       ),
                     ),
@@ -205,13 +205,13 @@ class _DevicesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final devices = ref.watch(devicesProvider);
-    final format = DateFormat('d.M.yyyy HH:mm', 'de_DE');
+    final format = localDate('d.M.yyyy HH:mm');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text('Geräte', style: Theme.of(context).textTheme.titleMedium),
+          child: Text(l10n.devices, style: Theme.of(context).textTheme.titleMedium),
         ),
         devices.when(
           loading: () => const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
@@ -219,14 +219,14 @@ class _DevicesSection extends ConsumerWidget {
           data: (list) => Column(
             children: [
               if (list.isEmpty)
-                const ListTile(title: Text('Noch kein Gerät registriert')),
+                ListTile(title: Text(l10n.noDevices)),
               for (final d in list)
                 ListTile(
                   leading: Icon(d.kind == 'fcm' ? Icons.phone_android : Icons.language),
                   title: Text(d.deviceName ?? (d.kind == 'fcm' ? 'Android' : 'Browser')),
-                  subtitle: d.lastSeen == null ? null : Text('zuletzt ${format.format(d.lastSeen!)}'),
+                  subtitle: d.lastSeen == null ? null : Text(l10n.lastSeen(format.format(d.lastSeen!))),
                   trailing: IconButton(
-                    tooltip: 'Entfernen',
+                    tooltip: l10n.remove,
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () async {
                       if (await runAction(context, () => ref.read(apiClientProvider).deleteDevice(d.id))) {
@@ -242,7 +242,7 @@ class _DevicesSection extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: FilledButton.tonalIcon(
             icon: const Icon(Icons.send),
-            label: const Text('Test-Benachrichtigung senden'),
+            label: Text(l10n.sendTestNotification),
             onPressed: () async {
               try {
                 final sent = await ref.read(apiClientProvider).testPush();
@@ -250,8 +250,8 @@ class _DevicesSection extends ConsumerWidget {
                 showInfo(
                   context,
                   sent == 0
-                      ? 'Kein Gerät erreicht. Ist Push eingerichtet und nicht stummgeschaltet?'
-                      : 'Test an $sent Gerät${sent == 1 ? '' : 'e'} gesendet',
+                      ? l10n.noDeviceReached
+                      : l10n.testSentCount(sent),
                 );
               } catch (e) {
                 if (context.mounted) showError(context, e);

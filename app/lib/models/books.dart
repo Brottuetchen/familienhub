@@ -1,13 +1,15 @@
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 /// 'ebook' oder 'audiobook' wie in Shelfarr.
 enum BookKind {
-  ebook('ebook', 'E-Book'),
-  audiobook('audiobook', 'Hörbuch');
+  ebook('ebook'),
+  audiobook('audiobook');
 
   final String api;
-  final String label;
-  const BookKind(this.api, this.label);
+  const BookKind(this.api);
+
+  String get label => this == ebook ? l10n.ebook : l10n.audiobook;
 
   static BookKind? fromApi(String? v) => values.where((k) => k.api == v).firstOrNull;
 }

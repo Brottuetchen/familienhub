@@ -7,6 +7,7 @@ import '../../models/common.dart';
 import '../../models/shopping.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Zuletzt eingegebene Artikel als Vorschläge (lokal, weil `/api/shopping/recent` noch leer ist).
 class RecentItems {
@@ -85,11 +86,11 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
     final async = ref.watch(shoppingProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Einkauf'),
+        title: Text(l10n.tabShopping),
         actions: [
           ReadStatusIcon(result: async.valueOrNull),
           IconButton(
-            tooltip: _showDone ? 'Erledigte ausblenden' : 'Erledigte zeigen',
+            tooltip: _showDone ? l10n.hideDone : l10n.showDone,
             icon: Icon(_showDone ? Icons.visibility_off_outlined : Icons.visibility_outlined),
             onPressed: () => setState(() => _showDone = !_showDone),
           ),
@@ -98,7 +99,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
         icon: const Icon(Icons.add),
-        label: const Text('Artikel'),
+        label: Text(l10n.item),
       ),
       body: HubRefresh(
         onRefresh: _reload,
@@ -146,7 +147,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Text(
-            group.isRecipes ? 'Keine Zutaten aus dem Wochenplan' : 'Nichts auf der Liste',
+            group.isRecipes ? l10n.noPlanIngredients : l10n.nothingOnList,
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
@@ -165,7 +166,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
         // Gemerkt, noch nicht gesendet: kleine Wolke
         secondary: item.pending
             ? Tooltip(
-                message: 'Wartet auf Netz',
+                message: l10n.waitingForNetwork,
                 child: Icon(Icons.cloud_upload_outlined, key: Key('pending-item-${item.uid}'), size: 18),
               )
             : null,
@@ -186,7 +187,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
         confirmDismiss: (_) => runChange(context, () => ref.read(apiClientProvider).deleteShoppingItem(item.uid, name: item.summary)),
         onDismissed: (_) {
           setState(() => _gone.add(item.uid));
-          showInfo(context, '„${item.summary}“ entfernt');
+          showInfo(context, l10n.removedTitle(item.summary));
         },
         child: _tile(item, done),
       );
@@ -244,9 +245,9 @@ class _AddItemSheetState extends ConsumerState<_AddItemSheet> {
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              labelText: 'Artikel',
+              labelText: l10n.item,
               suffixIcon: IconButton(
-                tooltip: 'Hinzufügen',
+                tooltip: l10n.add,
                 icon: const Icon(Icons.send),
                 onPressed: () => Navigator.pop(context, _text.text),
               ),

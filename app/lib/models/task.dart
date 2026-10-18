@@ -1,17 +1,24 @@
 import 'dart:convert';
 
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 /// Ansichten wie im Backend (`/api/tasks?view=`).
 enum TaskView {
-  mine('mine', 'Meine'),
-  forMe('for_me', 'Für mich'),
-  fromMe('from_me', 'Von mir'),
-  family('family', 'Familie');
+  mine('mine'),
+  forMe('for_me'),
+  fromMe('from_me'),
+  family('family');
 
   final String apiName;
-  final String label;
-  const TaskView(this.apiName, this.label);
+  const TaskView(this.apiName);
+
+  String get label => switch (this) {
+        mine => l10n.mine,
+        forMe => l10n.forMe,
+        fromMe => l10n.fromMe,
+        family => l10n.family,
+      };
 
   static TaskView fromApi(String? name) =>
       values.firstWhere((v) => v.apiName == name, orElse: () => mine);
@@ -72,7 +79,7 @@ class Task {
       provider: json['provider'] as String? ?? 'nextcloud',
       account: json['account'] as String? ?? '',
       native: Map<String, dynamic>.from(json['native'] as Map? ?? const {}),
-      title: (json['title'] as String?) ?? 'Aufgabe',
+      title: (json['title'] as String?) ?? l10n.task,
       notes: (json['notes'] as String?) ?? '',
       due: dueIsDate ? parseDay(dueRaw) : parseDate(dueRaw),
       dueIsDate: dueIsDate,
@@ -111,7 +118,7 @@ class TaskListInfo {
 
   factory TaskListInfo.fromJson(Map<String, dynamic> json) => TaskListInfo(
         caldavUrl: json['caldav_url'] as String,
-        displayName: (json['display_name'] as String?) ?? 'Liste',
+        displayName: (json['display_name'] as String?) ?? l10n.list,
         kind: json['kind'] as String?,
         ownerUserId: parseInt(json['owner_user_id']),
       );

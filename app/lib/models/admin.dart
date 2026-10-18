@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 // Verwaltung: Systemübersicht, Familie, Haus-Auswahl, Protokoll (nur Admins).
 
 class PluginHealth {
@@ -75,7 +77,7 @@ class AdminOverview {
   }
 }
 
-const roleLabels = {'admin': 'Admin', 'partner': 'Partner', 'child': 'Kind', 'guest': 'Gast'};
+Map<String, String> get roleLabels => {'admin': l10n.roleAdmin, 'partner': l10n.rolePartner, 'child': l10n.roleChild, 'guest': l10n.roleGuest};
 const linkLabels = {'nextcloud': 'Nextcloud', 'habitica': 'Habitica', 'paperless': 'Paperless', 'seerr': 'Seerr'};
 
 class AdminUser {
@@ -139,9 +141,9 @@ class HaEntity {
 
   String get stateLabel => switch (state) {
         null => '',
-        'on' => 'An',
-        'off' => 'Aus',
-        'unavailable' => 'Nicht verfügbar',
+        'on' => l10n.stateOn,
+        'off' => l10n.stateOff,
+        'unavailable' => l10n.stateUnavailable,
         _ => unit == null ? state! : '$state $unit',
       };
 

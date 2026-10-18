@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/calendar_event.dart';
 import '../../providers/providers.dart';
 import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
 import '../more/caldav_account_screen.dart';
+import '../../l10n/l10n.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
@@ -17,7 +17,7 @@ class CalendarScreen extends ConsumerWidget {
     Future<void> refresh() => ref.read(eventsProvider.notifier).refresh();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Termine'), actions: [ReadStatusIcon(result: async.valueOrNull)]),
+      appBar: AppBar(title: Text(l10n.tabCalendar), actions: [ReadStatusIcon(result: async.valueOrNull)]),
       floatingActionButton: !ref.watch(canEditProvider) ? null : FloatingActionButton.extended(
         onPressed: () async {
           await showModalBottomSheet<bool>(
@@ -28,7 +28,7 @@ class CalendarScreen extends ConsumerWidget {
           );
         },
         icon: const Icon(Icons.add),
-        label: const Text('Termin'),
+        label: Text(l10n.event),
       ),
       body: HubRefresh(
         onRefresh: refresh,
@@ -47,7 +47,7 @@ class CalendarScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 96),
               children: [
                 if (days.isEmpty)
-                  const EmptyHint(icon: Icons.event_available, text: 'Keine Termine in den nächsten 30 Tagen'),
+                  EmptyHint(icon: Icons.event_available, text: l10n.noEvents30),
                 for (final day in days) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
@@ -77,7 +77,7 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final time = event.allDay || event.start == null
-        ? 'ganztägig'
+        ? l10n.allDayLower
         : event.end == null
             ? timeLabel(event.start!)
             : '${timeLabel(event.start!)} – ${timeLabel(event.end!)}';
@@ -143,25 +143,25 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
       Duration(hours: 2),
       Duration(hours: 3),
     ];
-    String lengthLabel(Duration d) => d.inMinutes < 60 ? '${d.inMinutes} min' : '${d.inHours} h';
+    String lengthLabel(Duration d) => d.inMinutes < 60 ? l10n.durationMinutes(d.inMinutes) : '${d.inHours} h';
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Neuer Termin', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.newEvent, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           TextField(
             controller: _title,
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Titel'),
+            decoration: InputDecoration(labelText: l10n.title),
           ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Ganztägig'),
+            title: Text(l10n.allDay),
             value: _allDay,
             onChanged: (v) => setState(() => _allDay = v),
           ),
@@ -172,7 +172,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
             children: [
               OutlinedButton.icon(
                 icon: const Icon(Icons.calendar_today, size: 18),
-                label: Text(DateFormat('EEE, d. MMM', 'de_DE').format(_day)),
+                label: Text(localDate('EEE, d. MMM').format(_day)),
                 onPressed: () async {
                   final now = DateTime.now();
                   final d = await showDatePicker(
@@ -204,7 +204,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
-            child: FilledButton(onPressed: _saving ? null : _save, child: const Text('Speichern')),
+            child: FilledButton(onPressed: _saving ? null : _save, child: Text(l10n.save)),
           ),
         ],
       ),

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme/app_theme.dart';
 import '../models/themes.dart';
 import '../services/home_widgets.dart';
+import '../l10n/l10n.dart';
 import 'providers.dart';
 
 const _key = 'theme_spec';
@@ -102,3 +103,28 @@ final themesProvider = FutureProvider.autoDispose<List<ThemeSpec>>(
 
 final adminPluginsProvider = FutureProvider.autoDispose(
     (ref) => ref.watch(apiClientProvider).adminPlugins());
+
+/// Sprache der App: `system` (Gerät), `de` oder `en`. Pro Gerät gespeichert.
+class LanguageChoice extends StateNotifier<String> {
+  LanguageChoice() : super('system') {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final raw = (await SharedPreferences.getInstance()).getString(languagePrefKey);
+      if (raw != null && mounted) state = raw;
+    } catch (_) {
+      // Standard: wie das Gerät
+    }
+  }
+
+  Future<void> select(String choice) async {
+    state = choice;
+    try {
+      await (await SharedPreferences.getInstance()).setString(languagePrefKey, choice);
+    } catch (_) {}
+  }
+}
+
+final languageChoiceProvider = StateNotifierProvider<LanguageChoice, String>((ref) => LanguageChoice());

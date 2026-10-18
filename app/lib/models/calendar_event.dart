@@ -1,4 +1,5 @@
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 class CalendarEvent {
   final String title;
@@ -23,7 +24,7 @@ class CalendarEvent {
     final allDay = json['all_day'] == true;
     DateTime? parse(Object? raw) => allDay ? parseDay(raw) : parseDate(raw);
     return CalendarEvent(
-      title: (json['title'] as String?) ?? 'Termin',
+      title: (json['title'] as String?) ?? l10n.event,
       start: parse(json['start']),
       end: parse(json['end']),
       allDay: allDay,

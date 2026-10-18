@@ -1,13 +1,15 @@
 import 'common.dart';
+import '../l10n/l10n.dart';
 
 /// 'movie' oder 'tv' wie in Seerr.
 enum MediaKind {
-  movie('movie', 'Film'),
-  tv('tv', 'Serie');
+  movie('movie'),
+  tv('tv');
 
   final String api;
-  final String label;
-  const MediaKind(this.api, this.label);
+  const MediaKind(this.api);
+
+  String get label => this == movie ? l10n.movie : l10n.tvShow;
 
   static MediaKind? fromApi(Object? v) => values.where((k) => k.api == v).firstOrNull;
 }

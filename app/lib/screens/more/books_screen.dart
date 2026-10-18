@@ -6,6 +6,7 @@ import '../../models/books.dart';
 import '../../models/common.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final bookRequestsProvider = FutureProvider.autoDispose<ApiResult<SourceResult<BookRequest>>>(
     (ref) => ref.watch(apiClientProvider).bookRequests());
@@ -75,7 +76,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
       final hints = await ref.read(apiClientProvider).requestBook(book, _kind);
       if (!mounted) return;
       setState(() => _requested.add('${_kind.api}:${book.workId}'));
-      showInfo(context, ['${_kind.label} „${book.title}“ gewünscht', ...hints].join(' · '));
+      showInfo(context, [l10n.requestedKindTitle(_kind.label, book.title), ...hints].join(' · '));
       ref.invalidate(bookRequestsProvider);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -85,7 +86,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bücher & Hörbücher')),
+      appBar: AppBar(title: Text(l10n.booksAudiobooks)),
       body: Column(
         children: [
           Padding(
@@ -112,14 +113,14 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
               onSubmitted: (_) => _search(),
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Titel oder Autor',
+                hintText: l10n.titleOrAuthor,
                 prefixIcon: const Icon(Icons.search),
-                helperText: _tooShort ? 'Mindestens 3 Zeichen' : 'Suchen mit Enter',
+                helperText: _tooShort ? l10n.min3Chars : l10n.searchWithEnter,
                 suffixIcon: _query.text.isEmpty
                     ? null
                     : Row(mainAxisSize: MainAxisSize.min, children: [
                         IconButton(
-                          tooltip: 'Leeren',
+                          tooltip: l10n.clear,
                           icon: const Icon(Icons.clear),
                           onPressed: () => setState(() {
                             _query.clear();
@@ -129,7 +130,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
                         ),
                         IconButton(
                           key: const Key('book-search-go'),
-                          tooltip: 'Suchen',
+                          tooltip: l10n.search,
                           icon: const Icon(Icons.arrow_forward),
                           onPressed: _searching ? null : _search,
                         ),
@@ -150,7 +151,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
     if (shown.isEmpty) {
       return EmptyHint(
         icon: Icons.search_off,
-        text: r.items.isEmpty ? 'Nichts gefunden' : 'Nichts als ${_kind.label} gefunden',
+        text: r.items.isEmpty ? l10n.nothingFound : l10n.nothingFoundAs(_kind.label),
       );
     }
     // Schon gewünscht (gleicher Titel und gleiche Art): kein zweiter Wunsch
@@ -174,13 +175,13 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
           subtitle: sub.isEmpty ? null : Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis),
           trailing: done
               ? Tooltip(
-                  message: 'Schon gewünscht',
+                  message: l10n.alreadyRequested,
                   child: Icon(Icons.check_circle, key: ValueKey('book-done-${b.workId}'), color: Colors.green),
                 )
               : !canWish ? null : FilledButton.tonal(
                   key: ValueKey('book-request-${b.workId}'),
                   onPressed: () => _request(b),
-                  child: const Text('Wünschen'),
+                  child: Text(l10n.request),
                 ),
         );
       },
@@ -231,10 +232,10 @@ class _MyRequests extends ConsumerWidget {
               SourceBanner(source: 'Shelfarr', status: data.status, error: data.error),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text('Meine Wünsche', style: Theme.of(context).textTheme.titleMedium),
+                child: Text(l10n.myRequests, style: Theme.of(context).textTheme.titleMedium),
               ),
               if (data.isOk && data.items.isEmpty)
-                const EmptyHint(icon: Icons.auto_stories_outlined, text: 'Noch nichts gewünscht. Oben suchen.'),
+                EmptyHint(icon: Icons.auto_stories_outlined, text: l10n.noRequestsYet),
               for (final r in data.items)
                 ListTile(
                   leading: Icon(r.kind == BookKind.audiobook ? Icons.headphones : Icons.menu_book),
@@ -254,7 +255,7 @@ class _MyRequests extends ConsumerWidget {
                       ),
                       if (r.canCancel)
                         IconButton(
-                          tooltip: 'Wunsch zurückziehen',
+                          tooltip: l10n.withdrawRequest,
                           icon: const Icon(Icons.close),
                           onPressed: () async {
                             if (await runAction(context, () => ref.read(apiClientProvider).cancelBookRequest(r.id))) {

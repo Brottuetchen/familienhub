@@ -10,6 +10,7 @@ import '../../widgets/common.dart';
 import '../main_shell.dart';
 import 'house_controls.dart';
 import 'today_widgets.dart';
+import '../../l10n/l10n.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -103,7 +104,7 @@ class TodayScreen extends ConsumerWidget {
 
   static String _greeting(String? name) {
     final h = DateTime.now().hour;
-    final hello = h < 11 ? 'Guten Morgen' : (h < 18 ? 'Hallo' : 'Guten Abend');
+    final hello = h < 11 ? l10n.goodMorning : (h < 18 ? l10n.hello : l10n.goodEvening);
     return name == null ? hello : '$hello, $name';
   }
 
@@ -126,7 +127,7 @@ class TodayScreen extends ConsumerWidget {
         'events': SectionCard(
           key: const Key('today-events'),
           icon: Icons.event,
-          title: compact ? 'Heute' : 'Termine',
+          title: compact ? l10n.today : l10n.tabCalendar,
           onTap: () => go(AppTab.calendar),
           child: compact
               ? EventsTile(
@@ -136,13 +137,13 @@ class TodayScreen extends ConsumerWidget {
                       : '${nextEvent.allDay || nextEvent.start == null ? '' : '${timeLabel(nextEvent.start!)} '}${nextEvent.title}',
                 )
               : data.events.isEmpty
-                  ? Text('Heute und morgen nichts im Kalender', style: muted)
+                  ? Text(l10n.nothingTodayTomorrow, style: muted)
                   : Column(
                       children: [
                         for (final e in data.events)
                           _Line(
                             leading: e.allDay || e.start == null
-                                ? 'ganztägig'
+                                ? l10n.allDayLower
                                 : '${dayLabel(e.start!) == 'Heute' ? '' : '${dayLabel(e.start!)} '}${timeLabel(e.start!)}',
                             text: e.title,
                           ),
@@ -153,27 +154,27 @@ class TodayScreen extends ConsumerWidget {
         'tasks': SectionCard(
           key: const Key('today-tasks'),
           icon: Icons.check_circle_outline,
-          title: 'Aufgaben',
+          title: l10n.tabTasks,
           onTap: () => go(AppTab.tasks),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (!tasksOk) Text('Aufgaben gerade nicht verfügbar', style: muted),
+            if (!tasksOk) Text(l10n.tasksUnavailable, style: muted),
             if (filter == null && data.tasks.error != null) Text(data.tasks.error!, style: muted),
-            if (tasksOk && tasks.isEmpty) Text(filter == null ? 'Nichts fällig 🎉' : 'Keine offenen Aufgaben', style: muted),
+            if (tasksOk && tasks.isEmpty) Text(filter == null ? l10n.nothingDue : l10n.noOpenTasks, style: muted),
             if (tasks.isNotEmpty) TaskChecklist(tasks: tasks, online: online),
           ]),
         ),
       'meals': SectionCard(
         key: const Key('today-meals'),
         icon: Icons.restaurant,
-        title: 'Essensplan',
+        title: l10n.mealPlan,
         onTap: () => go(AppTab.meals),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (data.meals.isEmpty) Text('Heute noch nichts geplant', style: muted),
+            if (data.meals.isEmpty) Text(l10n.nothingPlannedToday, style: muted),
             for (final m in data.meals)
               _Line(
-                leading: m.source == 'cookidoo' ? 'Cookidoo' : 'Heute',
+                leading: m.source == 'cookidoo' ? 'Cookidoo' : l10n.today,
                 leadingColor: m.source == 'cookidoo' ? AppColors.cookidoo : null,
                 text: m.title,
               ),
@@ -186,7 +187,7 @@ class TodayScreen extends ConsumerWidget {
         'shopping': SectionCard(
           key: const Key('today-shopping'),
           icon: Icons.shopping_cart,
-          title: compact ? 'Einkauf' : 'Einkaufsliste',
+          title: compact ? l10n.tabShopping : l10n.shoppingList,
           onTap: () => go(AppTab.shopping),
           child: ShoppingQuick(openCount: data.shoppingOpen, online: online),
         ),
@@ -194,7 +195,7 @@ class TodayScreen extends ConsumerWidget {
         'reminders': SectionCard(
           key: const Key('today-reminders'),
           icon: Icons.notifications_active_outlined,
-          title: 'Erinnerungen',
+          title: l10n.reminders,
           onTap: () => go(AppTab.more),
           child: Column(
             children: [

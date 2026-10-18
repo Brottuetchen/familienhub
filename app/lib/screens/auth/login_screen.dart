@@ -9,6 +9,7 @@ import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
 import '../invite/invite_widgets.dart';
 import '../setup/first_admin_form.dart';
+import '../../l10n/l10n.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   /// Hinweis von außen, z. B. „Sitzung abgelaufen“.
@@ -62,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _login() async {
     if (_user.text.trim().isEmpty || _password.text.isEmpty) {
-      setState(() => _error = 'Benutzername und Passwort eingeben');
+      setState(() => _error = l10n.enterUserPassword);
       return;
     }
     setState(() {
@@ -73,9 +74,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(sessionProvider.notifier).login(_user.text.trim(), _password.text);
     } on ApiException catch (e) {
       setState(() => _error = e.statusCode == 401
-          ? 'Benutzername oder Passwort falsch'
+          ? l10n.wrongCredentials
           : e.statusCode == 429
-              ? 'Zu viele Versuche, bitte kurz warten'
+              ? l10n.tooManyAttempts
               : e.message);
     } catch (e) {
       setState(() => _error = errorText(e));
@@ -96,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final ok = kIsWeb
           ? await launchUrl(Uri.parse(url), webOnlyWindowName: '_self')
           : await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      if (!ok) setState(() => _error = 'Browser konnte nicht geöffnet werden');
+      if (!ok) setState(() => _error = l10n.browserFailed);
     } catch (e) {
       setState(() => _error = errorText(e));
     } finally {
@@ -106,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _loginLabel() => _busy
       ? const HubLoader(size: 20)
-      : const Text('Anmelden');
+      : Text(l10n.signInVerb);
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Icon(Icons.family_restroom, size: 56, color: theme.colorScheme.primary),
                 const SizedBox(height: 12),
-                Text(_needsSetup ? 'Einrichten' : 'Anmelden', textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
+                Text(_needsSetup ? l10n.setUp : l10n.signInVerb, textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
                 if (_server != null)
                   Text(_server!, textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
                 if (widget.message != null) ...[
@@ -136,7 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   FilledButton.icon(
                     onPressed: _busy ? null : _loginOidc,
                     icon: const Icon(Icons.verified_user),
-                    label: const Text('Mit Authentik anmelden'),
+                    label: Text(l10n.signInAuthentik),
                   ),
                   const SizedBox(height: 20),
                   const Row(children: [
@@ -152,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   autocorrect: false,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.username],
-                  decoration: const InputDecoration(labelText: 'Benutzername'),
+                  decoration: InputDecoration(labelText: l10n.username),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -161,9 +162,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   autofillHints: const [AutofillHints.password],
                   onSubmitted: (_) => _login(),
                   decoration: InputDecoration(
-                    labelText: 'Passwort',
+                    labelText: l10n.password,
                     suffixIcon: IconButton(
-                      tooltip: _hidePassword ? 'Passwort zeigen' : 'Passwort verbergen',
+                      tooltip: _hidePassword ? l10n.showPassword : l10n.hidePassword,
                       icon: Icon(_hidePassword ? Icons.visibility : Icons.visibility_off),
                       onPressed: () => setState(() => _hidePassword = !_hidePassword),
                     ),
@@ -183,14 +184,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   key: const Key('login-accept-invite'),
                   onPressed: _busy ? null : () => Navigator.of(context)
                       .push(MaterialPageRoute<void>(builder: (_) => const AcceptInviteScreen())),
-                  child: const Text('Einladung einlösen'),
+                  child: Text(l10n.redeemInvite),
                 ),
                 ],
                 const SizedBox(height: 8),
                 if (!kIsWeb)
                   TextButton(
                     onPressed: _busy ? null : () => ref.read(sessionProvider.notifier).changeServer(),
-                    child: const Text('Anderen Server wählen'),
+                    child: Text(l10n.otherServer),
                   ),
               ],
             ),

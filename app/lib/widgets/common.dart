@@ -9,8 +9,9 @@ import '../models/pending.dart';
 import '../providers/providers.dart';
 import '../services/api_exceptions.dart';
 import 'hub_background.dart';
+import '../l10n/l10n.dart';
 
-final _time = DateFormat('HH:mm', 'de_DE');
+DateFormat get _time => localDate('HH:mm');
 
 /// Modale Momentaufnahmen dürfen den Zugriff ihres Lesemodells nicht überleben.
 class ProtectedReadModal extends ConsumerWidget {
@@ -46,7 +47,7 @@ class HubLoader extends StatelessWidget {
         child: ExpressiveLoadingIndicator(
           color: color ?? Theme.of(context).colorScheme.primary,
           constraints: BoxConstraints.tight(Size.square(size)),
-          semanticsLabel: 'Lädt',
+          semanticsLabel: l10n.loading,
         ),
       );
 }
@@ -96,15 +97,15 @@ class ReadStatusIcon extends ConsumerWidget {
     if (pending.isNotEmpty) return PendingChangesButton(changes: pending);
     if (r == null) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
-    final at = r.cachedAt == null ? '' : DateFormat('dd.MM. HH:mm', 'de_DE').format(r.cachedAt!.toLocal());
-    final stand = at.isEmpty ? '' : ', Stand $at';
+    final at = r.cachedAt == null ? '' : localDate(l10n.patternDayMonthTime).format(r.cachedAt!.toLocal());
+    final stand = at.isEmpty ? '' : l10n.asOf(at);
     final (IconData icon, Color color, String label) = r.offline
-        ? (Icons.cloud_off, scheme.error, 'Offline$stand')
+        ? (Icons.cloud_off, scheme.error, l10n.offlineStatus(stand))
         : r.refreshError != null
-            ? (Icons.sync_problem, scheme.error, 'Aktualisierung fehlgeschlagen$stand – ${errorText(r.refreshError!)}')
+            ? (Icons.sync_problem, scheme.error, l10n.refreshFailed(stand, errorText(r.refreshError!)))
             : r.refreshing
-                ? (Icons.sync, scheme.primary, 'Wird aktualisiert$stand')
-                : (Icons.cloud_done_outlined, scheme.onSurfaceVariant, 'Aktuell$stand');
+                ? (Icons.sync, scheme.primary, l10n.refreshing(stand))
+                : (Icons.cloud_done_outlined, scheme.onSurfaceVariant, l10n.upToDate(stand));
     return Tooltip(
       key: const Key('read-status'),
       message: label,
@@ -126,11 +127,11 @@ class OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stand = cachedAt == null ? '' : ', Stand ${_time.format(cachedAt!.toLocal())}';
+    final stand = cachedAt == null ? '' : l10n.asOf(_time.format(cachedAt!.toLocal()));
     return _Banner(
       icon: Icons.cloud_off,
       color: Theme.of(context).colorScheme.tertiaryContainer,
-      text: 'Offline$stand',
+      text: l10n.offlineStatus(stand),
     );
   }
 }
@@ -146,8 +147,8 @@ class SourceBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (status == SourceStatus.ok) return const SizedBox.shrink();
     final text = status == SourceStatus.notConfigured
-        ? '$source ist noch nicht eingerichtet'
-        : '$source gerade nicht erreichbar';
+        ? l10n.sourceNotConfigured(source)
+        : l10n.sourceUnavailable(source);
     return _Banner(
       icon: Icons.warning_amber_rounded,
       color: Theme.of(context).colorScheme.errorContainer,
@@ -213,7 +214,7 @@ class ErrorView extends StatelessWidget {
         Text(errorText(error), textAlign: TextAlign.center),
         const SizedBox(height: 16),
         Center(
-          child: FilledButton.tonal(onPressed: onRetry, child: const Text('Erneut versuchen')),
+          child: FilledButton.tonal(onPressed: onRetry, child: Text(l10n.retry)),
         ),
       ],
     );
@@ -339,7 +340,7 @@ class SectionCard extends StatelessWidget {
 String errorText(Object error) => switch (error) {
       ApiException e => e.message,
       OfflineException e => e.toString(),
-      _ => 'Unerwarteter Fehler: $error',
+      _ => l10n.unexpectedError(error),
     };
 
 void showError(BuildContext context, Object error) {
@@ -360,7 +361,7 @@ void showInfo(BuildContext context, String text) {
 Future<bool> runChange(BuildContext context, Future<bool> Function() action) async {
   var sent = true;
   final ok = await runAction(context, () async => sent = await action());
-  if (ok && !sent && context.mounted) showInfo(context, 'Ohne Netz gemerkt – wird gesendet, sobald der Hub erreichbar ist');
+  if (ok && !sent && context.mounted) showInfo(context, l10n.savedOffline);
   return ok;
 }
 
@@ -380,10 +381,10 @@ String dayLabel(DateTime day, {DateTime? now}) {
   final today = DateTime(n.year, n.month, n.day);
   final d = DateTime(day.year, day.month, day.day);
   final diff = d.difference(today).inDays;
-  if (diff == 0) return 'Heute';
-  if (diff == 1) return 'Morgen';
-  if (diff == -1) return 'Gestern';
-  return DateFormat('EEEE, d. MMMM', 'de_DE').format(d);
+  if (diff == 0) return l10n.today;
+  if (diff == 1) return l10n.tomorrow;
+  if (diff == -1) return l10n.yesterday;
+  return localDate('EEEE, d. MMMM').format(d);
 }
 
 String timeLabel(DateTime t) => _time.format(t.toLocal());
@@ -399,8 +400,8 @@ class PendingChangesButton extends StatelessWidget {
     final conflicts = changes.where((c) => c.isConflict).length;
     final scheme = Theme.of(context).colorScheme;
     final label = conflicts > 0
-        ? '$conflicts Änderung${conflicts == 1 ? '' : 'en'} abgelehnt'
-        : '${changes.length} Änderung${changes.length == 1 ? '' : 'en'} warten auf Netz';
+        ? l10n.pendingRejected(conflicts)
+        : l10n.pendingWaiting(changes.length);
     return IconButton(
       key: const Key('pending-changes'),
       tooltip: label,
@@ -429,19 +430,19 @@ class PendingChangesSheet extends ConsumerWidget {
     final api = ref.read(apiClientProvider);
     final theme = Theme.of(context);
     if (changes.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(24),
-        child: EmptyHint(icon: Icons.cloud_done_outlined, text: 'Alles gesendet'),
+        child: EmptyHint(icon: Icons.cloud_done_outlined, text: l10n.allSent),
       );
     }
     return ListView(shrinkWrap: true, padding: const EdgeInsets.only(bottom: 16), children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-        child: Text('Noch nicht gesendet', style: theme.textTheme.titleMedium),
+        child: Text(l10n.notSentYet, style: theme.textTheme.titleMedium),
       ),
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Text('Wird automatisch gesendet, sobald der Hub erreichbar ist. Beim Abmelden gehen diese Änderungen verloren.'),
+        child: Text(l10n.pendingExplain),
       ),
       for (final c in changes)
         ListTile(
@@ -449,9 +450,9 @@ class PendingChangesSheet extends ConsumerWidget {
           leading: Icon(c.isConflict ? Icons.error_outline : Icons.schedule,
               color: c.isConflict ? theme.colorScheme.error : null),
           title: Text(c.label),
-          subtitle: Text(c.isConflict ? 'Abgelehnt: ${c.conflict}' : 'gemerkt ${DateFormat('HH:mm', 'de_DE').format(c.created)}'),
+          subtitle: Text(c.isConflict ? l10n.rejectedReason(c.conflict ?? '') : l10n.savedAt(localDate('HH:mm').format(c.created))),
           trailing: IconButton(
-            tooltip: c.isConflict ? 'Ausblenden' : 'Verwerfen',
+            tooltip: c.isConflict ? l10n.hide : l10n.discard,
             icon: const Icon(Icons.delete_outline),
             onPressed: () => api.discardPending(c.id),
           ),
@@ -463,7 +464,7 @@ class PendingChangesSheet extends ConsumerWidget {
             key: const Key('pending-send-now'),
             onPressed: () => api.flushPending(),
             icon: const Icon(Icons.cloud_upload_outlined),
-            label: const Text('Jetzt senden'),
+            label: Text(l10n.sendNow),
           ),
         ),
     ]);
