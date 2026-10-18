@@ -79,7 +79,7 @@ void main() {
     await setScreenSize(tester, const Size(420, 1600));
     await tester.pumpWidget(appWith(b.api(), const CalendarScreen()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Woche'));
+    await tester.tap(find.byTooltip('Woche'));
     await tester.pumpAndSettle();
     expect(b.sent('GET', '/api/calendar/events').last.url.queryParameters['days'], '7');
     expect(find.textContaining('KW '), findsOneWidget);
@@ -110,4 +110,103 @@ void main() {
     expect(find.text('Kinderfest'), findsOneWidget);
     expect((await SharedPreferences.getInstance()).getStringList('calendar_hidden'), ['ics:ferien']);
   });
+
+  group('calendar colours and filters (server data as the app really gets it)', () {
+    // Persönlich has no colour of its own; the server used to stamp every such event with the same purple.
+    FakeBackend colourBackend() {
+      final b = FakeBackend();
+      addDefaults(b);
+      b.json('GET', '/api/calendar/calendars', [
+        {'id': 'hub', 'name': 'Familie', 'source': 'hub', 'writable': true, 'family': true},
+        {'id': 'caldav:priv', 'name': 'Persönlich', 'source': 'caldav', 'color': null},
+        {'id': 'ics:ferien', 'name': 'Feiertage', 'source': 'ics', 'color': '#81B29A'},
+      ]);
+      final now = DateTime.now();
+      b.json('GET', '/api/calendar/events', [
+        {'title': 'Kinderfest', 'start': '${d(now)}T15:00:00', 'end': '${d(now)}T16:00:00', 'calendar_id': 'hub', 'calendar': 'Familie'},
+        {'title': 'Arzt', 'start': '${d(now)}T09:00:00', 'end': '${d(now)}T10:00:00', 'calendar_id': 'caldav:priv',
+         'calendar': 'Persönlich', 'color': '#4f46e5', 'source': 'caldav'},
+        {'title': 'Feiertag', 'start': '${d(now)}T00:00:00', 'end': '${d(now)}T01:00:00', 'calendar_id': 'ics:ferien',
+         'color': '#4f46e5', 'source': 'ics'},
+      ]);
+      return b;
+    }
+
+    Color chipColor(WidgetTester tester, String id) =>
+        ((tester.widget<FilterChip>(find.byKey(Key('cal-filter-$id'))).avatar as CircleAvatar).backgroundColor)!;
+
+    Iterable<Color> dotColours(WidgetTester tester) {
+      final now = DateTime.now();
+      final cell = find.byKey(ValueKey('cal-day-${now.month}-${now.day}')).first;
+      return tester
+          .widgetList<Container>(find.descendant(of: cell, matching: find.byType(Container)))
+          .map((c) => c.decoration)
+          .whereType<BoxDecoration>()
+          .where((x) => x.shape == BoxShape.circle)
+          .map((x) => x.color!);
+    }
+
+    testWidgets('month dots use the chip colour of their calendar, not the server colour', (tester) async {
+      SharedPreferences.setMockInitialValues({'calendar_view': 'month'});
+      await setScreenSize(tester, const Size(420, 1400));
+      await tester.pumpWidget(appWith(colourBackend().api(), const CalendarScreen()));
+      await tester.pumpAndSettle();
+      final dots = dotColours(tester).toList();
+      expect(dots, containsAll([chipColor(tester, 'hub'), chipColor(tester, 'caldav:priv'), chipColor(tester, 'ics:ferien')]));
+      expect(dots, isNot(contains(const Color(0xFF4F46E5))));
+      expect(dots.toSet().length, 3);
+    });
+
+    testWidgets('a chip hides its calendar in month grid, day list, week and list view; stays hidden after a restart', (tester) async {
+      SharedPreferences.setMockInitialValues({'calendar_view': 'month'});
+      await setScreenSize(tester, const Size(420, 1400));
+      final b = colourBackend();
+      await tester.pumpWidget(appWith(b.api(), const CalendarScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsOneWidget);
+      expect(dotColours(tester), hasLength(3));
+
+      await tester.tap(find.byKey(const Key('cal-filter-caldav:priv')));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsNothing); // day list below the grid
+      expect(find.text('Kinderfest'), findsOneWidget);
+      expect(dotColours(tester), hasLength(2)); // grid dot gone
+      expect((await SharedPreferences.getInstance()).getStringList('calendar_hidden'), ['caldav:priv']);
+
+      await tester.tap(find.byTooltip('Woche'));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsNothing);
+      expect(find.text('Kinderfest'), findsOneWidget);
+      await tester.tap(find.byTooltip('Liste'));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsNothing);
+      expect(find.text('Kinderfest'), findsOneWidget);
+
+      // New screen instance reads the persisted choice.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(appWith(b.api(), const CalendarScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsNothing);
+      await tester.tap(find.byKey(const Key('cal-filter-caldav:priv')));
+      await tester.pumpAndSettle();
+      expect(find.text('Arzt'), findsOneWidget);
+    });
+  });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('view switch sits in the app bar and fits 360 dp (text scale $scale)', (tester) async {
+      await setScreenSize(tester, const Size(360, 740));
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(appWith(backend().api(), const CalendarScreen()));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final bar = tester.getRect(find.byType(AppBar));
+      expect(bar.contains(tester.getCenter(find.byKey(const Key('calendar-view')))), isTrue);
+      final switchRect = tester.getRect(find.byKey(const Key('calendar-view')));
+      expect(switchRect.right, lessThanOrEqualTo(360));
+      expect(switchRect.left, greaterThan(tester.getRect(find.text('Termine')).right - 1));
+      expect(tester.getCenter(find.byKey(const Key('read-status'))).dy, closeTo(switchRect.center.dy, 1.5));
+    });
+  }
 }

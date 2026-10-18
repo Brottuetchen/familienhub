@@ -44,8 +44,9 @@ final calendarColorsProvider = Provider.autoDispose<Map<String, Color>>((ref) {
   return {for (final (i, c) in cals.indexed) c.id: _hex(c.color) ?? _palette[i % _palette.length]};
 });
 
+/// The calendar's colour (same as its filter chip) wins over the event's own colour; the latter is only a fallback.
 Color eventColor(BuildContext context, CalendarEvent e, [Map<String, Color> colors = const {}]) =>
-    _hex(e.color) ?? colors[e.calendarId] ?? Theme.of(context).colorScheme.primary;
+    (e.calendarId == null ? null : colors[e.calendarId]) ?? _hex(e.color) ?? Theme.of(context).colorScheme.primary;
 
 const _hiddenKey = 'calendar_hidden';
 
@@ -95,6 +96,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   List<CalendarEvent> _visible(List<CalendarEvent> all) =>
       [for (final e in all) if (e.calendarId == null || !_hidden.contains(e.calendarId)) e];
 
+  Widget _viewSwitch() => SegmentedButton<CalendarView>(
+        key: const Key('calendar-view'),
+        showSelectedIcon: false,
+        style: const ButtonStyle(
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 8)),
+        ),
+        segments: [
+          ButtonSegment(value: CalendarView.list, icon: const Icon(Icons.view_agenda_outlined), tooltip: l10n.viewList),
+          ButtonSegment(value: CalendarView.week, icon: const Icon(Icons.view_week_outlined), tooltip: l10n.viewWeek),
+          ButtonSegment(value: CalendarView.month, icon: const Icon(Icons.calendar_view_month), tooltip: l10n.viewMonth),
+        ],
+        selected: {_view},
+        onSelectionChanged: (v) => _setView(v.first),
+      );
+
   Widget _filters() {
     final cals = ref.watch(calendarsProvider).valueOrNull ?? const <CalendarInfo>[];
     if (cals.length < 2) return const SizedBox.shrink();
@@ -108,8 +126,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             padding: const EdgeInsets.only(right: 6),
             child: FilterChip(
               key: Key('cal-filter-${c.id}'),
-              avatar: CircleAvatar(radius: 6, backgroundColor: colors[c.id]),
-              label: Text(c.name),
+              avatar: CircleAvatar(radius: 6, backgroundColor: colors[c.id]?.withValues(alpha: _hidden.contains(c.id) ? 0.35 : 1)),
+              label: Text(c.name, style: _hidden.contains(c.id)
+                  ? TextStyle(decoration: TextDecoration.lineThrough, color: Theme.of(context).colorScheme.onSurfaceVariant)
+                  : null),
               selected: !_hidden.contains(c.id),
               showCheckmark: false,
               onSelected: (_) => _toggle(c.id),
@@ -146,7 +166,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final listAsync = ref.watch(eventsProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.tabCalendar), actions: [ReadStatusIcon(result: listAsync.valueOrNull)]),
+      appBar: AppBar(
+        title: Text(l10n.tabCalendar),
+        // Icon-only segments (tooltips carry the words): fits 360 dp and large fonts in any language.
+        actions: [_viewSwitch(), ReadStatusIcon(result: listAsync.valueOrNull), const SizedBox(width: 4)],
+      ),
       floatingActionButton: !ref.watch(canEditProvider) ? null : FloatingActionButton.extended(
         onPressed: () async {
           await showModalBottomSheet<bool>(
@@ -161,20 +185,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         label: Text(l10n.event),
       ),
       body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: SegmentedButton<CalendarView>(
-            key: const Key('calendar-view'),
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(value: CalendarView.list, label: Text(l10n.viewList)),
-              ButtonSegment(value: CalendarView.week, label: Text(l10n.viewWeek)),
-              ButtonSegment(value: CalendarView.month, label: Text(l10n.viewMonth)),
-            ],
-            selected: {_view},
-            onSelectionChanged: (v) => _setView(v.first),
-          ),
-        ),
         _filters(),
         Expanded(child: HubRefresh(onRefresh: _refresh, child: switch (_view) {
           CalendarView.list => _list(listAsync),
