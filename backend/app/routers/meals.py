@@ -108,12 +108,24 @@ async def get_meals(
                 "days": [],
             }
 
+    # Mealie: household meal plan (with recipe id, image, time)
+    from app.plugins.registry import plugin_registry
+    from app.services.mealie import MealieUnavailable, mealie_service
+
+    mealie_meals_by_date = {}
+    if plugin_registry.serves("meal_planning", "mealie"):
+        try:
+            mealie_meals_by_date = await mealie_service.plan_between(today, end)
+        except MealieUnavailable as exc:
+            status, error = "unavailable", str(exc)  # other entries stay visible
+
     # Merge nach Tagen
     days_list = []
     current = today
     while current <= end:
         date_str = current.isoformat()
-        entries_for_day = hub_meals_by_date.get(date_str, []) + cookidoo_meals_by_date.get(date_str, [])
+        entries_for_day = (hub_meals_by_date.get(date_str, []) + cookidoo_meals_by_date.get(date_str, [])
+                           + mealie_meals_by_date.get(date_str, []))
         days_list.append({
             "date": date_str,
             "entries": entries_for_day,

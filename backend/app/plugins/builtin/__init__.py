@@ -5,6 +5,7 @@ from app.plugins.builtin.hub import HubCalendarPlugin, HubShoppingPlugin, HubTas
 from app.plugins.builtin.cookidoo import CookidooPlugin
 from app.plugins.builtin.homeassistant import HomeAssistantPlugin
 from app.plugins.builtin.ics import IcsPlugin
+from app.plugins.builtin.mealie import MealiePlugin
 from app.plugins.builtin.nextcloud import NextcloudPlugin
 from app.plugins.builtin.ntfy import NtfyPlugin
 from app.plugins.builtin.paperless import PaperlessPlugin
@@ -12,5 +13,5 @@ from app.plugins.builtin.seerr import SeerrPlugin
 from app.plugins.builtin.shelfarr import ShelfarrPlugin
 from app.plugins.builtin.weather import WeatherPlugin
 
-BUILTIN_PLUGINS = [NextcloudPlugin(), HomeAssistantPlugin(), ShelfarrPlugin(), WeatherPlugin(), CookidooPlugin(), HabiticaPlugin(), PaperlessPlugin(), SeerrPlugin(), NtfyPlugin(), IcsPlugin(),
+BUILTIN_PLUGINS = [NextcloudPlugin(), HomeAssistantPlugin(), ShelfarrPlugin(), WeatherPlugin(), CookidooPlugin(), HabiticaPlugin(), PaperlessPlugin(), SeerrPlugin(), NtfyPlugin(), IcsPlugin(), MealiePlugin(),
                    HubTasksPlugin(), HubShoppingPlugin(), HubCalendarPlugin()]
