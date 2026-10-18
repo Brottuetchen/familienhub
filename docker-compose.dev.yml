@@ -1,0 +1,9 @@
+# Override for building from source:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# The result is tagged familienhub:local, the base image for plugins (docs/plugins.md).
+services:
+  familienhub:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: familienhub:local
