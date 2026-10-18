@@ -1007,6 +1007,28 @@ class ApiClient {
   /// Nur Hub-Einträge; Cookidoo lehnt der Server mit 403 ab.
   Future<void> deleteMeal(int id) => _send('DELETE', '/api/meals/$id');
 
+  // ── Recipe book (hub) ──────────────────────────────────────────────────────
+
+  Future<List<HubRecipe>> recipes({String? query}) async {
+    final q = query == null || query.trim().isEmpty ? '' : '?q=${Uri.encodeQueryComponent(query.trim())}';
+    return _maps(await _send('GET', '/api/recipes$q')).map(HubRecipe.fromJson).toList();
+  }
+
+  Future<HubRecipe> recipe(int id) async => HubRecipe.fromJson(await _send('GET', '/api/recipes/$id') as Map<String, dynamic>);
+
+  Future<HubRecipe> saveRecipe(HubRecipe r) async => HubRecipe.fromJson(await (r.id == null
+      ? _send('POST', '/api/recipes', body: r.toJson())
+      : _send('PUT', '/api/recipes/${r.id}', body: r.toJson())) as Map<String, dynamic>);
+
+  Future<void> deleteRecipe(int id) => _send('DELETE', '/api/recipes/$id');
+
+  Future<void> planRecipe(DateTime day, int recipeId) => _send('POST', '/api/meals/plan',
+      body: {'date': _dateOnly(day), 'recipe_id': recipeId, 'meal_type': 'dinner'});
+
+  /// Ingredients onto the family's current shopping list; returns how many were added.
+  Future<int> recipeToShopping(int id) async =>
+      parseInt((await _send('POST', '/api/recipes/$id/shopping') as Map<String, dynamic>)['added']) ?? 0;
+
   /// Zutaten der geplanten Hub-Rezepte auf die Einkaufsliste. Liefert die Meldung des Servers.
   Future<String> mealsToShoppingList() async {
     final json = await _send('POST', '/api/meals/shopping-list') as Map<String, dynamic>;

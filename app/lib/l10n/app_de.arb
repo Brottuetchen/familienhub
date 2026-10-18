@@ -1115,5 +1115,54 @@
   "areaShoppingSingle": "Einkaufsliste (eine Quelle)",
   "areaCalendarMulti": "Termine (mehrere möglich)",
   "sourceNotSetUp": "Noch nicht eingerichtet",
-  "sourceKeepOne": "Mindestens eine Quelle muss bleiben"
+  "sourceKeepOne": "Mindestens eine Quelle muss bleiben",
+  "recipeBook": "Rezeptbuch",
+  "recipeFromBook": "Rezept aus dem Rezeptbuch",
+  "newRecipe": "Neues Rezept",
+  "editRecipe": "Rezept bearbeiten",
+  "searchRecipes": "Rezepte suchen",
+  "noRecipes": "Noch keine Rezepte. Mit + das erste anlegen.",
+  "noRecipesYet": "Noch keine Rezepte.",
+  "ingredients": "Zutaten",
+  "ingredientsHint": "Eine Zutat pro Zeile, z. B. „200 g Mehl“",
+  "preparation": "Zubereitung",
+  "servings": "Portionen",
+  "minutesTotal": "Minuten",
+  "recipeLink": "Link (optional)",
+  "planOnDay": "Auf einen Tag legen",
+  "plannedOn": "Für {day} eingeplant",
+  "@plannedOn": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "ingredientsToListCount": "{count, plural, =0{Keine Zutaten hinzugefügt} =1{1 Zutat auf der Einkaufsliste} other{{count} Zutaten auf der Einkaufsliste}}",
+  "@ingredientsToListCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteRecipeQuestion": "Rezept löschen?",
+  "deleteRecipeHint": "„{title}“ wird aus dem Rezeptbuch gelöscht.",
+  "@deleteRecipeHint": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "servingsMinutes": "{servings} Portionen · {minutes} Min.",
+  "@servingsMinutes": {
+    "placeholders": {
+      "servings": {},
+      "minutes": {}
+    }
+  },
+  "servingsOnly": "{servings} Portionen",
+  "@servingsOnly": {
+    "placeholders": {
+      "servings": {}
+    }
+  },
+  "openLink": "Link öffnen"
 }

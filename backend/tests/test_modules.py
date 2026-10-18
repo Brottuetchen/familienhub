@@ -25,10 +25,10 @@ def test_recipes_and_meal_plan(client, auth):
         all_entries.extend(day["entries"])
     assert any(e["title"] == "Spaghetti" and e["source"] == "hub" for e in all_entries)
 
-    # Einkaufsliste aus Plan (HA nicht konfiguriert -> nur gesammelt)
+    # Shopping list from the plan: without Home Assistant the ingredients go to the hub's own list (since 18.10.)
     sl = client.post("/api/meals/shopping-list?days=7", headers=auth).json()
     assert "500g Nudeln" in sl["ingredients"]
-    assert sl["added"] == 0  # Feld umbenannt von added_to_kitchenowl zu added (Paket 3)
+    assert sl["added"] >= 2
 
 
 def test_holidays_endpoint(client, auth):

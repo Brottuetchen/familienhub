@@ -190,3 +190,24 @@ async def recent_completions(_: User = Depends(get_current_user)):
         if len(out) >= 30:
             break
     return out
+
+
+async def add_to_shopping(items, user_id: Optional[int]) -> int:
+    """Adds items to the family's current shopping list (hub, Mealie or Home Assistant). Returns how many went in."""
+    items = [i.strip() for i in items if i and i.strip()]
+    source = _hub_source()
+    added = 0
+    if source:
+        for item in items:
+            try:
+                if await source.add(item, user_id):
+                    added += 1
+            except Exception as exc:  # noqa: BLE001 - one failed item must not stop the others
+                logger.warning("Artikel nicht hinzugefügt: %s", type(exc).__name__)
+        return added
+    ha = _ha()
+    if ha:
+        for item in items:
+            if await ha.add_todo_item(settings.ha_shopping_todo, item):
+                added += 1
+    return added

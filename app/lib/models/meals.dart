@@ -14,6 +14,9 @@ class MealEntry {
   final String? image;
   final String? url;
 
+  /// Recipe from the hub's recipe book (source hub), opens the recipe in the app.
+  final int? hubRecipeId;
+
   const MealEntry({
     this.id,
     this.uid,
@@ -25,6 +28,7 @@ class MealEntry {
     this.minutes,
     this.image,
     this.url,
+    this.hubRecipeId,
   });
 
   bool get isCookidoo => source == 'cookidoo';
@@ -40,7 +44,44 @@ class MealEntry {
         minutes: parseInt(json['minutes']),
         image: json['image'] as String?,
         url: json['url'] as String?,
+        hubRecipeId: (json['source'] ?? 'hub') == 'hub' ? parseInt(json['recipe_id']) : null,
       );
+}
+
+/// Recipe in the hub's recipe book (`/api/recipes`).
+class HubRecipe {
+  final int? id;
+  final String title;
+  final String? description;
+  final List<String> ingredients;
+  final String? instructions;
+  final int servings;
+  final int? prepMinutes;
+  final String? sourceUrl;
+
+  const HubRecipe({this.id, required this.title, this.description, this.ingredients = const [], this.instructions,
+      this.servings = 2, this.prepMinutes, this.sourceUrl});
+
+  factory HubRecipe.fromJson(Map<String, dynamic> j) => HubRecipe(
+        id: parseInt(j['id']),
+        title: (j['title'] as String?) ?? '',
+        description: j['description'] as String?,
+        ingredients: ((j['ingredients'] as List?) ?? const []).map((e) => '$e').toList(),
+        instructions: j['instructions'] as String?,
+        servings: parseInt(j['servings']) ?? 2,
+        prepMinutes: parseInt(j['prep_minutes']),
+        sourceUrl: j['source_url'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        if (description != null) 'description': description,
+        'ingredients': ingredients,
+        if (instructions != null) 'instructions': instructions,
+        'servings': servings,
+        if (prepMinutes != null) 'prep_minutes': prepMinutes,
+        if (sourceUrl != null) 'source_url': sourceUrl,
+      };
 }
 
 /// Treffer der Cookidoo-Rezeptsuche.

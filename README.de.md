@@ -30,7 +30,7 @@ Eine App für alle in der Familie, die **allein funktioniert und anbindet, was i
 | Aufgaben | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica, auch mehrere nebeneinander |
 | Einkaufsliste | ✓ | Home Assistant |
 | Kalender | ✓ Familienkalender | CalDAV, Kalender-Abos (ICS), alles zusammen |
-| Essensplan & Rezepte | ✓ | Cookidoo |
+| Essensplan & Rezepte | ✓ Wochenplan und Rezeptbuch | Cookidoo |
 | Dokumente · Bücher · Filme & Serien | – | Paperless-ngx · Shelfarr · Seerr |
 
 Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unter *Verwaltung → Quellen je Bereich*.
@@ -39,7 +39,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 - **Heute:** Begrüßung, Aufgaben (meine / für mich / Familie), Einkauf, Termine, Essensplan, Erinnerungen und Haus-Kacheln auf einem Bildschirm
 - **Aufgaben:** eigene, gemeinsame und zugewiesene Aufgaben, Haushaltsrotation; Nextcloud und Habitica nebeneinander
-- **Einkauf, Essen, Rezepte:** Einkaufsliste, Wochenplan, Cookidoo-Rezepte einplanen und Zutaten auf die Liste
+- **Einkauf, Essen, Rezepte:** Einkaufsliste, Wochenplan, Rezeptbuch im Hub (Zutaten, Zubereitung, Link); Rezepte auf Tage legen und Zutaten auf die Liste, auch von Cookidoo
 - **Erinnerungen:** zu einer Zeit, wiederkehrend oder *wenn ich heimkomme* (über Home Assistant), mit Knöpfen direkt in der Mitteilung
 - **Haus:** Zustände sowie Licht, Schalter und Szenen aus Home Assistant, ausgewählt vom Admin
 - **Dokumente und Medien:** Paperless durchsuchen, Fristen als Erinnerung; Filme, Serien und Bücher wünschen

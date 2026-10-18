@@ -30,7 +30,7 @@ One app for everyone in the family, which **works on its own and connects to wha
 | Tasks | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica – several side by side |
 | Shopping list | ✓ | Home Assistant to-do lists |
 | Calendar | ✓ family calendar | CalDAV, calendar subscriptions (ICS), all merged |
-| Meal plan & recipes | ✓ | Cookidoo (recipes), Home Assistant (Cookidoo plan) |
+| Meal plan & recipes | ✓ weekly plan and recipe book | Cookidoo (recipes), Home Assistant (Cookidoo plan) |
 | Reminders, notifications | ✓ | Home Assistant, Shelfarr, Paperless … as notification sources |
 | Documents · books · movies & shows | – | Paperless-ngx · Shelfarr · Seerr |
 
@@ -40,7 +40,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 - **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
 - **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side
-- **Shopping, meals, recipes:** shopping list, weekly meal plan, Cookidoo recipes onto the plan and ingredients onto the list
+- **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
 - **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
 - **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books
