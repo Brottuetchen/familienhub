@@ -40,7 +40,9 @@ Alle anderen der rund 130 Endpunkte verlangen eine Anmeldung.
 
 **Rollen (umgesetzt 18.10.):**
 - **Gast** (z. B. Babysitter): sieht Heute, Einkauf, Termine; darf Einkauf abhaken und hinzufügen und eigene Erinnerungen anlegen. Kein Löschen von Rezepten und Essensplan, keine Familienaufgaben ändern.
-- **Kind:** wie Gast, dazu eigene und ihm zugewiesene Aufgaben abhaken.
+- **Kind:** wie Gast, dazu Aufgaben und Familien-Erinnerungen abhaken, Einkauf löschen, Bücher und Filme wünschen, eigenes Nextcloud-/Habitica-Konto verbinden.
+- **Partner/Admin:** Aufgaben, Termine, Essensplan, Rezepte und Familien-Erinnerungen anlegen und ändern, Haus schalten (Admin zusätzlich Verwaltung).
+- Der Server prüft jede Aktion (`require_min_role`). Die App blendet zusätzlich aus, was die Rolle nicht darf.
 
 ## Melden
 Sicherheitslücken bitte nicht als öffentliches Issue, sondern über einen privaten GitHub-Sicherheitshinweis

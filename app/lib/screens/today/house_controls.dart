@@ -209,6 +209,7 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
     final readOnly = [for (final s in widget.states.items) if (s.entity == null || !controlled.contains(s.entity)) s];
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     final problem = actionFailed || _error != null;
+    final canEdit = ref.watch(canEditProvider);
 
     return SectionCard(
       key: const Key('today-house'),
@@ -234,7 +235,8 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
           final w = (box.maxWidth - gap * (cols - 1)) / cols;
           return Wrap(spacing: gap, runSpacing: gap, children: [
             for (final c in controls)
-              SizedBox(width: w, child: _controlTile(c, widget.online && !api.houseActionPendingFor(c.entityId))),
+              // Schalten erst ab Partner (Server: require_min_role), Kind und Gast sehen nur den Zustand
+              SizedBox(width: w, child: _controlTile(c, canEdit && widget.online && !api.houseActionPendingFor(c.entityId))),
             for (final s in readOnly)
               SizedBox(width: w, child: HouseTile(
                 key: ValueKey('house-${s.entity ?? s.name}'),

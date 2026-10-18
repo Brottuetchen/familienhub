@@ -61,3 +61,16 @@ def test_reading_stays_allowed(client, role):
     h = _login(client, role)
     for path in ("/api/today", "/api/shopping", "/api/reminders", "/api/meals?week=2026-W43"):
         assert client.get(path, headers=h).status_code != 403, path
+
+
+@pytest.mark.parametrize("role,allowed", [("guest", False), ("child", True), ("partner", True)])
+def test_family_reminder_complete_from_child(client, role, allowed):
+    """Abhaken einer Familien-Erinnerung ab Kind (wie Aufgaben und der Knopf in der Mitteilung), ändern nicht."""
+    family = client.post("/api/reminders", json={"title": "Müll raus", "for_family": True},
+                         headers=_login(client, "partner")).json()
+    h = _login(client, role)
+    done = client.patch(f"/api/reminders/{family['id']}", json={"completed": True}, headers=h)
+    assert (done.status_code == 200) is allowed, (role, done.status_code, done.text)
+    if role != "partner":
+        changed = client.patch(f"/api/reminders/{family['id']}", json={"title": "Anders"}, headers=h)
+        assert changed.status_code == 403, (role, changed.status_code)
