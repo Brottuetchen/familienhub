@@ -16,6 +16,7 @@ import '../models/documents.dart';
 import '../models/media.dart';
 import '../models/meals.dart';
 import '../models/modules.dart';
+import '../models/plugin_install.dart';
 import '../models/pending.dart';
 import '../models/shopping.dart';
 import '../models/themes.dart';
@@ -283,6 +284,7 @@ class ApiClient {
     String? accessToken,
     int? sessionEpoch,
     Map<String, String>? headers,
+    Duration? timeout,
   }) async {
     final uri = await _uri(path, baseUrl: baseUrl);
     final request = http.Request(method, uri);
@@ -304,7 +306,7 @@ class ApiClient {
       if (token != null) request.headers['Authorization'] = 'Bearer $token';
     }
     if (sessionEpoch != null && sessionEpoch != _epoch) throw UnauthorizedException();
-    final streamed = await _http.send(request).timeout(timeout);
+    final streamed = await _http.send(request).timeout(timeout ?? this.timeout);
     return http.Response.fromStream(streamed);
   }
 
@@ -319,6 +321,7 @@ class ApiClient {
     String? baseUrl,
     bool replayOn401 = true,
     Map<String, String>? headers,
+    Duration? timeout,
   }) async {
     final epoch = _epoch;
     final base = baseUrl ?? await store.baseUrl();
@@ -327,7 +330,7 @@ class ApiClient {
     http.Response res;
     try {
       res = await _raw(method, path, body: body, auth: auth, baseUrl: base, accessToken: token, sessionEpoch: epoch,
-          headers: headers);
+          headers: headers, timeout: timeout);
       if (epoch != _epoch) throw UnauthorizedException();
       if (res.statusCode == 401 && auth) {
         bool refreshed;
@@ -346,7 +349,8 @@ class ApiClient {
             throw ApiException(401, l10n.sessionRenewed);
           }
           if (epoch != _epoch) throw UnauthorizedException();
-          res = await _raw(method, path, body: body, auth: auth, baseUrl: base, sessionEpoch: epoch, headers: headers);
+          res = await _raw(method, path, body: body, auth: auth, baseUrl: base, sessionEpoch: epoch, headers: headers,
+              timeout: timeout);
           if (epoch != _epoch) throw UnauthorizedException();
         }
         if (res.statusCode == 401) {
@@ -1389,6 +1393,26 @@ class ApiClient {
       ThemeSpec.fromJson(await _send('POST', '/api/themes', body: {'url': url}) as Map<String, dynamic>);
 
   Future<void> deleteTheme(String id) => _send('DELETE', '/api/themes/${Uri.encodeComponent(id)}');
+
+  // ── Admin: install plugins from GitHub ─────────────────────────────────────
+
+  Future<PluginInstallState> pluginInstallState() async =>
+      PluginInstallState.fromJson(await _send('GET', '/api/plugins/installed') as Map<String, dynamic>);
+
+  /// Link → manifest, commit and settings form. Nothing is installed.
+  Future<PluginPreview> inspectPlugin(String url) async => PluginPreview.fromJson(
+      await _send('POST', '/api/plugins/inspect', body: {'url': url}, timeout: const Duration(seconds: 60))
+          as Map<String, dynamic>);
+
+  /// Downloads and installs exactly [sha]; takes a while (pip), hence the long timeout.
+  Future<PluginInstallResult> installPlugin(String url, String sha, Map<String, String> settings) async =>
+      PluginInstallResult.fromJson(await _send('POST', '/api/plugins/install',
+          body: {'url': url, 'sha': sha, 'settings': settings}, timeout: const Duration(minutes: 6)) as Map<String, dynamic>);
+
+  /// Returns whether the server needs a restart to forget the plugin completely.
+  Future<bool> removePlugin(String id) async =>
+      ((await _send('DELETE', '/api/plugins/${Uri.encodeComponent(id)}', timeout: const Duration(minutes: 1)))
+          as Map<String, dynamic>)['restart_required'] == true;
 
   // ── Admin: Plugins & Zugänge ───────────────────────────────────────────────
 

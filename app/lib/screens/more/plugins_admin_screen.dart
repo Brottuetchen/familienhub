@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/admin.dart';
+import '../../models/plugin_install.dart';
 import '../../models/themes.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
@@ -9,6 +10,7 @@ import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 import '../admin/admin_screen.dart' show adminOverviewProvider;
 import '../admin/ics_feeds_screen.dart';
+import 'plugin_install_screen.dart';
 
 String _status(AdminPlugin p) => p.disabled
     ? l10n.pluginDisabled
@@ -17,6 +19,7 @@ String _status(AdminPlugin p) => p.disabled
         : l10n.pluginNotConfigured;
 
 /// Nur Admins: Plugins an-/abschalten und ihre Zugänge pflegen (`/api/admin/settings`).
+/// Plugins können aus GitHub installiert, aktualisiert und entfernt werden (`/api/plugins/*`).
 class PluginsAdminScreen extends ConsumerWidget {
   const PluginsAdminScreen({super.key});
 
@@ -28,28 +31,92 @@ class PluginsAdminScreen extends ConsumerWidget {
     }
   }
 
+  void _refresh(WidgetRef ref) {
+    ref.invalidate(adminPluginsProvider);
+    ref.invalidate(installedPluginsProvider);
+    ref.invalidate(modulesProvider);
+  }
+
+  Future<void> _install(BuildContext context, WidgetRef ref, {String? url}) async {
+    await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => PluginInstallScreen(initialUrl: url)));
+    _refresh(ref);
+  }
+
+  Future<void> _remove(BuildContext context, WidgetRef ref, InstalledPluginInfo p) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.pluginRemoveQuestion),
+        content: Text(l10n.pluginRemoveHint(p.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          FilledButton(key: const Key('plugin-remove-confirm'), onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.remove)),
+        ],
+      ),
+    );
+    if (sure != true || !context.mounted) return;
+    var restart = false;
+    if (await runAction(context, () async => restart = await ref.read(apiClientProvider).removePlugin(p.id))) {
+      _refresh(ref);
+      if (context.mounted) showInfo(context, restart ? l10n.pluginRemovedRestart : l10n.pluginRemoved);
+    }
+  }
+
+  Widget _installedMenu(BuildContext context, WidgetRef ref, InstalledPluginInfo p) => PopupMenuButton<String>(
+        key: Key('plugin-menu-${p.id}'),
+        onSelected: (v) => v == 'update' ? _install(context, ref, url: p.repoUrl) : _remove(context, ref, p),
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'update', child: Text(l10n.pluginCheckUpdate)),
+          PopupMenuItem(value: 'remove', child: Text(l10n.remove)),
+        ],
+      );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminPluginsProvider);
+    final state = ref.watch(installedPluginsProvider).valueOrNull; // the list works without it (older servers)
+    final shown = {for (final p in async.valueOrNull ?? const <AdminPlugin>[]) p.id};
+    final broken = [for (final i in state?.items ?? const <InstalledPluginInfo>[]) if (!shown.contains(i.id)) i];
     return Scaffold(
       appBar: AppBar(title: Text(l10n.pluginsAccess)),
+      floatingActionButton: state != null && !state.enabled
+          ? null
+          : FloatingActionButton.extended(
+              key: const Key('plugin-install-button'),
+              onPressed: () => _install(context, ref),
+              icon: const Icon(Icons.download_outlined),
+              label: Text(l10n.pluginInstall),
+            ),
       body: HubRefresh(
-        onRefresh: () => ref.refresh(adminPluginsProvider.future),
+        onRefresh: () {
+          ref.invalidate(installedPluginsProvider);
+          return ref.refresh(adminPluginsProvider.future);
+        },
         child: async.when(
           loading: () => const Center(child: HubLoader()),
           error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(adminPluginsProvider)),
           data: (plugins) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 96),
             children: [
               for (final p in plugins)
                 ListTile(
                   key: Key('plugin-${p.id}'),
                   title: Text(p.name),
-                  subtitle: Text('${_status(p)} · ${p.description}', maxLines: 2, overflow: TextOverflow.ellipsis),
-                  trailing: Switch(
-                    value: !p.disabled,
-                    onChanged: (v) => _toggle(context, ref, p, v),
-                  ),
+                  subtitle: Text(
+                      [
+                        if (state?.byId(p.id) != null) l10n.pluginFromGithub(state!.byId(p.id)!.version),
+                        '${_status(p)} · ${p.description}',
+                      ].join('\n'),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Switch(
+                      value: !p.disabled,
+                      onChanged: (v) => _toggle(context, ref, p, v),
+                    ),
+                    if (state?.byId(p.id) != null) _installedMenu(context, ref, state!.byId(p.id)!),
+                  ]),
                   onTap: () async {
                     final saved = await Navigator.of(context).push<bool>(
                         MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
@@ -59,6 +126,26 @@ class PluginsAdminScreen extends ConsumerWidget {
                       ref.invalidate(modulesProvider);
                     }
                   },
+                ),
+              if (broken.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+                  child: Text(l10n.pluginsNotLoaded, style: Theme.of(context).textTheme.titleSmall),
+                ),
+                for (final i in broken)
+                  ListTile(
+                    key: Key('plugin-broken-${i.id}'),
+                    leading: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+                    title: Text(i.name),
+                    subtitle: Text(i.error ?? l10n.pluginFromGithub(i.version), maxLines: 4, overflow: TextOverflow.ellipsis),
+                    trailing: _installedMenu(context, ref, i),
+                  ),
+              ],
+              if (state != null && !state.enabled)
+                Padding(
+                  key: const Key('plugin-install-off'),
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l10n.pluginInstallOff, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
             ],
           ),

@@ -1302,5 +1302,86 @@
     "placeholders": {
       "place": {}
     }
-  }
+  },
+  "pluginInstall": "Plugin installieren",
+  "pluginLinkHint": "Füge den Link zum GitHub-Repository des Plugins ein. Der Hub liest die Beschreibung des Plugins (familienhub-plugin.json) und zeigt dir, was es braucht, bevor etwas installiert wird.",
+  "pluginCheck": "Prüfen",
+  "pluginBy": "von {author}",
+  "@pluginBy": {
+    "placeholders": {
+      "author": {}
+    }
+  },
+  "pluginVersionCommit": "Version {version} · Commit {sha}",
+  "@pluginVersionCommit": {
+    "placeholders": {
+      "version": {},
+      "sha": {}
+    }
+  },
+  "pluginRepository": "Repository",
+  "pluginHosts": "Verbindet sich mit",
+  "pluginNoHosts": "Keine Angabe",
+  "pluginProvides": "Stellt bereit",
+  "pluginWarningTitle": "Nur aus vertrauenswürdigen Quellen",
+  "pluginWarningBody": "Ein Plugin läuft im Hub mit vollem Zugriff: auf alle Daten, alle gespeicherten Zugangsdaten und das Netz, in dem der Hub steht. Installiere nur Plugins von Quellen, die du kennst und denen du vertraust.",
+  "pluginTrust": "Ich kenne die Quelle und vertraue ihr",
+  "pluginUpdateFrom": "Update von Version {oldVersion} auf {newVersion}",
+  "@pluginUpdateFrom": {
+    "placeholders": {
+      "oldVersion": {},
+      "newVersion": {}
+    }
+  },
+  "pluginSameCommit": "Dieser Stand ist schon installiert. Du kannst ihn neu installieren, das repariert fehlende Dateien.",
+  "pluginInstallOff": "Die Installation aus GitHub ist vom Betreiber abgeschaltet.",
+  "pluginSettingsHeading": "Einstellungen für {name}",
+  "@pluginSettingsHeading": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pluginExample": "z. B. {example}",
+  "@pluginExample": {
+    "placeholders": {
+      "example": {}
+    }
+  },
+  "pluginFieldRequired": "Pflichtfeld",
+  "pluginFieldUrl": "Bitte eine Adresse mit http:// oder https://",
+  "pluginFieldNumber": "Bitte eine Zahl",
+  "pluginInstalling": "Wird installiert. Das kann einige Minuten dauern.",
+  "pluginInstallNoAnswer": "Keine Antwort vom Server. Die Installation kann dort noch laufen: schau gleich in der Liste nach.",
+  "pluginInstalled": "{name} ist installiert",
+  "@pluginInstalled": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pluginUpdated": "{name} ist aktualisiert",
+  "@pluginUpdated": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pluginActiveNow": "Das Plugin ist aktiv.",
+  "pluginNeedsSetup": "Trage noch die fehlenden Einstellungen ein, dann ist es aktiv.",
+  "pluginRestartNeeded": "Damit alles vollständig greift, starte den Hub neu (docker compose restart familienhub).",
+  "pluginRemoveQuestion": "Plugin entfernen?",
+  "pluginRemoveHint": "„{name}“ und die gespeicherten Einstellungen werden gelöscht.",
+  "@pluginRemoveHint": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pluginRemoved": "Plugin entfernt",
+  "pluginRemovedRestart": "Plugin entfernt. Ein Neustart des Hubs räumt es ganz auf.",
+  "pluginCheckUpdate": "Auf Update prüfen",
+  "pluginFromGithub": "Aus GitHub installiert · {version}",
+  "@pluginFromGithub": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "pluginsNotLoaded": "Installiert, aber nicht geladen"
 }
