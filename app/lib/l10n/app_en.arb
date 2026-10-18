@@ -680,6 +680,7 @@
   "forYourChoice": "Set up for your choice",
   "moreServices": "More services (optional)",
   "notSetUpStaysInHub": "{services} not set up yet – the hub is used until then.",
+  "unusedNotSwitchedOff": "Unused services could not be switched off. You can do that under Administration → Plugins & access.",
   "viewList": "List",
   "viewWeek": "Week",
   "viewMonth": "Month",

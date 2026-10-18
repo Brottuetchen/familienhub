@@ -1230,6 +1230,7 @@
       "services": {}
     }
   },
+  "unusedNotSwitchedOff": "Nicht genutzte Dienste konnten nicht abgeschaltet werden. Das geht unter Verwaltung → Plugins & Zugänge.",
   "viewList": "Liste",
   "viewWeek": "Woche",
   "viewMonth": "Monat",

@@ -1389,6 +1389,13 @@ class ApiClient {
   Future<void> setSources(String area, List<String> selected) =>
       _send('PUT', '/api/admin/sources', body: {'area': area, 'selected': selected});
 
+  /// End of the setup wizard: the server switches off active plugins that were neither chosen as a source nor
+  /// set up (`keep`). Returns the ids it disabled.
+  Future<List<String>> finishSetup(List<String> keep) async {
+    final json = await _send('POST', '/api/admin/setup/finish', body: {'keep': keep}) as Map<String, dynamic>;
+    return [for (final id in (json['disabled'] as List? ?? const [])) '$id'];
+  }
+
   Future<List<AdminPlugin>> adminPlugins() async =>
       _maps(await _send('GET', '/api/admin/settings')).map(AdminPlugin.fromJson).toList();
 

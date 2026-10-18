@@ -282,6 +282,35 @@ async def put_sources(data: SourceChoice, db: Session = Depends(get_db), _: User
     return _sources_view()
 
 
+# --- Finishing the setup wizard ---
+
+# Zero-config defaults that the wizard has no step for: they stay on (Open-Meteo weather needs no key).
+WIZARD_KEEP = {"weather"}
+
+
+class WizardFinish(BaseModel):
+    keep: List[str] = Field(default_factory=list, max_length=50)  # plugins the admin set up in the services step
+
+
+@router.post("/setup/finish")
+async def finish_setup(data: WizardFinish, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    """End of the setup wizard: switch off active plugins the admin neither chose as a source nor set up.
+
+    Stays on: the hub's own sources, plugins that serve an area (the choice is saved by then), plugins listed
+    in ``keep`` and ``WIZARD_KEEP``. Plugins that are not set up are not touched (nothing to switch off, and a
+    later setup must not stay blocked). Reversible per plugin under Administration → Plugins & access.
+    """
+    from app.services import config_store
+
+    used = set(WIZARD_KEEP) | set(data.keep)
+    for area in AREAS:
+        used.update(p.id for p in plugin_registry.providers(area))
+    disabled = [p.id for p in plugin_registry.all() if p.active and not p.fallback and p.id not in used]
+    if disabled:
+        config_store.disable_plugins(db, disabled)
+    return {"disabled": disabled}
+
+
 # --- Calendar subscriptions (ICS) ---
 
 class IcsFeed(BaseModel):

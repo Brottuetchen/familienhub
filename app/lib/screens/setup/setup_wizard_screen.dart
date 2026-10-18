@@ -38,6 +38,9 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   bool _loaded = false;
   bool _saving = false;
 
+  /// Plugins whose settings were saved in the services step: they stay on when the wizard ends.
+  final Set<String> _setUp = {};
+
   @override
   void initState() {
     super.initState();
@@ -73,7 +76,8 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     }
     if (_step == 2 && !await _applySources()) return;
     if (_step == steps.length - 1) {
-      _finish();
+      await _applyResult();
+      if (mounted) _finish();
       return;
     }
     setState(() => _step++);
@@ -106,6 +110,22 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     } catch (e) {
       if (mounted) showError(context, e);
       return false;
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Last step of the first-run wizard: plugins that were not chosen and not set up are switched off (reversible
+  /// under Administration → Plugins & access). Fails softly: the hub works either way. Not on re-runs, which must
+  /// not switch off what the admin set up earlier.
+  Future<void> _applyResult() async {
+    if (widget.standalone) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(apiClientProvider).finishSetup(_setUp.toList());
+      ref.invalidate(adminPluginsProvider);
+    } catch (_) {
+      if (mounted) showInfo(context, l10n.unusedNotSwitchedOff);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -155,7 +175,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
           child: switch (_step) {
             0 => _basics(),
             1 => _AreasStep(wanted: _wanted, onChanged: (w) => setState(() => _wanted = w)),
-            2 => _ServicesStep(wanted: {for (final ids in (_wanted ?? const <String, Set<String>>{}).values) ...ids}),
+            2 => _ServicesStep(onSetUp: _setUp.add, wanted: {for (final ids in (_wanted ?? const <String, Set<String>>{}).values) ...ids}),
             3 => const _FamilyStep(),
             _ => const _DoneStep(),
           },
@@ -286,7 +306,8 @@ class _AreasStep extends ConsumerWidget {
 /// Services: the ones chosen in "areas" first, then the optional ones; "set up" opens their settings.
 class _ServicesStep extends ConsumerWidget {
   final Set<String> wanted;
-  const _ServicesStep({this.wanted = const {}});
+  final void Function(String id)? onSetUp;
+  const _ServicesStep({this.wanted = const {}, this.onSetUp});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -323,6 +344,7 @@ class _ServicesStep extends ConsumerWidget {
             onTap: () async {
               final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
               if (saved == true) {
+                onSetUp?.call(p.id);
                 ref.invalidate(adminPluginsProvider);
                 ref.invalidate(adminSourcesProvider);
               }
