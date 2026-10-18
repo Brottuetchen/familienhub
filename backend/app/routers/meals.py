@@ -59,16 +59,18 @@ async def get_meals(
         .order_by(MealPlanEntry.date.asc())
         .all()
     )
-    recipes = {r.id: r.title for r in db.query(Recipe).all()}
+    recipes = {r.id: r for r in db.query(Recipe).all()}
     hub_meals_by_date = {}
     for e in entries:
         if e.date not in hub_meals_by_date:
             hub_meals_by_date[e.date] = []
+        recipe = recipes.get(e.recipe_id)
         hub_meals_by_date[e.date].append({
             "id": e.id,
             "meal_type": e.meal_type,
             "recipe_id": e.recipe_id,
-            "title": e.custom_title or recipes.get(e.recipe_id, "Mahlzeit"),
+            "title": e.custom_title or (recipe.title if recipe else "Mahlzeit"),
+            "minutes": recipe.prep_minutes if recipe else None,
             "source": "hub",
         })
 
@@ -155,16 +157,18 @@ async def get_plan(
         .order_by(MealPlanEntry.date.asc())
         .all()
     )
-    recipes = {r.id: r.title for r in db.query(Recipe).all()}
+    recipes = {r.id: r for r in db.query(Recipe).all()}
     hub_meals_by_date = {}
     for e in entries:
         if e.date not in hub_meals_by_date:
             hub_meals_by_date[e.date] = []
+        recipe = recipes.get(e.recipe_id)
         hub_meals_by_date[e.date].append({
             "id": e.id,
             "meal_type": e.meal_type,
             "recipe_id": e.recipe_id,
-            "title": e.custom_title or recipes.get(e.recipe_id, "Mahlzeit"),
+            "title": e.custom_title or (recipe.title if recipe else "Mahlzeit"),
+            "minutes": recipe.prep_minutes if recipe else None,
             "source": "hub",
         })
 
@@ -332,23 +336,17 @@ def _collect_ingredients(db: Session, days: int) -> List[str]:
 
 @router.post("/shopping-list")
 async def generate_shopping_list(days: int = 7, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
-    """Sammelt Zutaten aus dem Wochenplan und legt sie in HA shopping todo."""
-    from app.config import settings
-    
+    """Collects the ingredients of the planned hub recipes and puts them on the current shopping list."""
     ingredients = _collect_ingredients(db, days)
     if not ingredients:
         return {"ingredients": [], "added": 0, "message": "Keine Rezepte im Zeitraum geplant."}
 
-    added = 0
-    ha = registry.get("homeassistant")
-    if ha and ha.is_configured:
-        for ing in ingredients:
-            if await ha.add_todo_item(settings.ha_shopping_todo, ing):
-                added += 1
+    from app.routers.shopping import add_to_shopping
 
+    added = await add_to_shopping(ingredients, current_user.id)  # hub list, Mealie or Home Assistant
     return {
         "ingredients": ingredients,
         "added": added,
         "message": f"{len(ingredients)} Zutaten gesammelt"
-        + (f", {added} zur Einkaufsliste hinzugefügt." if added else " (HA nicht konfiguriert)."),
+        + (f", {added} zur Einkaufsliste hinzugefügt." if added else " (keine Einkaufsliste eingerichtet)."),
     }

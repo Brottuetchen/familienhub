@@ -7,6 +7,7 @@ import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import 'cookidoo_search_screen.dart';
+import 'recipes_screen.dart';
 import '../../l10n/l10n.dart';
 
 class MealsScreen extends ConsumerStatefulWidget {
@@ -29,8 +30,13 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
 
   bool get _planning => ref.read(appModulesProvider).has('meal_planning');
 
+  Future<void> _openRecipe(int id) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipeId: id)));
+    if (mounted) await _reload();
+  }
+
   Future<void> _addMeal(DateTime day) async {
-    if (_planning) {
+    {
       final choice = await showModalBottomSheet<String>(
         context: context,
         builder: (ctx) => SafeArea(
@@ -43,15 +49,28 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                 onTap: () => Navigator.pop(ctx, 'own'),
               ),
               ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
-                title: Text(l10n.recipeFromCookidoo),
-                onTap: () => Navigator.pop(ctx, 'cookidoo'),
+                key: const Key('meal-from-book'),
+                leading: const Icon(Icons.restaurant_menu),
+                title: Text(l10n.recipeFromBook),
+                onTap: () => Navigator.pop(ctx, 'book'),
               ),
+              if (_planning)
+                ListTile(
+                  leading: const Icon(Icons.menu_book_outlined),
+                  title: Text(l10n.recipeFromCookidoo),
+                  onTap: () => Navigator.pop(ctx, 'cookidoo'),
+                ),
             ],
           ),
         ),
       );
       if (choice == null || !mounted) return;
+      if (choice == 'book') {
+        final planned = await Navigator.push<bool>(
+            context, MaterialPageRoute(builder: (_) => RecipesScreen(pickFor: day)));
+        if (planned == true && mounted) await _reload();
+        return;
+      }
       if (choice == 'cookidoo') {
         final planned = await Navigator.push<bool>(
             context, MaterialPageRoute(builder: (_) => CookidooSearchScreen(day: day)));
@@ -148,6 +167,12 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
         title: Text(l10n.tabMeals),
         actions: [
           ReadStatusIcon(result: async.valueOrNull),
+          IconButton(
+            key: const Key('meals-recipe-book'),
+            tooltip: l10n.recipeBook,
+            icon: const Icon(Icons.restaurant_menu),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RecipesScreen())),
+          ),
           if (ref.watch(canEditProvider))
             IconButton(
               tooltip: l10n.ingredientsNext7Days,
@@ -191,6 +216,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                       onAdd: () => _addMeal(day.date),
                       onDelete: _deleteMeal,
                       onCookidoo: (entry, action) => _cookidooAction(day.date, entry, action),
+                      onOpenRecipe: _openRecipe,
                     ),
                   ],
                 ),
@@ -212,6 +238,7 @@ class _DayTile extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<MealEntry> onDelete;
   final void Function(MealEntry entry, String action) onCookidoo;
+  final ValueChanged<int>? onOpenRecipe;
   const _DayTile({
     required this.day,
     required this.planning,
@@ -219,6 +246,7 @@ class _DayTile extends StatelessWidget {
     required this.onAdd,
     required this.onDelete,
     required this.onCookidoo,
+    this.onOpenRecipe,
   });
 
   Widget? _subtitle(MealEntry e) {
@@ -302,6 +330,7 @@ class _DayTile extends StatelessWidget {
                   title: Text(e.title),
                   subtitle: _subtitle(e),
                   trailing: _trailing(e),
+                  onTap: e.hubRecipeId != null && onOpenRecipe != null ? () => onOpenRecipe!(e.hubRecipeId!) : null,
                 ),
             ],
           ),

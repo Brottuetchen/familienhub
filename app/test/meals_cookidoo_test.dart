@@ -102,7 +102,11 @@ void main() {
     expect(find.byTooltip('Rezept-Aktionen'), findsNothing);
     await tester.tap(find.byTooltip('Essen eintragen').first);
     await tester.pumpAndSettle();
+    // Since the recipe book (18.10.): own dish or recipe book, but no Cookidoo option
     expect(find.text('Rezept aus Cookidoo'), findsNothing);
-    expect(find.byType(AlertDialog), findsOneWidget); // direkt der bisherige Dialog
+    expect(find.text('Rezept aus dem Rezeptbuch'), findsOneWidget);
+    await tester.tap(find.text('Eigenes Gericht'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget); // the existing dialog
   });
 }
