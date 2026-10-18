@@ -23,6 +23,14 @@ logger = get_logger("service.config_store")
 _extra: Dict[str, str] = {}
 
 
+# Keys that were saved or applied from the database and map to a core setting (told apart from built-in defaults)
+_saved: set = set()
+
+
+def was_saved(key: str) -> bool:
+    return key.upper() in _saved
+
+
 def get_override(key: str) -> Optional[str]:
     return _extra.get(key.upper())
 
@@ -51,6 +59,8 @@ def _apply(key: str, value: str) -> None:
     if hasattr(settings, attr):
         try:
             setattr(settings, attr, value)
+            if value not in (None, ""):
+                _saved.add(key.upper())
             return
         except Exception as exc:  # noqa: BLE001
             logger.warning("override %s nicht anwendbar: %s", key, exc)

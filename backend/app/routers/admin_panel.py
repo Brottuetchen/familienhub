@@ -55,7 +55,8 @@ async def _health(plugin) -> Dict[str, Any]:
         return {"status": "off", "message": "Aus" if plugin.is_configured() else "Nicht eingerichtet"}
     url = plugin.health_url()
     if not url:
-        return {"status": "unknown", "message": "Keine Prüfung möglich"}
+        own = await plugin.check()
+        return own or {"status": "unknown", "message": "Keine Prüfung möglich"}
     hit = _health_cache.get(plugin.id)
     if hit and hit[0] == url and time.monotonic() - hit[1] < HEALTH_TTL:
         return hit[2]

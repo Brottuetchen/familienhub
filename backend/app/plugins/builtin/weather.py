@@ -20,4 +20,22 @@ class WeatherPlugin(Plugin):
         )
 
     def is_configured(self) -> bool:
-        return bool(settings.weather_enabled)
+        """Set up once coordinates were saved (or set in the environment); without them the built-in
+        default location is used as long as WEATHER_ENABLED is not switched off."""
+        return self._explicit() or bool(settings.weather_enabled)
+
+    @staticmethod
+    def _explicit() -> bool:
+        from app.services.config_store import was_saved
+
+        if all(was_saved(k) for k in ("WEATHER_LATITUDE", "WEATHER_LONGITUDE")):
+            return True
+        fields = type(settings).model_fields
+        return (settings.weather_latitude != fields["weather_latitude"].default
+                or settings.weather_longitude != fields["weather_longitude"].default)
+
+    async def check(self):
+        if not self.active:
+            return None
+        place = settings.weather_location_name
+        return {"status": "ok", "message": f"Eingerichtet ({place})" if self._explicit() else "Eingerichtet (Standardort)"}

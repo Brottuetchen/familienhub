@@ -13,6 +13,9 @@ from app.models.user import User
 def clean_overrides(monkeypatch):
     monkeypatch.setattr(settings, "plugins_disabled", "")
     monkeypatch.setattr(settings, "weather_enabled", True)
+    for attr in ("tasks_sources", "calendar_sources", "shopping_source"):  # restore what _apply overwrites
+        if hasattr(settings, attr):
+            monkeypatch.setattr(settings, attr, getattr(settings, attr))
     yield
     with SessionLocal() as db:
         for key in ("PLUGINS_DISABLED", "TASKS_SOURCES", "CALENDAR_SOURCES", "SHOPPING_SOURCE"):
