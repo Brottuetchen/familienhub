@@ -1,0 +1,26 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version and platform
+      description: "More → Send feedback shows both, e.g. 1.0.0+440 · android"
+  - type: input
+    id: server
+    attributes:
+      label: Server version
+      description: Administration → overview
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log or screenshot
+      description: Administration → Log. Please remove personal data.

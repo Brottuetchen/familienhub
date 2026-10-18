@@ -90,10 +90,11 @@ class AppearanceScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: SegmentedButton<ThemeMode>(
                 key: const Key('theme-mode'),
+                showSelectedIcon: false, // labels only: "Automatic" fits on one line at phone width
                 segments: [
-                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.modeAuto), icon: Icon(Icons.brightness_auto_outlined)),
-                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.modeLight), icon: Icon(Icons.light_mode_outlined)),
-                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.modeDark), icon: Icon(Icons.dark_mode_outlined)),
+                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.modeAuto)),
+                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.modeLight)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.modeDark)),
                 ],
                 selected: {ref.watch(themeModeProvider)},
                 onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).select(s.first),
@@ -103,8 +104,9 @@ class AppearanceScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: SegmentedButton<String>(
                 key: const Key('app-language'),
+                showSelectedIcon: false, // labels only: "Automatic" fits on one line at phone width
                 segments: [
-                  ButtonSegment(value: 'system', label: Text(l10n.languageSystem), icon: const Icon(Icons.translate)),
+                  ButtonSegment(value: 'system', label: Text(l10n.languageSystem)),
                   for (final e in appLanguages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
                 ],
                 selected: {ref.watch(languageChoiceProvider)},

@@ -31,7 +31,7 @@ Modell:
   - So bleibt die API sauber und Frontend muss nicht mit deaktiviertem Code rechnen.
 
 - **Plex-Konnektor entfernt:**
-  - Grund: Laut `docs/ENTSCHEIDUNGEN.md` ist Plex nicht mehr im Einsatz (vgl. „Medien: Finanzen, Pakete, Inventar (Homebox), Dokumente (Paperless). Der Code bleibt, die Module sind per Feature-Flag aus. **Plex gibt es nicht mehr.**").
+  - Grund: Laut `docs/internal/ENTSCHEIDUNGEN.md` ist Plex nicht mehr im Einsatz (vgl. „Medien: Finanzen, Pakete, Inventar (Homebox), Dokumente (Paperless). Der Code bleibt, die Module sind per Feature-Flag aus. **Plex gibt es nicht mehr.**").
   - Gelöschte Dateien: `plex_connector.py`, Imports aus `registry.py`, Endpunkte `/media/streams` und `/media/recent` aus `media.py`.
   - Plex-Optionen in `config.py` entfernt; Konfigurationsplatzhalter in `.env.example` kommentiert.
 
@@ -99,7 +99,7 @@ Der Code bleibt, die Module sind per Feature-Flag aus. **Plex gibt es nicht mehr
 - Admin/Partner dürfen ausgewählte Lampen/Schalter an- und ausschalten, nachgewiesen dimmbare Lampen dimmen und explizit freigegebene Skripte/Szenen aktivieren. Kind/Gast bleiben lesend. Keine beliebigen HA-Services, Domains, Nutzdaten oder Skriptparameter.
 - Flüchtige, authentifizierte Netzabfragen liefern Steuerfähigkeiten; weder persistierter Cache noch gehaltene Heute-Daten erteilen Freigaben. Serverseitig werden Plugin, Konfiguration, exakte Auswahl und aktueller Zustand/Fähigkeit vor jedem Serviceaufruf erneut geprüft. Unbekannt/nicht verfügbar blockiert die betroffene Aktion.
 - Für POST präzisiert diese Entscheidung BUILD_PROMPT B2: HA-Ausfall oder unbestätigte Geräteaktion liefert HTTP 409 statt stillen HTTP-200-Erfolg. Listen behalten ihr Statusformat. Annahme einer Aktion ist kein Nachweis einer physischen Zustandsänderung.
-- Keine Offline-Warteschlange und keine automatische Wiederholung einer Geräteaktion, auch nicht nach Token-Refresh oder Redirect; mehrdeutige Timeouts bleiben sichtbare Fehler. Pending-Sperre übersteht konkurrierende Leseaktualisierung. Details und Grenzen: `docs/PLUGINS.md`, Abschnitt #45.
+- Keine Offline-Warteschlange und keine automatische Wiederholung einer Geräteaktion, auch nicht nach Token-Refresh oder Redirect; mehrdeutige Timeouts bleiben sichtbare Fehler. Pending-Sperre übersteht konkurrierende Leseaktualisierung. Details und Grenzen: `docs/internal/PLUGINS.md`, Abschnitt #45.
 - **Revision 2026-10-17 (#66, Nutzerwunsch „so reibungslos wie in Home Assistant“):** Die Kachel zeigt den erwarteten Zustand sofort (wie das HA-Frontend). Bestätigt wird über den Zustand, den HA in der Service-Antwort meldet, sonst durch Nachlesen; ohne Bestätigung binnen 4 s fällt die Kachel auf den gelesenen Zustand zurück. Die Pending-Sperre gilt **pro Gerät**, verschiedene Geräte schalten parallel. Die Karte liest im Vordergrund alle 5 s nach. Unverändert: genau ein POST je Aktion, nie automatisch wiederholt, unklarer Ausgang bleibt sichtbar bis zur Bestätigung.
 
 ## Offline-Warteschlange (#32)
@@ -124,4 +124,4 @@ Das gilt für alle künftigen Integrationen, nicht nur für Aufgaben oder einzel
 - Ältere Aussagen dieses Dokuments zu lokalen Fachmodulen, globalem „ersten Provider“ oder zentraler Habitica-Belohnung sind Bestandsbeschreibung, **keine Ausnahme von diesem Zielbild**. Bestehende Fachfeatures außerhalb #47 bleiben erhalten; deren Bereinigung wird separat entschieden (u. a. eigene Rezepte/Essensplanung und Erinnerungen).
 - Kein vorgezogener Designumbau: Das vom Nutzer angekündigte Designpapier und eine spätere App-Bereinigung bleiben separate Arbeit. #47 ergänzt nur funktional notwendige Anbieter-/Konto-/Auswahl- und native Aktionsbedienung im vorhandenen Design.
 
-Verträge, Single-Writer-Cutover und bewusste Grenzen: `docs/AUFGABENPROVIDER.md`.
+Verträge, Single-Writer-Cutover und bewusste Grenzen: `docs/internal/AUFGABENPROVIDER.md`.

@@ -22,7 +22,7 @@
 - Erfolg melden ohne kopierte Befehlsausgabe. Eine Formulierung wie „alle Tests grün“ ist nur mit der Ausgabe
   `N passed` ohne `failed`/`error` zulässig.
 - **Bestehende Tests ändern oder löschen**, außer der PR nennt unter „Geänderte Tests“ jeden betroffenen Test mit Grund und
-  mit dem Verweis auf die Entscheidung in `docs/ENTSCHEIDUNGEN.md`, die ihn überholt (Beispiel: Plex entfernt).
+  mit dem Verweis auf die Entscheidung in `docs/internal/ENTSCHEIDUNGEN.md`, die ihn überholt (Beispiel: Plex entfernt).
 - **Mocks, die das erwartete Ergebnis vorgeben.** Ein Mock simuliert das Fachsystem (HTTP-Antworten, CalDAV-Objekte).
   Er beantwortet nie die Frage, die der Test prüft. Beispiel für Verbotenes: `connector.is_enabled = enabled`.
 - **Fehler schlucken:** `except Exception: return []`, `except: pass`, `contextlib.suppress(Exception)`.
