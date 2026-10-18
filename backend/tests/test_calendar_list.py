@@ -1,5 +1,9 @@
 """Calendar list for colours, filters and choosing the target of a new event."""
 
+from datetime import datetime
+
+import pytest
+
 from app.core.crypto import encrypt
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
@@ -198,3 +202,102 @@ def test_caldav_events_have_no_invented_colour_and_stable_ids():
     assert _component_to_event(comp, "Persönlich", None)["color"] is None
     assert _component_to_event(comp, "Familie", "#81B29A")["color"] == "#81B29A"
     assert calendar_id("https://dav.example.test/c/a/") == calendar_id("https://dav.example.test/c/a")
+
+
+# --- Calendar colours from the server (#47) ---
+
+COLOR_TAG = "{http://apple.com/ns/ical/}calendar-color"
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("#BC5C91", "#BC5C91"), ("#bc5c91ff", "#BC5C91"), ("#BC5C9180", "#BC5C91"), ("  #BC5C91\n", "#BC5C91"),
+    ("#abc", "#AABBCC"), ("BC5C91", "#BC5C91"),
+    (None, None), ("None", None), ("", None), ("red", None), ("#12345", None), ("#GGGGGG", None), (123, None),
+])
+def test_normalize_color(raw, expected):
+    from app.connectors.caldav_connector import normalize_color
+
+    assert normalize_color(raw) == expected
+
+
+class _ColorCalendar:
+    """Fake CalDAV calendar: answers PROPFIND for the requested properties like the caldav library does."""
+
+    def __init__(self, url, name, props, components=("VEVENT",), raises=False):
+        self.url, self.name, self._props, self._components, self._raises = url, name, props, components, raises
+
+    def get_properties(self, props=None, **kw):
+        if self._raises:
+            raise RuntimeError("PROPFIND failed")
+        assert [p.tag for p in props] == [COLOR_TAG]  # the colour must actually be requested
+        return dict(self._props)
+
+    def get_supported_components(self):
+        return list(self._components)
+
+    def search(self, **kw):
+        from icalendar import Calendar, Event
+
+        class Ev:
+            icalendar_component = None
+
+        cal = Calendar()
+        ev = Event()
+        ev.add("summary", "Test")
+        ev.add("uid", "u1")
+        ev.add("dtstart", datetime(2099, 1, 1, 10, 0))
+        cal.add_component(ev)
+        e = Ev()
+        e.icalendar_component = ev
+        return [e]
+
+
+def _color_fixture(monkeypatch):
+    import caldav
+
+    cals = [
+        _ColorCalendar("https://dav.example.test/c/a/", "A", {COLOR_TAG: "#BC5C91FF"}),
+        _ColorCalendar("https://dav.example.test/c/b/", "B", {COLOR_TAG: None}),
+        _ColorCalendar("https://dav.example.test/c/c/", "C", {COLOR_TAG: "garbage"}),
+        _ColorCalendar("https://dav.example.test/c/d/", "D", {}),
+        _ColorCalendar("https://dav.example.test/c/e/", "E", {}, raises=True),
+        _ColorCalendar("https://dav.example.test/c/f/", "F", {"{http://apple.com/ns/ical/}calendar-color": " #0a0 "}),
+    ]
+
+    class FakeClient:
+        def __init__(self, *a, **kw):
+            pass
+
+        def principal(self):
+            return type("P", (), {"calendars": lambda self: cals})()
+
+    monkeypatch.setattr(caldav, "DAVClient", FakeClient)
+
+
+def test_list_calendars_reads_and_normalises_server_colour(monkeypatch):
+    from app.connectors.caldav_connector import CalDAVConnector
+
+    _color_fixture(monkeypatch)
+    conn = CalDAVConnector(url="https://dav.example.test/dav", username="a", password="pw")
+    colors = {c["name"]: c["color"] for c in conn._list_calendars_sync()}
+    assert colors == {"A": "#BC5C91", "B": None, "C": None, "D": None, "E": None, "F": "#00AA00"}
+
+
+def test_event_fetch_carries_normalised_colour(monkeypatch):
+    from datetime import timedelta
+
+    from app.connectors.caldav_connector import CalDAVConnector
+
+    _color_fixture(monkeypatch)
+    conn = CalDAVConnector(url="https://dav.example.test/dav", username="a", password="pw")
+    events = conn._fetch_events_sync(datetime(2098, 12, 31), datetime(2098, 12, 31) + timedelta(days=3))
+    colors = {e["calendar"]: e["color"] for e in events}
+    assert colors["A"] == "#BC5C91" and colors["F"] == "#00AA00"
+    assert all(colors[n] is None for n in "BCDE")  # never the string "None"
+
+
+def test_caldav_color_element_is_importable_without_caldav_elements_ical_attribute():
+    """Regression for #47: `import caldav` alone does not expose caldav.elements.ical."""
+    from caldav.elements.ical import CalendarColor
+
+    assert CalendarColor().tag == COLOR_TAG
