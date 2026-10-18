@@ -37,22 +37,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _loadServer();
   }
 
+  int _loadSeq = 0;
+  bool _setupOidc = false;
+
+  /// Loads the capabilities (OIDC, first-run setup) of the *current* server. Runs again whenever the session
+  /// changes, because switching the server swaps the stored URL only after this screen was already built;
+  /// the latest call wins so a slow answer from the old server cannot overwrite the new one.
   Future<void> _loadServer() async {
+    final seq = ++_loadSeq;
     final api = ref.read(apiClientProvider);
     final url = await api.store.baseUrl();
-    if (mounted) setState(() => _server = url);
+    if (!mounted || seq != _loadSeq) return;
+    if (url != _server) {
+      setState(() {
+        _server = url;
+        _health = null;
+        _needsSetup = false;
+        _setupOidc = false;
+      });
+    }
     try {
       final health = await api.health();
-      if (mounted) setState(() => _health = health);
+      if (mounted && seq == _loadSeq) setState(() => _health = health);
     } catch (_) {
       // Ohne Health bleibt nur die Passwort-Anmeldung sichtbar.
     }
     try {
       final setup = await api.setupStatus();
-      if (mounted) {
+      if (mounted && seq == _loadSeq) {
         setState(() {
           _needsSetup = setup.needsSetup;
           _codeRequired = setup.codeRequired;
+          _setupOidc = setup.oidc;
         });
       }
     } catch (_) {
@@ -118,7 +134,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final oidc = _health?.oidc == true;
+    ref.listen(sessionProvider, (_, __) => _loadServer());
+    final oidc = _health?.oidc == true || _setupOidc;
     return Scaffold(
       body: SafeArea(
         child: Center(
