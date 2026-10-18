@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../test/helpers.dart';
 
@@ -111,6 +112,9 @@ FakeBackend _demo(String lang) {
     {'title': t('Elternabend', 'Parents\' evening'), 'start': '${_d(now.add(const Duration(days: 1)))}T19:30:00', 'end': '${_d(now.add(const Duration(days: 1)))}T21:00:00'},
     {'title': t('Schwimmkurs Mia', 'Swimming lesson Mia'), 'start': '${_d(now.add(const Duration(days: 2)))}T16:00:00', 'end': '${_d(now.add(const Duration(days: 2)))}T17:00:00'},
     {'title': t('Oma Geburtstag', 'Grandma\'s birthday'), 'start': _d(now.add(const Duration(days: 4))), 'all_day': true},
+    {'title': t('Herbstferien', 'Autumn half-term'), 'start': _d(now.add(const Duration(days: 6))),
+     'end': _d(now.add(const Duration(days: 13))), 'all_day': true, 'calendar': t('Schulferien', 'School holidays'), 'color': '#81B29A'},
+    {'title': t('Gelbe Tonne', 'Recycling bin'), 'start': _d(now.add(const Duration(days: 1))), 'all_day': true, 'color': '#E3B23C'},
   ]);
   b.json('GET', '/api/reminders', []);
   b.json('GET', '/api/themes', {'items': [
@@ -151,12 +155,14 @@ void main() {
     ('shopping', () => AppTheme.dark, const MainShell(startPush: false), AppTab.shopping),
     ('meals', () => AppTheme.fromSpec(_theme('liquid-glass').forBrightness(Brightness.dark)), const MainShell(startPush: false), AppTab.meals),
     ('calendar', () => AppTheme.fromSpec(_theme('neo-brutalism').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.calendar),
+    ('calendar-month', () => AppTheme.fromSpec(_theme('clean-cards').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.calendar),
     ('themes', () => AppTheme.dark, const AppearanceScreen(), AppTab.more),
   ];
 
   for (final lang in ['en', 'de']) {
     for (final (name, theme, home, tab) in shots) {
       testWidgets('$lang/$name', (tester) async {
+        if (name == 'calendar-month') SharedPreferences.setMockInitialValues({'calendar_view': 'month'});
         setAppLanguage(lang);
         tester.platformDispatcher.localeTestValue = Locale(lang);
         tester.view.physicalSize = const Size(1170, 2532); // phone, 390 × 844 at 3×

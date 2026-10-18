@@ -259,6 +259,15 @@ final eventsProvider = StateNotifierProvider<CachedRead<List<CalendarEvent>>, As
   ref, 'events:30', (j) => (j as List).whereType<Map<String, dynamic>>().map(CalendarEvent.fromJson).toList(),
   (api) => api.events(days: 30)));
 
+/// Events of a grid range, key "YYYY-MM-DD:days" (month: 42 days from the first grid Monday, week: 7).
+final eventsRangeProvider = StateNotifierProvider.family<CachedRead<List<CalendarEvent>>, AsyncValue<ApiResult<List<CalendarEvent>>>, String>(
+  (ref, key) {
+    final parts = key.split(':');
+    return _cachedRead(ref, 'events:$key',
+        (j) => (j as List).whereType<Map<String, dynamic>>().map(CalendarEvent.fromJson).toList(),
+        (api) => api.eventsRange(DateTime.parse(parts[0]), int.parse(parts[1])));
+  });
+
 final remindersProvider = FutureProvider.autoDispose<List<Reminder>>(
     (ref) => ref.watch(apiClientProvider).reminders());
 

@@ -193,7 +193,7 @@ def test_hub_calendar_without_caldav_account(client):
     assert r.status_code == 201, r.text
     assert r.json()["source"] == "hub"
     # family calendar: everyone sees it
-    events = client.get("/api/calendar/events", params={"days": 400000}, headers=b).json()
+    events = client.get("/api/calendar/events", params={"start": "2099-05-01", "days": 31}, headers=b).json()
     assert any(e["title"] == "Kinderarzt" and e["source"] == "hub" for e in events)
 
 
@@ -234,3 +234,17 @@ def test_built_in_sources_are_plugins_that_can_be_switched_off(client, monkeypat
     assert {"hub_tasks", "hub_shopping", "hub_calendar"} <= ids
     monkeypatch.setattr(settings, "plugins_disabled", "hub_tasks,hub_calendar")
     assert "hub_tasks" not in {p["id"] for p in client.get("/api/tasks/providers", headers=h).json()["items"]}
+
+
+def test_events_for_a_given_range_include_the_past(client):
+    h = _auth(client, "hub_cal_range")
+    client.post("/api/calendar/events", headers=h, json={
+        "title": "Vergangen", "start": "2030-01-03T10:00:00", "end": "2030-01-03T11:00:00", "all_day": False})
+    client.post("/api/calendar/events", headers=h, json={
+        "title": "Ferien", "start": "2029-12-28", "end": "2030-01-06", "all_day": True})
+    jan = client.get("/api/calendar/events", params={"start": "2030-01-01", "days": 31}, headers=h).json()
+    titles = {e["title"] for e in jan}
+    assert {"Vergangen", "Ferien"} <= titles  # multi-day event that started before the range is included
+    feb = client.get("/api/calendar/events", params={"start": "2030-02-01", "days": 28}, headers=h).json()
+    assert "Vergangen" not in {e["title"] for e in feb}
+    assert client.get("/api/calendar/events", params={"start": "kaputt"}, headers=h).status_code == 422
