@@ -1187,3 +1187,38 @@ def test_delete_and_complete_work_when_library_adds_port(client, auth_a, user_a,
     assert {t["title"] for t in listed["items"]} >= {"Erledigen", "Löschen"}
     assert completed.status_code == 200 and completed.json()["done"] is True
     assert deleted.status_code in (200, 204), deleted.text
+
+
+def test_due_on_a_day_is_written_as_date_and_read_back_as_day(client, auth_a, user_a, monkeypatch):
+    """A task due on a day must not become due at 00:00 (it was overdue the whole day)."""
+    from datetime import datetime as dt
+
+    from icalendar import Todo
+
+    from app.connectors.nextcloud_tasks_connector import format_due
+
+    db = SessionLocal()
+    try:
+        from app.core.crypto import encrypt
+        from app.models.caldav import CalDAVAccount, TaskList
+
+        db.add(CalDAVAccount(user_id=user_a.id, url="https://cloud.example.com/remote.php/dav",
+                             username="anna", password_enc=encrypt("secret")))
+        db.flush()
+        db.add(TaskList(user_id=user_a.id, caldav_url="https://cloud.example.com/remote.php/dav/calendars/user/Anna",
+                        display_name="Anna", kind="personal", owner_user_id=user_a.id))
+        db.commit()
+    finally:
+        db.close()
+    cal = FakeCalendar("Anna", ["VTODO"], [])
+    fake_client = FakeDAVClient("https://cloud.example.com/remote.php/dav", "anna", "secret")
+    fake_client._principal = FakePrincipal([cal])
+    with patch("caldav.DAVClient", return_value=fake_client):
+        created = client.post("/api/tasks?provider=nextcloud", headers=auth_a, json={"title": "Müll raus", "due": "2026-10-20"})
+    assert created.status_code in (200, 201), created.text
+    assert "DUE;VALUE=DATE:20261020" in cal._todos_data[-1]
+    assert created.json()["due"] == "2026-10-20"
+
+    # older entries with a midnight time are shown as a day; real times stay times
+    assert format_due(Todo.from_ical("BEGIN:VTODO\r\nDUE:20261020T000000\r\nEND:VTODO\r\n").get("due")) == "2026-10-20"
+    assert format_due(dt(2026, 10, 20, 9, 30)) == "2026-10-20T09:30:00"

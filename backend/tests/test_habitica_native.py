@@ -238,3 +238,12 @@ def test_native_options_expose_current_write_authority(client, native, monkeypat
     assert client.get("/api/habitica/options", headers=headers).json()["writes_enabled"] is True
     monkeypatch.setenv("HABITICA_NATIVE_WRITE_ACCOUNTS", "")
     assert client.get("/api/habitica/options", headers=headers).json()["writes_enabled"] is False
+
+
+def test_habitica_todo_date_is_a_day_in_local_time():
+    from app.connectors.habitica_connector import habitica_day
+
+    assert habitica_day("2026-10-19T22:00:00.000Z") == "2026-10-20"  # midnight in Berlin, stored as UTC
+    assert habitica_day("2026-10-20T00:00:00.000Z") == "2026-10-20"
+    assert habitica_day("2026-10-20") == "2026-10-20"
+    assert habitica_day(None) is None

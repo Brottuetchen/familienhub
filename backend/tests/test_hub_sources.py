@@ -201,8 +201,11 @@ def test_hub_calendar_without_caldav_account(client):
 def test_hub_calendar_in_today(client):
     from datetime import datetime
 
+    from app.core.timeutil import local_tz
+
     h = _auth(client, "hub_cal_today")
-    now = datetime.now().replace(microsecond=0)
+    # "today" in the hub's time zone; the build server runs in UTC (failed between 00:00 and 02:00 CEST)
+    now = datetime.now(local_tz()).replace(microsecond=0, tzinfo=None)
     client.post("/api/calendar/events", headers=h, json={
         "title": "Heute Abend", "start": now.replace(hour=23, minute=0).isoformat(),
         "end": now.replace(hour=23, minute=30).isoformat(), "all_day": False})
