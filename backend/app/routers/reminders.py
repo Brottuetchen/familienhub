@@ -79,9 +79,19 @@ async def list_reminders(include_completed: bool = False, db: Session = Depends(
     return query.order_by(Reminder.due_at.is_(None), Reminder.due_at.asc()).all()
 
 
+def _family_allowed(user: User) -> bool:
+    """Familien-Erinnerungen (für alle sichtbar) nur ab Partner; Kind und Gast nur eigene."""
+    from app.core.security import ROLE_LEVEL
+    from app.models.user import ROLE_PARTNER
+
+    return user.is_admin or ROLE_LEVEL.get(user.role or ROLE_PARTNER, 0) >= ROLE_LEVEL[ROLE_PARTNER]
+
+
 @router.post("", response_model=ReminderResponse)
 async def create_reminder(data: ReminderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     _validate_recurrence(data.recurrence)
+    if data.for_family and not _family_allowed(current_user):
+        raise HTTPException(status_code=403, detail="Erinnerungen für die ganze Familie legen Erwachsene an")
     if data.fire_on == "arrival" and data.due_at is not None:
         raise HTTPException(status_code=400, detail="Erinnerung beim Heimkommen hat keine Uhrzeit")
     reminder = Reminder(
@@ -110,6 +120,8 @@ async def update_reminder(reminder_id: int, data: ReminderUpdate, db: Session = 
     _validate_recurrence(data.recurrence)
 
     updates = data.model_dump(exclude_unset=True)
+    if (updates.get("for_family") or reminder.for_family) and not _family_allowed(current_user):
+        raise HTTPException(status_code=403, detail="Erinnerungen für die ganze Familie ändern Erwachsene")
     if updates.get("fire_on") == "arrival":
         updates["due_at"] = None  # Zeit entfällt, Home Assistant meldet die Ankunft
     if "due_at" in updates:
@@ -253,6 +265,8 @@ async def delete_reminder(reminder_id: int, db: Session = Depends(get_db), curre
     reminder = db.query(Reminder).filter(Reminder.id == reminder_id, visible_to(current_user.id)).first()
     if not reminder:
         raise HTTPException(status_code=404, detail="Reminder not found")
+    if reminder.for_family and not _family_allowed(current_user):
+        raise HTTPException(status_code=403, detail="Erinnerungen für die ganze Familie löschen Erwachsene")
     db.delete(reminder)
     db.commit()
     return {"message": "deleted"}

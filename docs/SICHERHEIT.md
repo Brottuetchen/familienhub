@@ -34,11 +34,11 @@ Alle anderen der rund 130 Endpunkte verlangen eine Anmeldung.
 | 7 | Keine Sicherheits-Header | niedrig | **behoben**: `nosniff`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `object-src 'none'`, `Referrer-Policy`. |
 | 8 | Standard- oder zu kurzer `SECRET_KEY` nur als Warnung | mittel (Neuinstallationen) | **behoben**: im Betrieb startet der Server nicht. |
 | 9 | Keine Größenbegrenzung für Anfragen | niedrig | **behoben**: 413 ab 2 MB. |
-| 10 | Rollen Kind/Gast haben (außer Haus/Verwaltung) dieselben Schreibrechte wie Partner; seit „Einladen“ vergebbar | Produktentscheidung | **offen**: Vorschlag unten. |
+| 10 | Rollen Kind/Gast haben (außer Haus/Verwaltung) dieselben Schreibrechte wie Partner; seit „Einladen“ vergebbar | Produktentscheidung | **umgesetzt** (Entscheidung 18.10.), siehe unten. |
 | 11 | Derselbe `SECRET_KEY` signiert Tokens und ist Basis der Fernet-Verschlüsselung | niedrig | offen (Umstellung braucht Umschlüsselung der gespeicherten Zugangsdaten). |
 | 12 | Android erlaubt Klartext-HTTP (`usesCleartextTraffic`), iOS lokale Netze | niedrig | bewusst: Hubs im Heimnetz ohne Zertifikat. Empfehlung: HTTPS über Reverse-Proxy. |
 
-**Vorschlag zu 10 (Rollen):**
+**Rollen (umgesetzt 18.10.):**
 - **Gast** (z. B. Babysitter): sieht Heute, Einkauf, Termine; darf Einkauf abhaken und hinzufügen und eigene Erinnerungen anlegen. Kein Löschen von Rezepten und Essensplan, keine Familienaufgaben ändern.
 - **Kind:** wie Gast, dazu eigene und ihm zugewiesene Aufgaben abhaken.
 

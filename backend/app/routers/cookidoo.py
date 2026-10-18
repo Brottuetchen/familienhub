@@ -11,8 +11,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.core.security import get_current_user
-from app.models.user import User
+from app.core.security import get_current_user, require_min_role
+from app.models.user import User, ROLE_PARTNER
 from app.services.cookidoo import CookidooUnavailable, cookidoo_service
 
 router = APIRouter(prefix="/api/cookidoo", tags=["cookidoo"])
@@ -49,7 +49,7 @@ class PlanIn(BaseModel):
 
 
 @router.post("/plan")
-async def plan(data: PlanIn, _: User = Depends(get_current_user)):
+async def plan(data: PlanIn, _: User = Depends(require_min_role(ROLE_PARTNER))):
     try:
         await cookidoo_service.add(data.date, data.recipe_id)
     except CookidooUnavailable as exc:
@@ -58,7 +58,7 @@ async def plan(data: PlanIn, _: User = Depends(get_current_user)):
 
 
 @router.delete("/plan/{day}/{recipe_id}")
-async def unplan(day: date, recipe_id: str, _: User = Depends(get_current_user)):
+async def unplan(day: date, recipe_id: str, _: User = Depends(require_min_role(ROLE_PARTNER))):
     try:
         await cookidoo_service.remove(day, recipe_id)
     except CookidooUnavailable as exc:
@@ -71,7 +71,7 @@ class ShoppingIn(BaseModel):
 
 
 @router.post("/shopping")
-async def to_shopping(data: ShoppingIn, _: User = Depends(get_current_user)):
+async def to_shopping(data: ShoppingIn, _: User = Depends(require_min_role(ROLE_PARTNER))):
     """Zutaten auf die Cookidoo-Einkaufsliste (in HA als Rezept-Einkaufsliste sichtbar)."""
     try:
         return {"added": await cookidoo_service.ingredients_to_shopping(data.recipe_ids)}

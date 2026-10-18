@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.core.crypto import encrypt
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.habitica import HabiticaAccount
-from app.models.user import User
+from app.models.user import User, ROLE_CHILD
 from app.schemas import CanonicalUUID
 from app.plugins.base import get_setting
 
@@ -50,7 +50,7 @@ def get_account(response: Response, user: User = Depends(get_current_user), db: 
 
 
 @router.put("/account")
-async def put_account(data: AccountRequest, response: Response, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def put_account(data: AccountRequest, response: Response, user: User = Depends(require_min_role(ROLE_CHILD)), db: Session = Depends(get_db)):
     from app.connectors.habitica_connector import remote_request
     url = urlsplit(server_url())
     if not active() or url.scheme != "https" or not url.hostname or url.username or url.password or url.query or url.fragment:

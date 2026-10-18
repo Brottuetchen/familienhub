@@ -20,9 +20,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.service_key import ServiceKey
-from app.models.user import User
+from app.models.user import User, ROLE_CHILD
 from app.plugins.base import get_setting
 from app.routers.notifications import service_key
 from app.services.notify import notify
@@ -246,7 +246,7 @@ class MediaRequestIn(BaseModel):
 
 
 @router.post("/requests", status_code=201)
-async def create_request(data: MediaRequestIn, user: User = Depends(get_current_user)):
+async def create_request(data: MediaRequestIn, user: User = Depends(require_min_role(ROLE_CHILD))):
     if not _active():
         raise HTTPException(503, "Seerr ist nicht eingerichtet")
     try:
@@ -269,7 +269,7 @@ async def create_request(data: MediaRequestIn, user: User = Depends(get_current_
 
 
 @router.delete("/requests/{request_id}")
-async def cancel_request(request_id: int, user: User = Depends(get_current_user)):
+async def cancel_request(request_id: int, user: User = Depends(require_min_role(ROLE_CHILD))):
     """Eigenen, noch nicht freigegebenen Wunsch zurückziehen. Fremde → 404."""
     if not _active():
         raise HTTPException(503, "Seerr ist nicht eingerichtet")

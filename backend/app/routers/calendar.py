@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.connectors.registry import registry
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.caldav import CalDAVAccount
-from app.models.user import User
+from app.models.user import User, ROLE_PARTNER
 from app.services.holidays import upcoming_holidays
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
@@ -73,7 +73,7 @@ async def holidays(days: int = 60, current_user: User = Depends(get_current_user
 @router.post("/events", status_code=status.HTTP_201_CREATED)
 async def create_event(
     event: EventCreateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_PARTNER)),
     db: Session = Depends(get_db),
 ):
     """Erstellt einen Termin per CalDAV mit dem Konto des Nutzers.

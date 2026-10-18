@@ -9,8 +9,8 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.connectors.registry import registry
-from app.core.security import get_current_user
-from app.models.user import User
+from app.core.security import get_current_user, require_min_role
+from app.models.user import User, ROLE_CHILD
 from app.services import idempotency
 
 router = APIRouter(prefix="/api/shopping", tags=["shopping"])
@@ -104,7 +104,7 @@ async def update_item(uid: str, data: UpdateItemRequest, _: User = Depends(get_c
 
 
 @router.delete("/{uid}")
-async def delete_item(uid: str, _: User = Depends(get_current_user)):
+async def delete_item(uid: str, _: User = Depends(require_min_role(ROLE_CHILD))):
     """Entfernt Item aus manueller Liste (Rezeptzutaten nicht löschbar)."""
     ha = _ha()
     if not ha:
