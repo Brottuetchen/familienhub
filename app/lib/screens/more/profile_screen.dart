@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/account.dart';
+import '../../models/task.dart';
 import '../../models/themes.dart' show hexColor;
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
@@ -107,6 +108,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await _apply(() => ref.read(apiClientProvider).uploadAvatar(bytes), done: l10n.avatarSaved);
   }
 
+  Future<void> _setPlace(String? place) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(apiClientProvider).setTaskPlace(place);
+      ref.invalidate(taskPlaceProvider);
+      if (mounted) showInfo(context, l10n.taskPlaceSaved);
+    } catch (e) {
+      if (mounted) showError(context, e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Where tasks that others give me land: automatic (derived from the connected accounts) or a chosen place.
+  /// Hidden while the server does not answer (older server, offline).
+  Widget _taskPlaceSection(ThemeData theme) {
+    final info = ref.watch(taskPlaceProvider).valueOrNull;
+    if (info == null) return const SizedBox.shrink();
+    final selected = info.explicit != null && info.options.any((o) => o.id == info.explicit && o.available) ? info.explicit : null;
+    return Padding(
+      key: const Key('task-place-section'),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(l10n.taskPlace, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        Text(l10n.taskPlaceHint, style: theme.textTheme.bodySmall),
+        RadioGroup<String>(
+          groupValue: selected ?? '',
+          onChanged: (value) { if (!_busy) _setPlace(value == null || value.isEmpty ? null : value); },
+          child: Column(children: [
+            RadioListTile<String>(
+              key: const Key('task-place-auto'),
+              contentPadding: EdgeInsets.zero,
+              value: '',
+              title: Text(l10n.taskPlaceAuto(info.auto == null ? '' : taskPlaceName(info.auto!))),
+            ),
+            for (final option in info.options)
+              RadioListTile<String>(
+                key: Key('task-place-${option.id}'),
+                contentPadding: EdgeInsets.zero,
+                value: option.id,
+                enabled: option.available,
+                title: Text(taskPlaceName(option.id)),
+              ),
+          ]),
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(sessionProvider).user;
@@ -197,6 +248,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: _busy ? const HubLoader(size: 20) : Text(l10n.save),
           ),
           const SizedBox(height: 24),
+          _taskPlaceSection(theme),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.alternate_email),

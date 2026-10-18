@@ -1267,5 +1267,30 @@
     "placeholders": {
       "title": {}
     }
-  }
+  },
+  "taskPlace": "Aufgabenort",
+  "taskPlaceHint": "Hierhin kommen Aufgaben, die andere dir geben. Standardmäßig richtet sich der Ort nach deinen verbundenen Konten.",
+  "taskPlaceAuto": "Automatisch ({place})",
+  "@taskPlaceAuto": {
+    "placeholders": {
+      "place": {}
+    }
+  },
+  "taskPlaceNextcloud": "Nextcloud",
+  "taskPlaceHabitica": "Habitica",
+  "taskPlaceHub": "Familienhub",
+  "taskPlaceSaved": "Aufgabenort gespeichert",
+  "taskLandsWhereTheyWork": "Die Aufgabe landet dort, wo {name} sie bekommt.",
+  "@taskLandsWhereTheyWork": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "taskAssignedVia": "liegt in {place}",
+  "@taskAssignedVia": {
+    "placeholders": {
+      "place": {}
+    }
+  },
+  "taskStatusUnknown": "Status unbekannt"
 }

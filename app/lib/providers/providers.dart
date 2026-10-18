@@ -278,6 +278,12 @@ final pushServiceProvider = Provider<PushService>(
     (ref) => PushService(ref.watch(apiClientProvider)));
 
 
+/// Preferred task place of the person (profile setting); null while unknown or on an older server.
+final taskPlaceProvider = FutureProvider.autoDispose<TaskPlaceInfo?>((ref) {
+  ref.watch(sessionProvider.select((s) => s.user?.id));
+  return ref.watch(apiClientProvider).taskPlace();
+});
+
 final taskAccountsProvider = FutureProvider<List<TaskProviderInfo>>((ref) {
   ref.watch(sessionProvider.select((s) => s.user?.id));
   return ref.watch(apiClientProvider).taskProviders();

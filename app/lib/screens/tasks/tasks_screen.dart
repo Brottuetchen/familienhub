@@ -57,28 +57,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     super.dispose();
   }
 
+  /// No provider choice: the hub puts the task where the recipient works (own tasks: my preferred place,
+  /// family tasks: the family list). Native Habitica types are created in the Habitica account screen.
   Future<void> _create() async {
     final view = ref.read(taskViewProvider);
-    List<TaskProviderInfo> accounts;
-    try { accounts = await ref.read(taskAccountsProvider.future); }
-    catch (e) { if (mounted) showError(context, e); return; }
-    if (!mounted) return;
-    final available = accounts.where((p) => p.configured).toList();
-    if (available.isEmpty) { showInfo(context, l10n.setUpTaskAccountFirst); return; }
-    final provider = available.length == 1 ? available.single : await showModalBottomSheet<TaskProviderInfo>(context: context,
-      builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        ListTile(title: Text(l10n.chooseProviderAccount)),
-        for (final p in available) ListTile(title: Text(p.name), onTap: () => Navigator.pop(ctx, p)),
-      ])));
-    if (provider == null || !mounted) return;
-    if (provider.id == 'habitica') { await showNativeEditor(context, ref, provider.account); return; }
     await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => ProtectedReadModal(
         provider: tasksProvider(view),
-        child: TaskCreateSheet(provider: provider.id, account: provider.account),
+        child: const TaskCreateSheet(),
       ),
     );
   }
@@ -262,7 +251,7 @@ class _TaskListState extends ConsumerState<_TaskList> {
               for (final t in open)
                 Dismissible(
                   key: ValueKey('task-${view.apiName}-${t.identity}'),
-                  direction: t.isHabitica || t.localOnly || !canAct
+                  direction: t.isHabitica || t.localOnly || t.readOnly || !canAct
                       ? DismissDirection.none
                       : canEdit ? DismissDirection.horizontal : DismissDirection.startToEnd,
                   background: _swipeBackground(context, Icons.check, l10n.done,
@@ -300,7 +289,16 @@ class _TaskListState extends ConsumerState<_TaskList> {
   Widget _tile(Task t, Map<int, String> names, bool habiticaEnabled, bool canAct) {
     Future<void> changed() async => refreshTasks(ref);
     final Widget leading;
-    if (t.isHabitica && habiticaCheckable(t)) {
+    if (t.readOnly) {
+      // Given to someone else: the recipient completes it in her own place; here only the status
+      leading = Checkbox(
+        key: Key('assigned-check-${t.uid}'),
+        shape: const CircleBorder(),
+        value: t.done,
+        semanticLabel: t.title,
+        onChanged: null,
+      );
+    } else if (t.isHabitica && habiticaCheckable(t)) {
       leading = HabiticaTaskButtons(task: t, part: HabiticaPart.check, enabled: habiticaEnabled, onChanged: changed);
     } else if (t.isHabitica) {
       leading = SizedBox(
@@ -350,6 +348,8 @@ class _TaskListState extends ConsumerState<_TaskList> {
       if (view == TaskView.family && t.assignee != null) l10n.forName(names[t.assignee] ?? l10n.someoneAcc),
       if (t.listName != null && view != TaskView.mine) t.listName!,
       // Quelle nur, wenn sie hilft (Habitica-Typ); keine internen Konto-IDs
+      if (t.readOnly && t.via != null) l10n.taskAssignedVia(taskPlaceName(t.via!)),
+      if (t.readOnly && t.stale) l10n.taskStatusUnknown,
       if (t.isHabitica) habiticaLabel(t),
       if (t.isHabitica && t.native['type'] == 'reward') '${t.native['value']} GP',
       if (t.rotation.isNotEmpty) reminderRecurrences[t.recurrence] ?? t.recurrence,
@@ -423,7 +423,7 @@ class TaskDetails extends ConsumerWidget {
             IconButton(onPressed: onClose, icon: const Icon(Icons.close), tooltip: l10n.close),
           ],
         ),
-        if (ref.watch(canEditProvider))
+        if (ref.watch(canEditProvider) && !task.readOnly)
         TextButton.icon(icon: const Icon(Icons.edit_outlined), label: Text(l10n.editTask), onPressed: () async {
           final changed = await showModalBottomSheet<bool>(context: context, isScrollControlled: true, useSafeArea: true,
             builder: (_) => ProtectedReadModal(provider: tasksProvider(view), child: TaskEditSheet(task: task)));
@@ -452,9 +452,7 @@ class TaskDetails extends ConsumerWidget {
 
 /// Schnell anlegen: Titel, für wen, optional Fälligkeit.
 class TaskCreateSheet extends ConsumerStatefulWidget {
-  final String provider;
-  final String? account;
-  const TaskCreateSheet({super.key, this.provider = 'nextcloud', this.account});
+  const TaskCreateSheet({super.key});
 
   @override
   ConsumerState<TaskCreateSheet> createState() => _TaskCreateSheetState();
@@ -507,7 +505,6 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
       context,
       () async => await ref.read(apiClientProvider).createTask(
             title: title,
-            provider: widget.provider, account: widget.account,
             due: _due,
             assigneeId: !_household && target is _PersonTarget ? target.person.id : null,
             family: _household || target is _FamilyList,
@@ -615,6 +612,13 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
                 ),
             ],
           ),
+          if (_target case _PersonTarget(:final person))
+            Padding(
+              key: const Key('task-lands-hint'),
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(l10n.taskLandsWhereTheyWork(person.displayName),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
           ],
           const SizedBox(height: 12),
           Wrap(
