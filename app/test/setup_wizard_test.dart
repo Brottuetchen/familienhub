@@ -183,6 +183,51 @@ void main() {
     expect(container.read(sessionProvider).onboarding, isFalse);
   });
 
+  Future<ProviderContainer> onboardingWizard(WidgetTester tester, FakeBackend b) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final container = ProviderContainer(overrides: [apiClientProvider.overrideWithValue(b.api())]);
+    addTearDown(container.dispose);
+    container.read(sessionProvider.notifier).state =
+        const SessionState(SessionPhase.loggedIn, user: null, onboarding: true);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(locale: Locale('de', 'DE'), home: SetupWizardScreen()),
+    ));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(const Key('wizard-next')));
+      await tester.pumpAndSettle();
+    }
+    return container;
+  }
+
+  testWidgets('Wizard end (first run): unused plugins are switched off with one call', (tester) async {
+    final b = _backend();
+    b.json('POST', '/api/admin/setup/finish', {'disabled': ['ntfy']});
+    final container = await onboardingWizard(tester, b);
+    expect(bodyOf(b.sent('POST', '/api/admin/setup/finish').single), {'keep': <String>[]});
+    expect(container.read(sessionProvider).onboarding, isFalse);
+  });
+
+  testWidgets('Wizard end: a failing switch-off call does not block finishing', (tester) async {
+    final b = _backend();
+    b.json('POST', '/api/admin/setup/finish', {'detail': 'kaputt'}, status: 500);
+    final container = await onboardingWizard(tester, b);
+    expect(container.read(sessionProvider).onboarding, isFalse);
+  });
+
+  testWidgets('Wizard re-run (standalone) never switches plugins off', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final b = _backend();
+    await tester.pumpWidget(appWith(b.api(), const SetupWizardScreen(standalone: true)));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(const Key('wizard-next')));
+      await tester.pumpAndSettle();
+    }
+    expect(b.sent('POST', '/api/admin/setup/finish'), isEmpty);
+  });
+
   testWidgets('Verbindung testen: eingegebene Werte, Ergebnis sichtbar, Geheimnis leer = gespeichert', (tester) async {
     await setScreenSize(tester, const Size(420, 1200));
     final b = _backend();

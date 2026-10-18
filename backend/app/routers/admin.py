@@ -63,6 +63,9 @@ async def update_settings(
             except ValueError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
     config_store.save_overrides(db, data.values)
+    from app.routers import admin_panel
+
+    admin_panel._health_cache.clear()  # the overview must show the new state right away
     return {"saved": True, "plugins": [_view(p) for p in plugin_registry.all() if p.settings]}
 
 

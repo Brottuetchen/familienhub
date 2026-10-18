@@ -15,27 +15,21 @@ class ApiTokensScreen extends ConsumerWidget {
   const ApiTokensScreen({super.key});
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final ctrl = TextEditingController(text: l10n.voiceAssistant);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.newAccess),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: InputDecoration(labelText: l10n.whatFor, helperText: l10n.egVoiceAssistant),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: Text(l10n.create)),
-        ],
-      ),
-    );
+    final name = await showDialog<String>(context: context, builder: (_) => const _NameDialog());
     if (name == null || name.isEmpty || !context.mounted) return;
+    // Take everything we need from `ref` before the first await: the screen may be gone when the answer arrives.
+    final api = ref.read(apiClientProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      final created = await ref.read(apiClientProvider).createApiToken(name);
-      ref.invalidate(apiTokensProvider);
+      final created = await api.createApiToken(name);
+      container.invalidate(apiTokensProvider);
       if (!context.mounted) return;
+      final plain = created.token;
+      if (plain == null || plain.isEmpty) {
+        // The key exists on the server but its plaintext did not arrive: tell the user instead of crashing.
+        showInfo(context, l10n.tokenNotReturned);
+        return;
+      }
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -47,7 +41,7 @@ class ApiTokensScreen extends ConsumerWidget {
             children: [
               Text(l10n.tokenShownOnce),
               const SizedBox(height: 12),
-              SelectableText(created.token ?? '', key: const Key('new-token'), style: const TextStyle(fontFamily: 'monospace')),
+              SelectableText(plain, key: const Key('new-token'), style: const TextStyle(fontFamily: 'monospace')),
             ],
           ),
           actions: [
@@ -55,7 +49,7 @@ class ApiTokensScreen extends ConsumerWidget {
               icon: const Icon(Icons.copy),
               label: Text(l10n.copy),
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: created.token ?? ''));
+                Clipboard.setData(ClipboardData(text: plain));
                 showInfo(ctx, l10n.copied);
               },
             ),
@@ -112,4 +106,44 @@ class ApiTokensScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Asks for the name of the new key. Owns its controller and accepts only one submit, so a double tap on
+/// "Create" cannot pop the (already closing) route twice.
+class _NameDialog extends StatefulWidget {
+  const _NameDialog();
+
+  @override
+  State<_NameDialog> createState() => _NameDialogState();
+}
+
+class _NameDialogState extends State<_NameDialog> {
+  final _ctrl = TextEditingController(text: l10n.voiceAssistant);
+  bool _done = false;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _close([String? result]) {
+    if (_done) return;
+    _done = true;
+    Navigator.pop(context, result);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(l10n.newAccess),
+        content: TextField(
+          controller: _ctrl,
+          autofocus: true,
+          decoration: InputDecoration(labelText: l10n.whatFor, helperText: l10n.egVoiceAssistant),
+        ),
+        actions: [
+          TextButton(onPressed: _close, child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => _close(_ctrl.text.trim()), child: Text(l10n.create)),
+        ],
+      );
 }

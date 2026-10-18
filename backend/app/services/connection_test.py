@@ -150,6 +150,17 @@ async def _cookidoo(v):
             await session.close()
 
 
+async def _ntfy(v):
+    url = _base(v, "NTFY_URL")
+    if not url:
+        return fail("Adresse des ntfy-Servers eintragen")
+    headers = {"Authorization": f"Bearer {v['NTFY_TOKEN']}"} if v.get("NTFY_TOKEN") else {}
+    r = await _get(f"{url}/v1/health", headers=headers)
+    if r.status_code == 200 and r.json().get("healthy") is not False:
+        return ok("ntfy: Server erreichbar")
+    return _auth_status(r.status_code, "ntfy", "Token") if r.status_code in (401, 403, 404) else fail("ntfy antwortet nicht wie erwartet")
+
+
 async def _reachable(plugin, v):
     url = next((v[s.key.upper()] for s in plugin.settings
                 if s.key.endswith("_URL") and not s.key.endswith("PUBLIC_URL") and v.get(s.key.upper())), "")
@@ -161,7 +172,7 @@ async def _reachable(plugin, v):
 
 TESTERS: Dict[str, Callable[[Dict[str, str]], Awaitable[Result]]] = {
     "homeassistant": _homeassistant, "nextcloud": _nextcloud, "habitica": _habitica, "paperless": _paperless,
-    "shelfarr": _shelfarr, "seerr": _seerr, "weather": _weather, "cookidoo": _cookidoo,
+    "shelfarr": _shelfarr, "ntfy": _ntfy, "seerr": _seerr, "weather": _weather, "cookidoo": _cookidoo,
 }
 
 

@@ -87,6 +87,10 @@ class Plugin:
                     return str(value)
         return None
 
+    async def check(self) -> Optional[Dict[str, Any]]:
+        """Own status for the admin overview (``{"status", "message"}``) when there is no address to probe."""
+        return None
+
     def missing_settings(self) -> List[str]:
         return [s.key for s in self.settings if s.required and get_setting(s.key) in (None, "")]
 

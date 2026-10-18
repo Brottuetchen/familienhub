@@ -549,6 +549,7 @@
     }
   },
   "tokenShownOnce": "Wird nur jetzt angezeigt. Im Assistenten bei der Familienhub-Anbindung eintragen.",
+  "tokenNotReturned": "Der Zugang wurde angelegt, aber der Schlüssel kam nicht an. Bitte den Zugang widerrufen und neu anlegen.",
   "copy": "Kopieren",
   "copied": "Kopiert",
   "finished": "Fertig",
@@ -1229,6 +1230,7 @@
       "services": {}
     }
   },
+  "unusedNotSwitchedOff": "Nicht genutzte Dienste konnten nicht abgeschaltet werden. Das geht unter Verwaltung → Plugins & Zugänge.",
   "viewList": "Liste",
   "viewWeek": "Woche",
   "viewMonth": "Monat",

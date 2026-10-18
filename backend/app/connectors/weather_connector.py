@@ -60,8 +60,10 @@ class WeatherConnector(BaseConnector):
 
     @property
     def is_configured(self) -> bool:
-        # Open-Meteo braucht keinen Key -> nur ein Feature-Flag.
-        return bool(settings.weather_enabled)
+        # Open-Meteo needs no key; the plugin decides (saved coordinates or the WEATHER_ENABLED default)
+        from app.plugins.builtin.weather import WeatherPlugin
+
+        return WeatherPlugin().is_configured()
 
     @property
     def base_url(self) -> Optional[str]:

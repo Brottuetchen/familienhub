@@ -8,7 +8,7 @@ Klartext zurückgegeben.
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,14 @@ logger = get_logger("service.config_store")
 
 # Overrides für Plugin-Einstellungen ohne Feld in den Kern-Settings (z. B. externe Plugins)
 _extra: Dict[str, str] = {}
+
+
+# Keys that were saved or applied from the database and map to a core setting (told apart from built-in defaults)
+_saved: set = set()
+
+
+def was_saved(key: str) -> bool:
+    return key.upper() in _saved
 
 
 def get_override(key: str) -> Optional[str]:
@@ -51,6 +59,8 @@ def _apply(key: str, value: str) -> None:
     if hasattr(settings, attr):
         try:
             setattr(settings, attr, value)
+            if value not in (None, ""):
+                _saved.add(key.upper())
             return
         except Exception as exc:  # noqa: BLE001
             logger.warning("override %s nicht anwendbar: %s", key, exc)
@@ -94,6 +104,18 @@ def set_plugin_enabled(db: Session, plugin_id: str, enabled: bool) -> None:
     current = [p for p in settings.disabled_plugins if p != plugin_id]
     if not enabled:
         current.append(plugin_id)
+    value = ",".join(current)
+    row = db.get(ConfigOverride, "PLUGINS_DISABLED") or ConfigOverride(key="PLUGINS_DISABLED")
+    row.value, row.secret = value, False
+    db.add(row)
+    db.commit()
+    _apply("PLUGINS_DISABLED", value)
+
+
+def disable_plugins(db: Session, plugin_ids: List[str]) -> None:
+    """Switches several plugins off in one write (same override as :func:`set_plugin_enabled`)."""
+    current = list(settings.disabled_plugins)
+    current.extend(p for p in plugin_ids if p not in current)
     value = ",".join(current)
     row = db.get(ConfigOverride, "PLUGINS_DISABLED") or ConfigOverride(key="PLUGINS_DISABLED")
     row.value, row.secret = value, False

@@ -7,6 +7,7 @@ import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
+import '../admin/admin_screen.dart' show adminOverviewProvider;
 import '../admin/ics_feeds_screen.dart';
 
 String _status(AdminPlugin p) => p.disabled
@@ -22,6 +23,7 @@ class PluginsAdminScreen extends ConsumerWidget {
   Future<void> _toggle(BuildContext context, WidgetRef ref, AdminPlugin p, bool enabled) async {
     if (await runAction(context, () => ref.read(apiClientProvider).setPluginEnabled(p.id, enabled))) {
       ref.invalidate(adminPluginsProvider);
+      ref.invalidate(adminOverviewProvider);
       ref.invalidate(modulesProvider); // Bereiche in der App sofort anpassen
     }
   }
@@ -53,6 +55,7 @@ class PluginsAdminScreen extends ConsumerWidget {
                         MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
                     if (saved == true) {
                       ref.invalidate(adminPluginsProvider);
+                      ref.invalidate(adminOverviewProvider);
                       ref.invalidate(modulesProvider);
                     }
                   },
