@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import re
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional
@@ -9,7 +13,7 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -24,6 +28,7 @@ from app.core.oidc import (
     verify_id_token,
 )
 from app.core.security import (
+    revoke_all_refresh_tokens,
     authenticate_user,
     check_rate_limit,
     clear_auth_cookies,
@@ -101,7 +106,8 @@ class UpdateUserRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
-    new_password: str
+    new_password: str = Field(min_length=10, max_length=200)
+    refresh_token: Optional[str] = None  # diese Sitzung behalten (App), alle anderen beenden
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -185,12 +191,14 @@ async def me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/change-password")
-async def change_password(data: ChangePasswordRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def change_password(data: ChangePasswordRequest, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not verify_password(data.current_password, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
     current_user.hashed_password = get_password_hash(data.new_password)
     db.commit()
-    return {"message": "Password changed successfully"}
+    # Andere Geräte abmelden: wer das alte Passwort kannte, soll nicht angemeldet bleiben
+    ended = revoke_all_refresh_tokens(current_user.id, db, keep=data.refresh_token or request.cookies.get("refresh_token"))
+    return {"message": "Password changed successfully", "other_sessions_ended": ended}
 
 
 # --- User management (admin) ---
@@ -278,10 +286,11 @@ class OIDCStartResponse(BaseModel):
 
 class OIDCExchangeRequest(BaseModel):
     code: str
+    verifier: Optional[str] = Field(default=None, max_length=200)  # Geheimnis zum challenge aus /oidc/start
 
 
 @router.get("/oidc/start", response_model=OIDCStartResponse)
-async def oidc_start(client: str, db: Session = Depends(get_db)):
+async def oidc_start(client: str, challenge: Optional[str] = None, db: Session = Depends(get_db)):
     """Starte OIDC Authorization Code Flow mit PKCE."""
     if not settings.oidc_issuer or not settings.oidc_client_id:
         raise HTTPException(status_code=501, detail="OIDC not configured")
@@ -289,6 +298,7 @@ async def oidc_start(client: str, db: Session = Depends(get_db)):
     # web: Cookies (alte Weboberfläche) · app: familienhub://-Rücksprung · pwa: Web-App, Rücksprung auf /?oidc_code=
     if client not in ("web", "app", "pwa"):
         raise HTTPException(status_code=400, detail="Invalid client type")
+    challenge = _valid_challenge(challenge)  # vor jedem Netzaufruf prüfen
 
     # Hole OIDC-Konfiguration
     try:
@@ -307,6 +317,8 @@ async def oidc_start(client: str, db: Session = Depends(get_db)):
         nonce=nonce,
         code_verifier=pkce["code_verifier"],
         client_type=client,
+        # App/Web-App: Hash eines Geheimnisses, das nur das startende Gerät kennt (PKCE-Bindung des Rücksprungs)
+        app_challenge=challenge,
     )
     db.add(oidc_session)
     db.commit()
@@ -488,12 +500,10 @@ async def _finish_oidc_login(code: str, state: str, request: Request, db: Sessio
     db.delete(oidc_session)
     db.commit()
 
-    # Erzeuge Hub-Tokens
-    access = create_access_token(data={"sub": user.username})
-    refresh = create_refresh_token(user.id, db, request)
-
     if oidc_session.client_type == "web":
         # Web: Cookies auf genau die Antwort setzen, die zurückgeht (vorher gingen sie verloren)
+        access = create_access_token(data={"sub": user.username})
+        refresh = create_refresh_token(user.id, db, request)
         redirect = RedirectResponse(url="/", status_code=302)
         set_auth_cookies(redirect, access, refresh)
         return redirect
@@ -505,6 +515,7 @@ async def _finish_oidc_login(code: str, state: str, request: Request, db: Sessio
             code=exchange_code,
             user_id=user.id,
             used=False,
+            app_challenge=oidc_session.app_challenge,
         )
         db.add(exchange_record)
         db.commit()
@@ -520,6 +531,18 @@ async def _finish_oidc_login(code: str, state: str, request: Request, db: Sessio
         return RedirectResponse(url=f"familienhub://auth?code={exchange_code}")
 
 
+def _challenge_of(verifier: str) -> str:
+    return base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
+
+
+def _valid_challenge(challenge: Optional[str]) -> Optional[str]:
+    if challenge is None:
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", challenge):
+        raise HTTPException(status_code=400, detail="Invalid challenge")
+    return challenge
+
+
 @router.post("/oidc/exchange", response_model=TokenResponse)
 async def oidc_exchange(data: OIDCExchangeRequest, request: Request, db: Session = Depends(get_db)):
     """Tausche Exchange-Code gegen Hub-Tokens (nur für App)."""
@@ -531,6 +554,15 @@ async def oidc_exchange(data: OIDCExchangeRequest, request: Request, db: Session
 
     if not exchange_record:
         raise HTTPException(status_code=401, detail="Invalid or expired exchange code")
+
+    # PKCE-Bindung: Wurde beim Start ein Hash mitgegeben, braucht das Einlösen das passende Geheimnis.
+    # So nützt ein von einer fremden App abgefangener familienhub://-Rücksprung nichts.
+    if exchange_record.app_challenge:
+        given = _challenge_of(data.verifier) if data.verifier else None
+        if not given or not hmac.compare_digest(given, exchange_record.app_challenge):
+            exchange_record.used = True  # nach einem Fehlversuch verbrannt
+            db.commit()
+            raise HTTPException(status_code=401, detail="Invalid or expired exchange code")
 
     # Prüfe Alter (max 60 Sekunden)
     if exchange_record.created_at < datetime.utcnow() - timedelta(seconds=60):

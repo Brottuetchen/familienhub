@@ -6,6 +6,7 @@ rollenbasierte FastAPI-Dependencies.
 
 from __future__ import annotations
 
+import hashlib
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Iterable, Optional
@@ -83,12 +84,17 @@ def verify_token(token: str, token_type: str = "access") -> Optional[Dict]:
         return None
 
 
+def hash_refresh_token(token: str) -> str:
+    """Refresh-Tokens liegen nur als SHA-256 in der Datenbank (ein Datenbank-Leck verrät keine Sitzungen)."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def create_refresh_token(user_id: int, db: Session, request: Request) -> str:
     token = secrets.token_urlsafe(32)
     expires_at = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
     db_token = RefreshToken(
         user_id=user_id,
-        token=token,
+        token=hash_refresh_token(token),
         expires_at=expires_at,
         user_agent=request.headers.get("user-agent", "unknown"),
         ip_address=request.client.host if request.client else "unknown",
@@ -101,7 +107,7 @@ def create_refresh_token(user_id: int, db: Session, request: Request) -> str:
 def verify_refresh_token(token: str, db: Session) -> Optional[RefreshToken]:
     db_token = (
         db.query(RefreshToken)
-        .filter(RefreshToken.token == token, RefreshToken.revoked == False)  # noqa: E712
+        .filter(RefreshToken.token == hash_refresh_token(token), RefreshToken.revoked == False)  # noqa: E712
         .first()
     )
     if not db_token or db_token.expires_at < datetime.utcnow():
@@ -110,7 +116,7 @@ def verify_refresh_token(token: str, db: Session) -> Optional[RefreshToken]:
 
 
 def revoke_refresh_token(token: str, db: Session) -> bool:
-    db_token = db.query(RefreshToken).filter(RefreshToken.token == token).first()
+    db_token = db.query(RefreshToken).filter(RefreshToken.token == hash_refresh_token(token)).first()
     if db_token:
         db_token.revoked = True
         db.commit()
@@ -298,3 +304,13 @@ def verify_reminder_action_token(token: str) -> Optional[dict]:
     if payload.get("typ") != "reminder_action":
         return None
     return payload
+
+
+def revoke_all_refresh_tokens(user_id: int, db: Session, keep: Optional[str] = None) -> int:
+    """Alle Sitzungen einer Person beenden (z. B. nach Passwortänderung); optional eine behalten."""
+    q = db.query(RefreshToken).filter(RefreshToken.user_id == user_id, RefreshToken.revoked == False)  # noqa: E712
+    if keep:
+        q = q.filter(RefreshToken.token != hash_refresh_token(keep))
+    n = q.update({RefreshToken.revoked: True}, synchronize_session=False)
+    db.commit()
+    return n
