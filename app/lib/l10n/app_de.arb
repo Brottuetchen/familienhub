@@ -1245,5 +1245,11 @@
       "week": {},
       "range": {}
     }
-  }
+  },
+  "calendarTarget": "Kalender",
+  "startLabel": "Beginn",
+  "endLabel": "Ende",
+  "untilDay": "Bis",
+  "location": "Ort",
+  "familyCalendarHint": "Familienkalender"
 }

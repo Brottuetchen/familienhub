@@ -1072,12 +1072,20 @@ class ApiClient {
     required DateTime start,
     required DateTime end,
     required bool allDay,
+    String? calendarId,
+    String? location,
+    String? notes,
+    String recurrence = 'none',
   }) =>
       _send('POST', '/api/calendar/events', body: {
         'title': title,
         'start': allDay ? _dateOnly(start) : _localIso(start),
         'end': allDay ? _dateOnly(end) : _localIso(end),
         'all_day': allDay,
+        if (calendarId != null) 'calendar_id': calendarId,
+        if (location != null && location.isNotEmpty) 'location': location,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (recurrence != 'none') 'recurrence': recurrence,
       });
 
   // ── Erinnerungen ───────────────────────────────────────────────────────────

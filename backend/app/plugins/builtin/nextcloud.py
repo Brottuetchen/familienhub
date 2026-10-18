@@ -15,6 +15,8 @@ class NextcloudPlugin(Plugin):
                         help="Optional. Fallback für Personen ohne eigenes Konto."),
                 Setting("CALDAV_USERNAME", "Gemeinsamer Kalender: Benutzer", required=False),
                 Setting("CALDAV_PASSWORD", "Gemeinsamer Kalender: Passwort", secret=True, required=False),
+                Setting("CALDAV_FAMILY_CALENDAR", "Name des Familienkalenders", required=False,
+                        help="So heißt der geteilte Familienkalender in Nextcloud o. Ä. (mehrere mit Komma). Er wird beim Anlegen vorgeschlagen."),
             ),
             builtin=True,
         )

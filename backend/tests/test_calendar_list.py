@@ -60,3 +60,60 @@ def test_hub_events_carry_the_calendar_id(client):
         "title": "Mit Kennung", "start": "2099-08-01T10:00:00", "end": "2099-08-01T11:00:00", "all_day": False})
     events = client.get("/api/calendar/events", params={"start": "2099-08-01", "days": 1}, headers=h).json()
     assert next(e for e in events if e["title"] == "Mit Kennung")["calendar_id"] == "hub"
+
+
+CALS = [{"id": "caldav:privat", "name": "Persönlich", "color": None, "url": "https://dav.example.test/c/anna/personal/"},
+        {"id": "caldav:fam", "name": "Familie", "color": "#81B29A", "url": "https://dav.example.test/c/anna/familie_shared/"}]
+
+
+def test_family_calendar_is_marked_and_first(client, monkeypatch):
+    from app.connectors import caldav_connector
+    from app.services import config_store
+
+    monkeypatch.setitem(config_store._extra, "CALDAV_FAMILY_CALENDAR", "familie")
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_list_calendars_sync", lambda self: CALS)
+    cals = client.get("/api/calendar/calendars", headers=_auth(client, "cl_fam", caldav=True)).json()
+    assert [c["id"] for c in cals if c["family"]][:2] == ["hub", "caldav:fam"]
+    assert cals.index(next(c for c in cals if c["id"] == "caldav:fam")) < cals.index(next(c for c in cals if c["id"] == "caldav:privat"))
+
+
+def test_create_goes_exactly_into_the_chosen_caldav_calendar(client, monkeypatch):
+    from app.connectors import caldav_connector
+
+    seen = {}
+
+    def fake_create(self, title, start, end, all_day, calendar_url=None, **extras):
+        seen.update(url=calendar_url, **extras)
+        return {"uid": "u1", "title": title, "start": start, "end": end, "all_day": all_day}
+
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_list_calendars_sync", lambda self: CALS)
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_create_event_sync", fake_create)
+    h = _auth(client, "cl_target", caldav=True)
+    r = client.post("/api/calendar/events", headers=h, json={
+        "title": "Elternabend", "start": "2099-03-03T19:00:00", "end": "2099-03-03T21:00:00", "all_day": False,
+        "calendar_id": "caldav:fam", "location": "Aula", "notes": "Mappe mitbringen", "recurrence": "monthly"})
+    assert r.status_code == 201, r.text
+    assert seen == {"url": "https://dav.example.test/c/anna/familie_shared/", "location": "Aula",
+                    "notes": "Mappe mitbringen", "rrule": "MONTHLY"}
+    bad = client.post("/api/calendar/events", headers=h, json={
+        "title": "x", "start": "2099-03-03T19:00:00", "end": "2099-03-03T20:00:00", "all_day": False, "calendar_id": "caldav:gibtsnicht"})
+    assert bad.status_code == 422
+    ics = client.post("/api/calendar/events", headers=h, json={
+        "title": "x", "start": "2099-03-03T19:00:00", "end": "2099-03-03T20:00:00", "all_day": False, "calendar_id": "ics:schulferien"})
+    assert ics.status_code == 422
+
+
+def test_hub_event_with_details_and_weekly_repeat(client):
+    h = _auth(client, "cl_repeat")
+    r = client.post("/api/calendar/events", headers=h, json={
+        "title": "Schwimmkurs", "start": "2099-04-06T16:00:00", "end": "2099-04-06T17:00:00", "all_day": False,
+        "calendar_id": "hub", "location": "Hallenbad", "notes": "Badekappe", "recurrence": "weekly"})
+    assert r.status_code == 201 and r.json()["location"] == "Hallenbad" and r.json()["recurrence"] == "weekly"
+    april = client.get("/api/calendar/events", params={"start": "2099-04-01", "days": 30}, headers=h).json()
+    starts = sorted(e["start"] for e in april if e["title"] == "Schwimmkurs")
+    assert starts == ["2099-04-06T16:00:00", "2099-04-13T16:00:00", "2099-04-20T16:00:00", "2099-04-27T16:00:00"]
+    later = client.get("/api/calendar/events", params={"start": "2099-12-01", "days": 7}, headers=h).json()
+    assert any(e["title"] == "Schwimmkurs" for e in later)  # still repeats months later
+    assert client.post("/api/calendar/events", headers=h, json={
+        "title": "x", "start": "2099-04-06T16:00:00", "end": "2099-04-06T17:00:00", "all_day": False,
+        "recurrence": "hourly"}).status_code == 422

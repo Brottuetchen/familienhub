@@ -113,8 +113,9 @@ class CalDAVConnector(BaseConnector):
         end: str,
         all_day: bool,
         calendar_url: Optional[str] = None,
+        **extras: Any,
     ) -> Dict[str, Any]:
-        """Erstellt einen neuen Kalendereintrag.
+        """Erstellt einen neuen Kalendereintrag. ``extras``: location, notes, rrule (DAILY/WEEKLY/MONTHLY/YEARLY).
 
         Args:
             title: Titel des Events
@@ -136,6 +137,7 @@ class CalDAVConnector(BaseConnector):
             end,
             all_day,
             calendar_url,
+            **extras,
         )
 
     # --- Synchrone CalDAV-Logik (läuft im Thread) ---
@@ -182,6 +184,9 @@ class CalDAVConnector(BaseConnector):
         end: str,
         all_day: bool,
         calendar_url: Optional[str] = None,
+        location: Optional[str] = None,
+        notes: Optional[str] = None,
+        rrule: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Erstellt synchron ein Event via CalDAV."""
         try:
@@ -204,13 +209,13 @@ class CalDAVConnector(BaseConnector):
         if not calendars:
             raise ValueError("No calendar found")
 
-        # Ersten Kalender nehmen (oder den angegebenen)
+        # Exactly the chosen calendar; without a choice the first one (old behaviour)
         target_calendar = calendars[0]
         if calendar_url:
-            for cal in calendars:
-                if calendar_url in str(cal.url):
-                    target_calendar = cal
-                    break
+            wanted = calendar_url.rstrip("/")
+            target_calendar = next((c for c in calendars if str(c.url).rstrip("/") == wanted), None)
+            if target_calendar is None:
+                raise ValueError("Kalender nicht gefunden")
 
         # iCalendar Event erstellen
         cal = Calendar()
@@ -232,6 +237,12 @@ class CalDAVConnector(BaseConnector):
             event.add('dtstart', start_dt)
             event.add('dtend', end_dt)
 
+        if location:
+            event.add('location', location)
+        if notes:
+            event.add('description', notes)
+        if rrule:
+            event.add('rrule', {'freq': rrule})
         cal.add_component(event)
 
         # Event speichern

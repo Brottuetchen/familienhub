@@ -684,5 +684,11 @@
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
   "untilDate": "until {date}",
-  "weekRange": "Week {week} · {range}"
+  "weekRange": "Week {week} · {range}",
+  "calendarTarget": "Calendar",
+  "startLabel": "Start",
+  "endLabel": "End",
+  "untilDay": "Until",
+  "location": "Location",
+  "familyCalendarHint": "Family calendar"
 }
