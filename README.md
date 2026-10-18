@@ -77,13 +77,12 @@ flowchart LR
 ## Quick start
 
 ```bash
-git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
-cp .env.example .env            # set SECRET_KEY, POSTGRES_PASSWORD, CORS_ORIGINS
-docker compose up -d --build
-docker compose logs familienhub | grep -i code      # setup code for the first admin
+mkdir familienhub && cd familienhub
+curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
+docker compose up -d
 ```
 
-Open the hub in the app or a browser and choose **Set up**; the setup wizard does the rest. Details, reverse proxy, apps and backups: [getting started](docs/getting-started.md).
+No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). The apps (APK and IPA) are attached to each [GitHub release](https://github.com/Brottuetchen/familienhub/releases/latest). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
 
 ## Documentation
 
