@@ -3,7 +3,9 @@
 # 1) Flutter-Web-App bauen (gleiche Oberfläche wie die Android-App)
 #    Lokal mit vorhandenem Flutter-Image bauen: --build-arg FLUTTER_IMAGE=<image>
 ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:stable
-FROM ${FLUTTER_IMAGE} AS web
+# The web build is the same for every CPU, so it runs natively on the build machine
+FROM --platform=$BUILDPLATFORM ${FLUTTER_IMAGE} AS web
+ARG FH_VERSION=dev
 USER root
 # Flutter-SDK kann einem anderen Nutzer gehören (z. B. lokales Image) → Git-Prüfung abschalten
 RUN git config --global --add safe.directory '*'
@@ -12,14 +14,16 @@ COPY app/pubspec.yaml app/pubspec.lock ./
 RUN flutter pub get
 COPY app/ ./
 # --no-web-resources-cdn: CanvasKit vom eigenen Server statt von gstatic.com
-RUN flutter build web --release --no-web-resources-cdn
+RUN flutter build web --release --no-web-resources-cdn --dart-define=FH_VERSION=${FH_VERSION}
 
 # 2) Backend
 FROM python:3.12-slim
+ARG FH_VERSION=dev
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    FH_VERSION=${FH_VERSION}
 
 WORKDIR /app
 
