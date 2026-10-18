@@ -36,19 +36,38 @@
                 <data android:scheme="familienhub" android:host="open"/>
             </intent-filter>
         </activity>
-        <!-- Startbildschirm-Widgets (Texte schreibt die App, siehe lib/services/home_widgets.dart) -->
-        <receiver android:name=".TodayWidgetProvider" android:exported="false" android:label="Familienhub – Heute">
+        <!-- Home-screen widgets (content is written by the app, see lib/services/home_widgets.dart) -->
+        <receiver android:name=".TodayWidgetProvider" android:exported="false" android:label="@string/widget_today_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_today_info"/>
         </receiver>
-        <receiver android:name=".ShoppingWidgetProvider" android:exported="false" android:label="Familienhub – Einkauf">
+        <receiver android:name=".EventsWidgetProvider" android:exported="false" android:label="@string/widget_events_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_events_info"/>
+        </receiver>
+        <receiver android:name=".TasksWidgetProvider" android:exported="false" android:label="@string/widget_tasks_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tasks_info"/>
+        </receiver>
+        <receiver android:name=".ShoppingWidgetProvider" android:exported="false" android:label="@string/widget_shopping_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_shopping_info"/>
         </receiver>
+        <!-- Configure screen of the Today widget (shown when placed; reconfigurable by long-press on Android 12+) -->
+        <activity android:name=".TodayWidgetConfigActivity" android:exported="true"
+            android:theme="@style/WidgetConfigTheme" android:taskAffinity="" android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

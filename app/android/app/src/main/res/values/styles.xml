@@ -15,4 +15,6 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- Configure screen of the Today widget -->
+    <style name="WidgetConfigTheme" parent="@android:style/Theme.Material.Light.Dialog" />
 </resources>

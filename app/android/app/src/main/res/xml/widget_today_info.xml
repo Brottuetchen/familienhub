@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="250dp" android:minHeight="110dp"
-    android:targetCellWidth="4" android:targetCellHeight="2"
+    android:minWidth="250dp" android:minHeight="180dp"
+    android:targetCellWidth="4" android:targetCellHeight="3"
+    android:minResizeWidth="110dp" android:minResizeHeight="110dp"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_today"
-    android:previewLayout="@layout/widget_today"
+    android:initialLayout="@layout/widget_sections"
+    android:previewLayout="@layout/widget_preview_today"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:description="@string/widget_today_description" />
+    android:description="@string/widget_today_description"
+    android:configure="de.familienhub.app.TodayWidgetConfigActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" />

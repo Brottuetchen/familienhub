@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_today_description">Familienhub – Heute: Termine, Aufgaben, Essen, Einkauf</string>
-    <string name="widget_shopping_description">Familienhub – Einkaufsliste</string>
+    <string name="widget_today_label">Familienhub – Heute</string>
+    <string name="widget_events_label">Familienhub – Termine</string>
+    <string name="widget_tasks_label">Familienhub – Aufgaben</string>
+    <string name="widget_shopping_label">Familienhub – Einkauf</string>
+    <string name="widget_today_description">Termine, Aufgaben und Einkauf auf einen Blick – anpassbar</string>
+    <string name="widget_events_description">Die nächsten Termine der Familie</string>
+    <string name="widget_tasks_description">Offene Aufgaben</string>
+    <string name="widget_shopping_description">Die Einkaufsliste</string>
+
+    <string name="section_events">Termine</string>
+    <string name="section_tasks">Aufgaben</string>
+    <string name="section_shopping">Einkauf</string>
+    <string name="widget_title_today">Heute</string>
+    <string name="widget_more">+%d weitere</string>
+    <string name="widget_login">In der App anmelden</string>
+
+    <string name="config_title">Widget anpassen</string>
+    <string name="config_hint">Welche Bereiche soll das Widget zeigen?</string>
+    <string name="config_save">Speichern</string>
+    <string name="config_cancel">Abbrechen</string>
+    <string name="config_min_one">Mindestens ein Bereich muss aktiv sein.</string>
+
+    <string name="preview_today_title">Sonntag, 18. Oktober</string>
+    <string name="preview_event_1">09:30  Zahnarzt</string>
+    <string name="preview_event_2">15:00  Kindergeburtstag</string>
+    <string name="preview_event_3">morgen 18:30  Elternabend</string>
+    <string name="preview_task_1">○  Müll rausbringen</string>
+    <string name="preview_task_2">○  Paket abholen</string>
+    <string name="preview_task_3">○  Blumen gießen</string>
+    <string name="preview_item_1">•  Milch</string>
+    <string name="preview_item_2">•  Brot</string>
+    <string name="preview_item_3">•  Äpfel</string>
 </resources>
