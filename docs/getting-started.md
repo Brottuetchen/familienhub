@@ -69,6 +69,8 @@ Firebase (Android app), Web Push (browser and home-screen web app) and ntfy (any
 
 Enter credentials for Nextcloud, Home Assistant, Paperless, Seerr, Shelfarr, Cookidoo, Habitica, ntfy and weather under **Administration → Plugins & access**. They are stored encrypted and take effect without a restart. You can also put them in `.env`. Personal accounts (Nextcloud, Habitica, Paperless token, ntfy) are set up by each person in the app. Details: [plugins](plugins.md).
 
+With a CalDAV server, set the shared family calendar and connect the phones to the same server, so the iPhone and Android calendar and reminder apps show the same data as the hub: [calendar & phone](calendar.md).
+
 ## 7. Backup
 
 Back up the PostgreSQL volume (`familienhub_db`) and `.env`. Tasks, shopping lists, documents and the like live in the connected services.

@@ -155,3 +155,33 @@ def test_edit_and_delete_own_caldav_event(client, monkeypatch):
     assert calls[0] == ("update", "https://dav.example.test/c/anna/familie_shared/", "u1", "Neu")
     assert calls[-1] == ("delete", "https://dav.example.test/c/anna/familie_shared/", "u1")
     assert ("update", "https://dav.example.test/c/anna/familie_shared/", "u1", "Neu") in calls
+
+
+def test_new_caldav_event_uses_named_time_zone(monkeypatch):
+    """Times go out as TZID=<hub zone>, not as a fixed offset that servers map to a random zone."""
+    import caldav
+
+    from app.connectors.caldav_connector import CalDAVConnector
+
+    saved = []
+
+    class FakeCalendar:
+        url = "https://cloud.example.com/remote.php/dav/calendars/anna/familie/"
+
+        def save_event(self, ical):
+            saved.append(ical)
+
+    class FakeClient:
+        def __init__(self, *a, **kw):
+            pass
+
+        def principal(self):
+            return type("P", (), {"calendars": lambda self: [FakeCalendar()]})()
+
+    monkeypatch.setattr(caldav, "DAVClient", FakeClient)
+    conn = CalDAVConnector(url="https://cloud.example.com/remote.php/dav", username="anna", password="pw")
+    conn._create_event_sync("Elternabend", "2026-10-19T19:00:00+02:00", "2026-10-19T20:00:00+02:00", False,
+                            None, rrule="WEEKLY")
+    ical = saved[0]
+    assert "DTSTART;TZID=Europe/Berlin:20261019T190000" in ical
+    assert "UTC+02" not in ical and "+0200" not in ical.split("BEGIN:VEVENT")[1]
