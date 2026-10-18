@@ -23,6 +23,7 @@ from app.plugins.registry import plugin_registry
 from app.routers import (
     admin,
     admin_panel,
+    feedback,
     invites,
     setup,
     auth,
@@ -115,7 +116,7 @@ async def refresh_after_changes(request, call_next):
 
 # Kern-Router; Integrationen bringen ihre Router als Plugin mit
 for module in (health, auth, modules, notifications, today, tasks, reminders, meals, recipes, push, themes, profile, admin,
-               admin_panel, invites, setup):
+               admin_panel, feedback, invites, setup):
     app.include_router(module.router)
 plugin_registry.include_routers(app)
 

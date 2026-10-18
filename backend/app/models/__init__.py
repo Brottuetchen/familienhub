@@ -11,11 +11,13 @@ from app.models.push_device import PushDevice
 from app.models.recipe import MealPlanEntry, Recipe
 from app.models.paperless import PaperlessAccount
 from app.models.invite import Invite
+from app.models.feedback import Feedback
 from app.models.reminder import Reminder
 from app.models.theme import Theme
 from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
+    "Feedback",
     "Invite",
     "HabiticaAccount",
     "HabiticaSelection",

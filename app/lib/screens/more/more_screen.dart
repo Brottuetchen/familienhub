@@ -7,6 +7,7 @@ import 'api_tokens_screen.dart';
 import '../admin/admin_screen.dart';
 import 'books_screen.dart';
 import 'documents_screen.dart';
+import 'feedback_screen.dart';
 import 'media_screen.dart';
 import 'notifications_screen.dart';
 import 'appearance_screen.dart';
@@ -123,6 +124,13 @@ class MoreScreen extends ConsumerWidget {
               subtitle: const Text('Systemzustand, Familie, Haus, Plugins, Protokoll'),
               onTap: () => open(const AdminScreen()),
             ),
+          ListTile(
+            key: const Key('more-feedback'),
+            leading: const Icon(Icons.chat_bubble_outline),
+            title: const Text('Feedback senden'),
+            subtitle: const Text('Fehler, Wünsche – an die Familie oder die Entwickler'),
+            onTap: () => open(const FeedbackScreen()),
+          ),
           FutureBuilder<String?>(
             future: ref.read(apiClientProvider).store.baseUrl(),
             builder: (context, snap) => ListTile(

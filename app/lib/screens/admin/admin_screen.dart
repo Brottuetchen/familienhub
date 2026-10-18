@@ -8,6 +8,7 @@ import '../more/appearance_screen.dart';
 import '../more/plugins_admin_screen.dart';
 import '../more/service_keys_screen.dart';
 import '../setup/setup_wizard_screen.dart';
+import 'admin_feedback_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
 import 'admin_users_screen.dart';
@@ -82,6 +83,13 @@ class AdminScreen extends ConsumerWidget {
               title: 'Themes',
               subtitle: 'Designsprachen installieren und entfernen',
               onTap: () => open(const AppearanceScreen()),
+            ),
+            _Area(
+              key: const Key('admin-feedback'),
+              icon: Icons.chat_bubble_outline,
+              title: 'Feedback',
+              subtitle: 'Rückmeldungen der Familie, weitergeben an GitHub',
+              onTap: () => open(const AdminFeedbackScreen()),
             ),
             _Area(
               key: const Key('admin-log'),

@@ -4,7 +4,7 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<!-- Deep links: hubstinger://auth#token=<jwt> (OIDC callback) -->
+	<!-- Deep links: familienhub://auth?code=… (OIDC-Rücksprung) und familienhub://open?route=… (wie Android) -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -12,7 +12,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>hubstinger</string>
+				<string>familienhub</string>
 			</array>
 		</dict>
 	</array>
