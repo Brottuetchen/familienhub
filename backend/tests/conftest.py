@@ -13,6 +13,7 @@ if os.path.exists(_DB_PATH):
 
 os.environ["DATABASE_URL"] = f"sqlite:///{_DB_PATH}"
 os.environ["SECRET_KEY"] = "pytest-secret"
+os.environ["VAPID_AUTO"] = "false"  # tests opt in to generated Web Push keys explicitly
 os.environ["DATA_DIR"] = os.path.join(tempfile.gettempdir(), "hermes_pytest_data")
 os.environ["WEATHER_ENABLED"] = "false"
 os.environ["AI_PROVIDER"] = "none"
