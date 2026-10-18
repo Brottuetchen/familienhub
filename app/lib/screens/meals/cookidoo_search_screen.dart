@@ -9,10 +9,12 @@ import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 
-/// Cookidoo-Rezept suchen und auf [day] legen. Gibt beim Schließen `true` zurück, wenn eingeplant wurde.
+/// Search a recipe in a source (Cookidoo, Mealie …) and plan it on [day]. Closes with `true` when planned.
 class CookidooSearchScreen extends ConsumerStatefulWidget {
   final DateTime day;
-  const CookidooSearchScreen({super.key, required this.day});
+  final String source;
+  final String sourceName;
+  const CookidooSearchScreen({super.key, required this.day, this.source = 'cookidoo', this.sourceName = 'Cookidoo'});
 
   @override
   ConsumerState<CookidooSearchScreen> createState() => _CookidooSearchScreenState();
@@ -45,7 +47,8 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
     }
     setState(() => _loading = true);
     try {
-      final r = await ref.read(apiClientProvider).searchCookidoo(q);
+      final api = ref.read(apiClientProvider);
+      final r = widget.source == 'cookidoo' ? await api.searchCookidoo(q) : await api.searchRecipeSource(widget.source, q);
       if (mounted && _query.text.trim() == q) setState(() => _result = r);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -56,7 +59,10 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
 
   Future<void> _plan(CookidooRecipe recipe) async {
     setState(() => _planning = recipe.id);
-    final ok = await runAction(context, () => ref.read(apiClientProvider).planCookidoo(widget.day, recipe.id));
+    final api = ref.read(apiClientProvider);
+    final ok = await runAction(context, () => widget.source == 'cookidoo'
+        ? api.planCookidoo(widget.day, recipe.id)
+        : api.planFromSource(widget.source, widget.day, recipe.id));
     if (!mounted) return;
     setState(() => _planning = null);
     if (ok) Navigator.pop(context, true);
@@ -77,7 +83,7 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: l10n.searchCookidoo,
+                hintText: widget.source == 'cookidoo' ? l10n.searchCookidoo : l10n.searchInSource(widget.sourceName),
               ),
               onChanged: _onQuery,
               onSubmitted: (_) => _search(),
@@ -89,7 +95,7 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
                 ? EmptyHint(icon: Icons.restaurant_menu, text: l10n.min3Letters)
                 : ListView(
                     children: [
-                      SourceBanner(source: 'Cookidoo', status: result.status, error: result.error),
+                      SourceBanner(source: widget.sourceName, status: result.status, error: result.error),
                       if (result.status == SourceStatus.ok && result.items.isEmpty)
                         EmptyHint(icon: Icons.search_off, text: l10n.nothingFound),
                       for (final r in result.items)

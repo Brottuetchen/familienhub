@@ -46,6 +46,12 @@ def _hub_source():
     from app.plugins.base import get_setting
 
     choice = str(get_setting("SHOPPING_SOURCE") or "").strip()
+    if choice == "mealie":
+        from app.plugins.registry import plugin_registry
+        from app.services.mealie import MealieShopping
+
+        if plugin_registry.serves("shopping", "mealie"):
+            return MealieShopping()
     if choice == "hub_shopping" or (choice != "homeassistant" and _ha() is None):
         return _hub()
     return None  # Home Assistant

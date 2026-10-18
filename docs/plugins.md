@@ -12,6 +12,7 @@ The shipped plugins live in `backend/app/plugins/builtin/`:
 |---|---|---|
 | Tasks / shopping list / family calendar in the hub | tasks, shopping, calendar | – (stored in the hub) |
 | CalDAV (Nextcloud, iCloud, Radicale …) | tasks, calendar | own CalDAV account and app password |
+| Mealie | meal_planning, meal_source, shopping: search and plan recipes, household meal plan in the week, shopping list | – (household API token) |
 | Calendar subscriptions (ICS) | calendar (read-only): school holidays, waste collection, clubs | – (admin adds feeds: `Name \| https://…/feed.ics; …`) |
 | Habitica | tasks (dailies, habits, rewards) | own Habitica user ID and API key |
 | Home Assistant | shopping list, house tiles, Cookidoo meal plan (read) | – (shared, admin chooses entities) |
@@ -78,7 +79,7 @@ At start-up the hub loads every entry point in the group `familienhub.plugins` (
 
 ### Rules
 
-- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Several task providers can be active side by side. For the other areas, the first active plugin wins.
+- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Recipe sources (`meal_planning`) appear in the app as "Recipe from <name>" through `/api/recipe-sources` (`backend/app/routers/recipe_sources.py`); a new source adds its service there. Several task providers can be active side by side. For the other areas, the first active plugin wins.
 - **Settings** are read only through `get_setting(KEY)`: admin entry > core setting > environment. Fields with `secret=True` are stored encrypted and never sent back to the app.
 - **Active** means all required settings are set and the id is not in `PLUGINS_DISABLED`. Override `is_configured()` if your plugin works with per-person accounts instead.
 - **Fail softly.** Lists from external systems use `{status: ok | unavailable | not_configured, error, items}`. An external system that is down must never break the app.

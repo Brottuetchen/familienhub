@@ -1164,5 +1164,23 @@
       "servings": {}
     }
   },
-  "openLink": "Link öffnen"
+  "openLink": "Link öffnen",
+  "recipeFromSource": "Rezept aus {name}",
+  "@recipeFromSource": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "searchInSource": "Rezept in {name} suchen",
+  "@searchInSource": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "openInSource": "In {name} öffnen",
+  "@openInSource": {
+    "placeholders": {
+      "name": {}
+    }
+  }
 }

@@ -33,6 +33,12 @@ class MealEntry {
 
   bool get isCookidoo => source == 'cookidoo';
 
+  /// Entry from a recipe source (Cookidoo, Mealie …) rather than the hub itself.
+  bool get isExternal => source != 'hub';
+
+  /// Display name of the source, e.g. "Cookidoo", "Mealie".
+  String get sourceName => recipeSourceNames[source] ?? source;
+
   factory MealEntry.fromJson(Map<String, dynamic> json) => MealEntry(
         id: parseInt(json['id']),
         uid: json['uid'] as String?,
@@ -40,12 +46,24 @@ class MealEntry {
         source: (json['source'] as String?) ?? 'hub',
         mealType: json['meal_type'] as String?,
         description: json['description'] as String?,
-        cookidooId: json['cookidoo_id'] as String?,
+        // Recipe id of the source: Cookidoo sends cookidoo_id, other sources (Mealie) recipe_id
+        cookidooId: (json['cookidoo_id'] as String?) ??
+            ((json['source'] ?? 'hub') != 'hub' && json['recipe_id'] is String ? json['recipe_id'] as String : null),
         minutes: parseInt(json['minutes']),
         image: json['image'] as String?,
         url: json['url'] as String?,
         hubRecipeId: (json['source'] ?? 'hub') == 'hub' ? parseInt(json['recipe_id']) : null,
       );
+}
+
+const recipeSourceNames = {'cookidoo': 'Cookidoo', 'mealie': 'Mealie'};
+
+/// Recipe source from `/api/recipe-sources` (Cookidoo, Mealie …).
+class RecipeSource {
+  final String id;
+  final String name;
+  const RecipeSource(this.id, this.name);
+  factory RecipeSource.fromJson(Map<String, dynamic> j) => RecipeSource(j['id'] as String, (j['name'] as String?) ?? j['id'] as String);
 }
 
 /// Recipe in the hub's recipe book (`/api/recipes`).

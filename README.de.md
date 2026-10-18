@@ -28,9 +28,9 @@ Eine App für alle in der Familie, die **allein funktioniert und anbindet, was i
 | Bereich | Im Hub | Oder aus (Plugins) |
 |---|:-:|---|
 | Aufgaben | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica, auch mehrere nebeneinander |
-| Einkaufsliste | ✓ | Home Assistant |
+| Einkaufsliste | ✓ | Home Assistant, Mealie |
 | Kalender | ✓ Familienkalender | CalDAV, Kalender-Abos (ICS), alles zusammen |
-| Essensplan & Rezepte | ✓ Wochenplan und Rezeptbuch | Cookidoo |
+| Essensplan & Rezepte | ✓ Wochenplan und Rezeptbuch | Mealie, Cookidoo |
 | Dokumente · Bücher · Filme & Serien | – | Paperless-ngx · Shelfarr · Seerr |
 
 Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unter *Verwaltung → Quellen je Bereich*.
