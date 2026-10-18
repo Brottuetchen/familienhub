@@ -11,7 +11,7 @@ from app.services import setup
 
 
 @pytest.fixture
-def no_admin(client):
+def fresh_hub(client):
     """Simuliert einen frischen Hub: vorhandene Admins vorübergehend zu Partnern machen."""
     with SessionLocal() as db:
         admins = db.query(User).filter(User.role == "admin").all()
@@ -19,8 +19,7 @@ def no_admin(client):
         for u in admins:
             u.role, u.is_admin = "partner", False
         db.commit()
-    code = setup.new_code()
-    yield code
+    yield
     with SessionLocal() as db:
         for u in db.query(User).filter(User.id.in_(ids)).all():
             u.role, u.is_admin = "admin", True
@@ -30,13 +29,20 @@ def no_admin(client):
     setup.finish()
 
 
+@pytest.fixture
+def no_admin(fresh_hub, monkeypatch):
+    """Fresh hub with SETUP_REQUIRE_CODE=true; yields the setup code."""
+    monkeypatch.setattr(settings, "setup_require_code", True)
+    return setup.new_code()
+
+
 def _admin(code, name="setup_chef", **kw):
     return {"code": code, "username": name, "email": f"{name}@example.org", "password": "lang-genug-123", **kw}
 
 
 def test_status_is_public(client):
     r = client.get("/api/setup/status")
-    assert r.status_code == 200 and set(r.json()) == {"needs_setup", "version", "app_name", "oidc"}
+    assert r.status_code == 200 and set(r.json()) == {"needs_setup", "version", "app_name", "oidc", "code_required"}
 
 
 def test_first_admin_needs_code_and_only_once(client, no_admin):
@@ -64,7 +70,49 @@ def test_first_admin_validation(client, no_admin, override):
     assert client.post("/api/setup/admin", json={**_admin(no_admin), **override}).status_code == 422
 
 
-def test_existing_admin_blocks_setup(client, auth):
+def test_status_reports_code_required(client, monkeypatch):
+    assert client.get("/api/setup/status").json()["code_required"] is False
+    monkeypatch.setattr(settings, "setup_require_code", True)
+    assert client.get("/api/setup/status").json()["code_required"] is True
+
+
+def test_first_admin_without_code_by_default(client, fresh_hub):
+    body = _admin("")
+    del body["code"]
+    assert client.get("/api/setup/status").json()["needs_setup"] is True
+    r = client.post("/api/setup/admin", json=body)
+    assert r.status_code == 201, r.text
+    assert r.json()["user"]["is_admin"] is True
+    assert client.get("/api/setup/status").json()["needs_setup"] is False
+    # second attempt: setup is closed
+    body["username"], body["email"] = "setup_zwei", "setup_zwei@example.org"
+    assert client.post("/api/setup/admin", json=body).status_code == 409
+
+
+def test_code_required_rejects_missing_and_wrong_code(client, no_admin):
+    body = _admin("")
+    del body["code"]
+    assert client.post("/api/setup/admin", json=body).status_code == 403
+    assert client.post("/api/setup/admin", json=_admin("AAAA-AAAA")).status_code == 403
+    assert client.post("/api/setup/admin", json=_admin(no_admin)).status_code == 201
+
+
+def test_startup_log_matches_mode(client, fresh_hub, monkeypatch, caplog):
+    import logging
+    from app.core.database import SessionLocal as S
+    caplog.set_level(logging.WARNING, logger="familienhub.setup")
+    with S() as db:
+        setup.prepare(db)
+    assert "first person to open the hub becomes admin" in caplog.text and "setup code" not in caplog.text
+    caplog.clear()
+    monkeypatch.setattr(settings, "setup_require_code", True)
+    with S() as db:
+        setup.prepare(db)
+    assert "setup code:" in caplog.text
+
+
+def test_existing_admin_blocks_setup(client, auth, monkeypatch):
+    monkeypatch.setattr(settings, "setup_require_code", True)
     setup.new_code()
     assert client.post("/api/setup/admin", json=_admin("ABCD-EFGH")).status_code == 409
 

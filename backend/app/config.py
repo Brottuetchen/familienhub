@@ -8,16 +8,49 @@ betreffende Baustein liefert leere/Beispiel-Daten statt einen Fehler zu werfen.
 
 from __future__ import annotations
 
+import logging
+import os
+import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repo-Wurzel (…/config.py -> app -> backend -> root), damit die .env unabhängig
 # vom Arbeitsverzeichnis gefunden wird (der Installer schreibt sie in die Wurzel).
 _ROOT = Path(__file__).resolve().parents[2]
+
+PLACEHOLDER_SECRET_KEY = "CHANGE_ME_dev_only_secret_key"
+SECRET_KEY_FILENAME = "secret_key"
+
+_log = logging.getLogger("familienhub.config")
+
+
+def load_or_create_secret_key(data_dir: str) -> Optional[str]:
+    """Read ``<data_dir>/secret_key``; create it (mode 0600, atomically) if missing.
+
+    Returns None if the directory is not usable. The key is never logged.
+    """
+    path = Path(data_dir) / SECRET_KEY_FILENAME
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            fd = None
+        if fd is not None:
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write(secrets.token_urlsafe(48))
+        value = path.read_text(encoding="utf-8").strip()
+        return value or None
+    except OSError as exc:
+        _log.error(
+            "SECRET_KEY is not set and %s is not usable (%s). Mount a writable volume at DATA_DIR "
+            "or set SECRET_KEY explicitly.", path, exc.__class__.__name__,
+        )
+        return None
 
 
 class Settings(BaseSettings):
@@ -52,7 +85,12 @@ class Settings(BaseSettings):
     plugins_disabled: str = ""
 
     # --- Security / Auth ---
-    secret_key: str = Field(default="CHANGE_ME_dev_only_secret_key")
+    # Empty or placeholder: loaded from / generated into <DATA_DIR>/secret_key (see _resolve_secret_key)
+    secret_key: str = Field(default=PLACEHOLDER_SECRET_KEY)
+    data_dir: str = "/app/data"  # persistent state of the hub itself (generated secret key)
+    # Setup code (shown in the server log) is optional; set true if the hub is reachable from the
+    # internet before the first admin exists.
+    setup_require_code: bool = False
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     secure_cookies: bool = False
@@ -107,6 +145,16 @@ class Settings(BaseSettings):
     shelfarr_token: Optional[str] = None
     shelfarr_language: str = "de"
     shelfarr_user_map: Optional[str] = None  # "hubname=shelfarrname,…"; Standard: gleicher Name
+
+    @model_validator(mode="after")
+    def _resolve_secret_key(self) -> "Settings":
+        if not self.secret_key.strip() or self.secret_key == PLACEHOLDER_SECRET_KEY:
+            loaded = load_or_create_secret_key(self.data_dir)
+            if loaded:
+                self.secret_key = loaded
+            elif not self.secret_key.strip():
+                self.secret_key = PLACEHOLDER_SECRET_KEY
+        return self
 
     @property
     def cors_origin_list(self) -> List[str]:
