@@ -15,6 +15,7 @@ import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/server_setup_screen.dart';
 import 'screens/main_shell.dart';
+import 'services/error_reporter.dart';
 import 'screens/setup/setup_wizard_screen.dart';
 import 'services/web_platform.dart' as webp;
 import 'widgets/common.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
       yield LicenseEntryWithLineBreaks([family], await rootBundle.loadString('assets/fonts/$family/OFL.txt'));
     }
   });
+  ErrorReporter.install(); // unerwartete Fehler ins Protokoll der Verwaltung (nur angemeldet)
   runApp(const ProviderScope(child: FamilienhubApp()));
 }
 
@@ -40,6 +42,7 @@ class FamilienhubApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = ref.watch(themeChoiceProvider);
     final mode = ref.watch(themeModeProvider);
+    ErrorReporter.api = ref.read(apiClientProvider);
     return MaterialApp(
       title: 'Familienhub',
       // Hell/Dunkel/Automatisch: jede Fassung des Themes; ohne Variante bleibt es bei der Grundfassung

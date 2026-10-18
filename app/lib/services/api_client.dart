@@ -23,6 +23,7 @@ import '../models/task.dart';
 import '../models/today.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
+import 'app_info.dart';
 import 'cache.dart';
 import 'session_store.dart';
 
@@ -1153,6 +1154,28 @@ class ApiClient {
 
   Future<void> saveCoreSettings({required String appName, required String timezone}) =>
       _send('PUT', '/api/admin/core', body: {'app_name': appName, 'timezone': timezone});
+
+  // ── Rückmeldung und App-Fehler ────────────────────────────────────────────
+
+  /// Rückmeldung an die Verwaltung der eigenen Familie.
+  Future<void> sendFeedback({required String text, String? area}) => _send('POST', '/api/feedback',
+      body: {'text': text, if (area != null) 'area': area, 'app_version': appVersion, 'platform': appPlatform});
+
+  Future<List<Map<String, dynamic>>> adminFeedback() async =>
+      (((await _send('GET', '/api/admin/feedback')) as Map)['items'] as List).whereType<Map<String, dynamic>>().toList();
+
+  Future<void> markFeedbackDone(int id) => _send('POST', '/api/admin/feedback/$id/done');
+
+  /// Nur angemeldet; Fehler beim Melden werden geschluckt (der Bericht darf nichts kaputt machen).
+  Future<void> reportClientError({required String message, String? stack}) async {
+    if (_ended || await store.accessToken() == null) return;
+    await _send('POST', '/api/client-errors', body: {
+      'message': message.length > 2000 ? message.substring(0, 2000) : message,
+      if (stack != null) 'stack': stack.length > 4000 ? stack.substring(0, 4000) : stack,
+      'app_version': appVersion,
+      'platform': appPlatform,
+    });
+  }
 
   // ── Einladungen ───────────────────────────────────────────────────────────
 
