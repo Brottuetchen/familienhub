@@ -20,7 +20,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **Repository and docs:** English README with screenshots, guides for plugins, themes and notifications, contribution guide
 - **Server texts in both languages:** push texts in the recipient's language, error messages via `Accept-Language`
 - **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
-- **Books:** "Discover" with German-language sources
+- **Books:** "Discover" with German-language sources *(done 18.10.: Open Library shelves, German titles)*
 - **iOS widgets** (WidgetKit extension)
 
 ## Later

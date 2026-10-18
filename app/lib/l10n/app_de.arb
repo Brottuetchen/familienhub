@@ -1182,5 +1182,14 @@
     "placeholders": {
       "name": {}
     }
-  }
+  },
+  "discover": "Entdecken",
+  "shelfPopular": "Beliebt",
+  "shelfNew": "Neu & beliebt",
+  "shelfTopRated": "Bestbewertet",
+  "shelfCrime": "Krimi & Thriller",
+  "shelfFantasy": "Fantasy",
+  "shelfRomance": "Liebesromane",
+  "shelfKids": "Kinder & Jugend",
+  "discoverHint": "Bücher, die es auf Deutsch gibt – beliebt bei Lesern auf Open Library."
 }

@@ -1373,6 +1373,10 @@ class ApiClient {
     return parseInt(json['added']) ?? 0;
   }
 
+  /// Shelves of books that exist in German (Open Library), requestable like search results.
+  Future<SourceResult<BookResult>> discoverBooks(String shelf) async => SourceResult.fromJson(
+      await _send('GET', '/api/books/discover?shelf=${Uri.encodeQueryComponent(shelf)}') as Map<String, dynamic>, BookResult.fromJson);
+
   Future<SourceResult<BookResult>> searchBooks(String query, {BookKind? kind}) async {
     final q = Uri(queryParameters: {'q': query, if (kind != null) 'book_type': kind.api}).query;
     return SourceResult.fromJson(

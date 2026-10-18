@@ -11,6 +11,22 @@ import '../../l10n/l10n.dart';
 final bookRequestsProvider = FutureProvider.autoDispose<ApiResult<SourceResult<BookRequest>>>(
     (ref) => ref.watch(apiClientProvider).bookRequests());
 
+final discoverProvider = FutureProvider.autoDispose.family<SourceResult<BookResult>, String>(
+    (ref, shelf) => ref.watch(apiClientProvider).discoverBooks(shelf));
+
+const _shelves = ['popular', 'new', 'top_rated', 'crime', 'fantasy', 'romance', 'kids'];
+
+String _shelfLabel(String id) => switch (id) {
+      'popular' => l10n.shelfPopular,
+      'new' => l10n.shelfNew,
+      'top_rated' => l10n.shelfTopRated,
+      'crime' => l10n.shelfCrime,
+      'fantasy' => l10n.shelfFantasy,
+      'romance' => l10n.shelfRomance,
+      'kids' => l10n.shelfKids,
+      _ => id,
+    };
+
 /// Bücher und Hörbücher wünschen (Shelfarr). Immer auf Deutsch.
 ///
 /// Gesucht wird nur auf Enter (oder Lupe): jede Suche fragt über Shelfarr Google Books, dessen
@@ -30,6 +46,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
   bool _tooShort = false;
   SourceResult<BookResult>? _results;
   final _requested = <String>{};
+  String _shelf = 'popular';
 
   @override
   void initState() {
@@ -139,10 +156,57 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
             ),
           ),
           if (_searching) const Padding(padding: EdgeInsets.all(12), child: HubLoader(size: 32)),
-          Expanded(child: _results == null ? const _MyRequests() : _resultList(_results!)),
+          Expanded(child: _results == null ? _browse() : _resultList(_results!)),
         ],
       ),
     );
+  }
+
+  /// Without a search: my requests or discover shelves.
+  Widget _browse() => DefaultTabController(
+        length: 2,
+        child: Column(children: [
+          // My requests first: that's where you see what's ready; discover is one tap away
+          TabBar(tabs: [Tab(key: const Key('books-tab-mine'), text: l10n.myRequests), Tab(key: const Key('books-tab-discover'), text: l10n.discover)]),
+          Expanded(child: TabBarView(children: [const _MyRequests(), _discover()])),
+        ]),
+      );
+
+  Widget _discover() {
+    final async = ref.watch(discoverProvider(_shelf));
+    return Column(children: [
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: Row(children: [
+          for (final s in _shelves)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                key: Key('shelf-$s'),
+                label: Text(_shelfLabel(s)),
+                selected: _shelf == s,
+                onSelected: (_) => setState(() => _shelf = s),
+              ),
+            ),
+        ]),
+      ),
+      Expanded(
+        child: async.when(
+          loading: () => const Center(child: HubLoader()),
+          error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(discoverProvider(_shelf))),
+          data: (r) => r.isOk && r.items.isNotEmpty
+              ? Column(children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    child: Text(l10n.discoverHint, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  ),
+                  Expanded(child: _resultList(r)),
+                ])
+              : _resultList(r),
+        ),
+      ),
+    ]);
   }
 
   Widget _resultList(SourceResult<BookResult> r) {
