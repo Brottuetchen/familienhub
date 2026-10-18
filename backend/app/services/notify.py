@@ -219,6 +219,12 @@ async def notify(
 
     db = SessionLocal()
     try:
+        from app.core.i18n import translate
+        from app.models.user import User
+
+        recipient = db.get(User, user_id)
+        lang = getattr(recipient, "language", None)
+        title, body = translate(title, lang), translate(body, lang)  # in the recipient's language (#24)
         entry = NotificationLog(
             user_id=user_id, title=title, body=body or "", category=category or "system",
             route=(data or {}).get("route"), source=source, delivered=0, suppressed=False,

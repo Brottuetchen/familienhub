@@ -181,6 +181,7 @@ def _user_from_api_token(raw: str, db: Session, unauthorized: HTTPException) -> 
 
 
 async def get_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
@@ -209,7 +210,21 @@ async def get_current_user(
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled")
+    _remember_language(request, user, db)
     return user
+
+
+def _remember_language(request: Request, user: User, db: Session) -> None:
+    """The app sends its language with every request; push texts (#24) use the last one seen."""
+    from app.core.i18n import parse_accept_language
+
+    lang = parse_accept_language(request.headers.get("x-app-language") or request.headers.get("accept-language"))
+    if lang and lang != getattr(user, "language", None):
+        user.language = lang
+        try:
+            db.commit()
+        except Exception:  # noqa: BLE001 – never fail a request over this
+            db.rollback()
 
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
