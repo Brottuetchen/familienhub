@@ -38,6 +38,12 @@ class PushService {
       if (!available) lastError = webPushHint();
       return;
     }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      // Selbst installierte iPhone-App (Sideload, kostenlose Apple-ID): Apple erlaubt dort keine Push-Mitteilungen.
+      lastError = 'Auf dem iPhone kommen Mitteilungen über die Web-App: Hub in Safari öffnen, „Zum Home-Bildschirm“ '
+          'und dort Mitteilungen erlauben.';
+      return;
+    }
     try {
       await Firebase.initializeApp();
     } catch (e) {
