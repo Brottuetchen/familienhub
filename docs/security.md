@@ -17,9 +17,13 @@ Run them locally with `.forgejo/ci/security.sh`. A full manual review was done o
 - **Hardening:**
   - security headers, `/docs` off in production
   - 2 MB request limit
-  - production refuses to start with a default or short `SECRET_KEY`
+  - the secret key is generated on first start (kept in `<DATA_DIR>/secret_key`, mode 0600); production refuses to start with a default or short key if none can be stored
   - CORS same-origin by default
 - **No secrets and no household data in the repository.**
+
+## First admin and secret key
+- **First admin:** on a new hub, the first person to open it creates the admin account, and only while no active admin exists. Until then, anyone who can reach the hub could claim it. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true`: the hub then logs a setup code at start (`docker compose logs familienhub`) that is needed to create the admin. The startup log says which mode is active.
+- **Secret key:** if `SECRET_KEY` is empty, the hub generates one and stores it in the `familienhub_data` volume. Treat that volume like the database: it is part of the backup, and anyone who can read it can forge sign-in tokens. An explicitly set `SECRET_KEY` always wins.
 
 ## Roles
 
@@ -38,7 +42,7 @@ The server enforces every rule (`require_min_role`). The app also hides what a r
 ## Public endpoints (no sign-in)
 - `/api/health`
 - `/api/auth/login`, `/api/auth/refresh`, `/api/auth/oidc/{start,callback,exchange}`
-- `/api/setup/{status,admin}`: only while no admin exists, with the setup code from the server log
+- `/api/setup/{status,admin}`: only while no admin exists; with `SETUP_REQUIRE_CODE=true` also needs the setup code from the server log
 - `/api/invites/accept`: invite code, attempts limited
 - `/api/push/vapid-public-key`
 - `/api/reminders/{id}/action`: short-lived token per reminder and person

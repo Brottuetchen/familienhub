@@ -19,11 +19,11 @@ final _ha = {
   ],
 };
 
-FakeBackend _backend({bool needsSetup = true}) {
+FakeBackend _backend({bool needsSetup = true, Map<String, dynamic> statusExtra = const {}}) {
   final b = FakeBackend();
   addDefaults(b);
   b.json('GET', '/api/health', {'status': 'ok', 'oidc': false});
-  b.json('GET', '/api/setup/status', {'needs_setup': needsSetup, 'app_name': 'Familienhub', 'oidc': false});
+  b.json('GET', '/api/setup/status', {'needs_setup': needsSetup, 'app_name': 'Familienhub', 'oidc': false, ...statusExtra});
   b.json('GET', '/api/admin/core', {'app_name': 'Familienhub', 'timezone': 'Europe/Berlin'});
   b.json('PUT', '/api/admin/core', {'app_name': 'Familie Beispiel', 'timezone': 'Europe/Vienna'});
   b.json('GET', '/api/admin/settings', [_ha]);
@@ -92,6 +92,40 @@ void main() {
     expect(session.phase, SessionPhase.loggedIn);
     expect(session.onboarding, isTrue);
     expect(await api.store.accessToken(), 'a1');
+  });
+
+  testWidgets('Server without setup code: no code field, account is created without code', (tester) async {
+    await setScreenSize(tester, const Size(420, 1600));
+    final b = _backend(statusExtra: {'code_required': false});
+    b.on('POST', '/api/setup/admin', (r) =>
+        jsonResponse({'access_token': 'a1', 'refresh_token': 'r1', 'user': {...meJson, 'username': 'chef'}}, status: 201));
+    final api = b.api(store: MemorySessionStore(url: 'https://hub.test'));
+    await tester.pumpWidget(appWith(api, const LoginScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Einrichten'), findsOneWidget);
+    expect(find.byKey(const Key('setup-code')), findsNothing);
+    await tester.enterText(find.byKey(const Key('setup-username')), 'Chef');
+    await tester.enterText(find.byKey(const Key('setup-email')), 'chef@example.org');
+    await tester.enterText(find.byKey(const Key('setup-password')), 'lang-genug-123');
+    await tester.enterText(find.byKey(const Key('setup-repeat')), 'lang-genug-123');
+    await tester.tap(find.byKey(const Key('setup-submit')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Einrichtungscode aus dem Server-Log'), findsNothing);
+    expect(bodyOf(b.sent('POST', '/api/setup/admin').single), {
+      'username': 'chef', 'email': 'chef@example.org', 'password': 'lang-genug-123', 'display_name': '', 'client': 'app',
+    }..remove('display_name'));
+    final session = ProviderScope.containerOf(tester.element(find.byType(LoginScreen))).read(sessionProvider);
+    expect(session.phase, SessionPhase.loggedIn);
+  });
+
+  testWidgets('Server that says code_required: true (or nothing) shows the code field', (tester) async {
+    await setScreenSize(tester, const Size(420, 1600));
+    for (final extra in [<String, dynamic>{'code_required': true}, <String, dynamic>{}]) {
+      final b = _backend(statusExtra: extra);
+      await tester.pumpWidget(appWith(b.api(store: MemorySessionStore(url: 'https://hub.test')), const LoginScreen()));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('setup-code')), findsOneWidget);
+    }
   });
 
   testWidgets('Eingerichteter Hub zeigt die normale Anmeldung', (tester) async {

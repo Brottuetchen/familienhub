@@ -91,10 +91,10 @@ At start-up the hub loads every entry point in the group `familienhub.plugins` (
 
 ## Install a plugin
 
-Build a small image on top of your Familienhub image (`docker compose build` tags it `familienhub:local`):
+Build a small image on top of the Familienhub image: `ghcr.io/brottuetchen/familienhub:latest`, or `familienhub:local` if you build from source (`docker compose -f docker-compose.yml -f docker-compose.dev.yml build` tags it that way):
 
 ```dockerfile
-FROM familienhub:local
+FROM ghcr.io/brottuetchen/familienhub:latest
 RUN pip install --no-cache-dir familienhub-plugin-grocy==0.1.0
 ```
 

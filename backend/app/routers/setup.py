@@ -26,11 +26,12 @@ async def status(db: Session = Depends(get_db)):
         "version": __version__,
         "app_name": settings.app_name,
         "oidc": bool(settings.oidc_issuer and settings.oidc_client_id),
+        "code_required": setup.code_required(),
     }
 
 
 class FirstAdmin(BaseModel):
-    code: str = Field(min_length=4, max_length=20)
+    code: str | None = Field(default=None, max_length=20)
     username: str = Field(min_length=2, max_length=40)
     email: str = Field(min_length=3, max_length=200)
     password: str = Field(min_length=10, max_length=200)

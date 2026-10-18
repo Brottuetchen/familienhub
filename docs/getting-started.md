@@ -5,17 +5,15 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 ## 1. Start the server
 
 ```bash
-git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
-cp .env.example .env
-# at least: SECRET_KEY  (python3 -c "import secrets;print(secrets.token_urlsafe(48))")
-#           POSTGRES_PASSWORD
-#           CORS_ORIGINS  (your own address, e.g. https://hub.example.org)
-docker compose up -d --build
-docker compose logs familienhub | grep -i code
+mkdir familienhub && cd familienhub
+curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
+docker compose up -d
 ```
 
-Open the app or `https://hub.example.org` in a browser. A new hub shows **Set up**:
-1. Create the first admin account with the setup code from the log. The code is valid only while no admin exists; it changes on every restart and after ten wrong attempts. Alternative: `docker compose exec familienhub python -m scripts.create_admin`.
+This pulls the prebuilt image and needs no configuration (Docker Compose v2.24 or newer). The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
+
+Open `http://<host>:8000` in a browser, or enter that address in the app. A new hub shows **Set up**:
+1. The first person to open the hub creates the admin account. No code is needed, and this works only while no admin exists. **If the hub is reachable from the internet before you have done this, set `SETUP_REQUIRE_CODE=true` in `.env` first:** the hub then logs a setup code (`docker compose logs familienhub | grep -i code`) that is valid only while no admin exists and changes on every restart and after ten wrong attempts. Alternative without a code: `docker compose exec familienhub python -m scripts.create_admin`.
 2. The **setup wizard** then guides you through:
    1. **Basics:** name and time zone
    2. **Areas:** where tasks, the shopping list and the calendar live, in the hub and/or a service
@@ -23,6 +21,15 @@ Open the app or `https://hub.example.org` in a browser. A new hub shows **Set up
    4. **Family:** invite people
 
    Without any service, tasks, shopping list and family calendar are stored in the hub. You can rerun the wizard under *More → Administration*.
+
+### Building from source
+
+```bash
+git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+The image is tagged `familienhub:local`, the base for [plugins](plugins.md#install-a-plugin).
 
 Database migrations run automatically on start (Alembic).
 
@@ -34,10 +41,12 @@ Database migrations run automatically on start (Alembic).
 
 ## 3. Get the apps
 
+APK and IPA are attached to each GitHub release: <https://github.com/Brottuetchen/familienhub/releases/latest>.
+
 | Platform | How |
 |---|---|
-| **Android** | Build your own APK (`cd app && flutter build apk --release`, with your own `google-services.json` for push), or serve APKs from the hub under `/downloads/` (`DOWNLOADS_DIR`). [Obtainium](https://obtainium.imranr.dev/) can watch that page for updates. |
-| **iPhone / iPad** | Either the **web app**: open the hub in Safari → *Add to Home Screen*. Or **sideload the iOS app**: the GitHub workflow `ios.yml` builds an unsigned IPA; install it with Sideloadly or SideStore and a free Apple ID (re-sign every 7 days, SideStore does it on the phone). |
+| **Android** | Install the APK from the release (or build your own, `cd app && flutter build apk --release`, with your own `google-services.json` for push). You can also serve APKs from the hub under `/downloads/` (`DOWNLOADS_DIR`, mount a folder as shown in `docker-compose.yml`). [Obtainium](https://obtainium.imranr.dev/) can watch the release page for updates. |
+| **iPhone / iPad** | Either the **web app**: open the hub in Safari → *Add to Home Screen*. Or **sideload the iOS app**: install the unsigned IPA from the release with Sideloadly or SideStore and a free Apple ID (re-sign every 7 days, SideStore does it on the phone). |
 | **Desktop** | The web app in any browser. |
 
 ## 4. People and sign-in
@@ -73,10 +82,12 @@ With a CalDAV server, set the shared family calendar and connect the phones to t
 
 ## 7. Backup
 
-Back up the PostgreSQL volume (`familienhub_db`) and `.env`. Tasks, shopping lists, documents and the like live in the connected services.
+Back up the PostgreSQL volume (`familienhub_db`), the data volume (`familienhub_data`, holds the generated secret key; without it stored plugin credentials cannot be decrypted) and `.env` if you have one. Tasks, shopping lists, documents and the like live in the connected services.
 
 ## 8. Update
 
 ```bash
-git pull && docker compose up -d --build
+docker compose pull && docker compose up -d
 ```
+
+To pin a version, set `FAMILIENHUB_VERSION` in `.env` (default `latest`). If you build from source: `git pull` and then the build command from above.

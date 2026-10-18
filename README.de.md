@@ -59,13 +59,12 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 ## Schnellstart
 
 ```bash
-git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
-cp .env.example .env            # SECRET_KEY, POSTGRES_PASSWORD, CORS_ORIGINS eintragen
-docker compose up -d --build
-docker compose logs familienhub | grep -i code      # Einrichtungscode für das erste Konto
+mkdir familienhub && cd familienhub
+curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
+docker compose up -d
 ```
 
-Dann den Hub in der App oder im Browser öffnen und **Einrichten** wählen; der Einrichtungs-Assistent führt durch den Rest. Mehr dazu (Reverse-Proxy, Apps, Sicherung) im [Einstieg](docs/getting-started.md).
+Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen (oder die Adresse in der App eintragen): Wer einen neuen Hub zuerst öffnet, legt das Admin-Konto an, danach führt der Einrichtungs-Assistent durch den Rest. Ist der Hub vor der Einrichtung aus dem Internet erreichbar, `SETUP_REQUIRE_CODE=true` setzen (siehe [Sicherheit](docs/security.md#first-admin-and-secret-key), englisch). APK und IPA hängen an jedem [GitHub-Release](https://github.com/Brottuetchen/familienhub/releases/latest). Mehr dazu (Reverse-Proxy, Selbst bauen, Sicherung) im [Einstieg](docs/getting-started.md) (englisch).
 
 ## Mitmachen
 

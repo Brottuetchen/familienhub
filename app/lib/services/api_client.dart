@@ -1203,16 +1203,16 @@ class ApiClient {
   Future<SetupStatus> setupStatus({String? baseUrl}) async =>
       SetupStatus.fromJson(await _send('GET', '/api/setup/status', auth: false, baseUrl: baseUrl) as Map<String, dynamic>);
 
-  /// Legt das erste Admin-Konto an (Einrichtungscode aus dem Server-Log) und meldet es an.
+  /// Legt das erste Admin-Konto an (Einrichtungscode aus dem Server-Log, falls der Server ihn verlangt) und meldet es an.
   Future<AppUser> createFirstAdmin({
-    required String code,
+    String? code,
     required String username,
     required String email,
     required String password,
     String? displayName,
   }) =>
       _authenticate('/api/setup/admin', {
-        'code': code,
+        if (code != null && code.isNotEmpty) 'code': code,
         'username': username,
         'email': email,
         'password': password,

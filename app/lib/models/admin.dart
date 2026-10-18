@@ -205,12 +205,16 @@ class SetupStatus {
   final bool needsSetup;
   final String appName;
   final bool oidc;
-  const SetupStatus({required this.needsSetup, this.appName = 'Familienhub', this.oidc = false});
+
+  /// Whether the server wants the setup code from its log. Older servers do not send the field: required.
+  final bool codeRequired;
+  const SetupStatus({required this.needsSetup, this.appName = 'Familienhub', this.oidc = false, this.codeRequired = true});
 
   factory SetupStatus.fromJson(Map<String, dynamic> j) => SetupStatus(
         needsSetup: j['needs_setup'] == true,
         appName: (j['app_name'] as String?) ?? 'Familienhub',
         oidc: j['oidc'] == true,
+        codeRequired: j['code_required'] != false,
       );
 }
 

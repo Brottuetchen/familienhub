@@ -6,10 +6,13 @@ import '../../services/api_exceptions.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 
-/// Neuer Hub: erstes Admin-Konto anlegen. Der Einrichtungscode steht im Server-Log
-/// (`docker compose logs familienhub`), damit nicht jeder, der den Server zuerst erreicht, Admin wird.
+/// New hub: create the first admin account. If the server requires a setup code
+/// (SETUP_REQUIRE_CODE), it is in the server log (`docker compose logs familienhub`).
 class FirstAdminForm extends ConsumerStatefulWidget {
-  const FirstAdminForm({super.key});
+  const FirstAdminForm({super.key, this.codeRequired = true});
+
+  /// False when the server does not ask for the setup code (SETUP_REQUIRE_CODE off).
+  final bool codeRequired;
 
   @override
   ConsumerState<FirstAdminForm> createState() => _FirstAdminFormState();
@@ -34,7 +37,7 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
   }
 
   String? _problem() {
-    if (_code.text.trim().length < 8) return l10n.enterSetupCode;
+    if (widget.codeRequired && _code.text.trim().length < 8) return l10n.enterSetupCode;
     if (!RegExp(r'^[a-z0-9._-]{2,40}$').hasMatch(_username.text.trim().toLowerCase())) {
       return l10n.usernameRule;
     }
@@ -56,7 +59,7 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
     });
     try {
       await ref.read(sessionProvider.notifier).createFirstAdmin(
-            code: _code.text.trim(),
+            code: widget.codeRequired ? _code.text.trim() : null,
             username: _username.text.trim().toLowerCase(),
             email: _email.text.trim(),
             password: _password.text,
@@ -78,18 +81,20 @@ class _FirstAdminFormState extends ConsumerState<FirstAdminForm> {
       Text(l10n.welcomeNewHub, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
       const SizedBox(height: 8),
       Text(
-        l10n.firstAdminExplain,
+        widget.codeRequired ? l10n.firstAdminExplain : l10n.firstAdminExplainNoCode,
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 20),
-      TextField(
-        key: const Key('setup-code'),
-        controller: _code,
-        textCapitalization: TextCapitalization.characters,
-        autocorrect: false,
-        decoration: InputDecoration(labelText: l10n.setupCode, hintText: 'ABCD-EFGH'),
-      ),
-      const SizedBox(height: 12),
+      if (widget.codeRequired) ...[
+        TextField(
+          key: const Key('setup-code'),
+          controller: _code,
+          textCapitalization: TextCapitalization.characters,
+          autocorrect: false,
+          decoration: InputDecoration(labelText: l10n.setupCode, hintText: 'ABCD-EFGH'),
+        ),
+        const SizedBox(height: 12),
+      ],
       TextField(key: const Key('setup-name'), controller: _name, decoration: InputDecoration(labelText: l10n.yourName)),
       const SizedBox(height: 12),
       TextField(

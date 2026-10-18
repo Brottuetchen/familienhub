@@ -39,6 +39,11 @@ WORKDIR /app/backend
 # Nicht als root laufen. Feste UID, damit eingebundene Dateien (z. B. Firebase-Dienstkonto) passend
 # freigegeben werden können: chown 10001:10001 <datei> auf dem Host.
 RUN useradd --system --uid 10001 --user-group --no-create-home --shell /usr/sbin/nologin familienhub
+# /app/data holds state of the hub itself (generated SECRET_KEY). Mount a volume here so it survives
+# container re-creation; a fresh named volume inherits this ownership.
+RUN mkdir -p /app/data && chown 10001:10001 /app/data
+ENV DATA_DIR=/app/data
+VOLUME ["/app/data"]
 USER 10001:10001
 
 EXPOSE 8000

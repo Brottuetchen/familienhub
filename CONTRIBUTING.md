@@ -23,7 +23,7 @@ flutter analyze && flutter test
 flutter run -d chrome          # web app against a local backend
 ```
 
-`docker compose up -d --build` runs everything together (see [getting started](docs/getting-started.md)).
+`docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build` builds and runs everything from source (see [getting started](docs/getting-started.md)).
 
 ## Pull requests
 - Branch from `main`, one topic per PR.

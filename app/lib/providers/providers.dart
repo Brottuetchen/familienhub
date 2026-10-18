@@ -108,7 +108,7 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   /// Ersteinrichtung: erstes Admin-Konto anlegen, anmelden und den Assistenten starten.
   Future<void> createFirstAdmin({
-    required String code,
+    String? code,
     required String username,
     required String email,
     required String password,
