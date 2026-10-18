@@ -43,6 +43,7 @@ Zeitzone, Dienste (mit „Verbindung testen“) und Familie. Später erneut unte
 - Entscheidungen und Zielbild: [`docs/ENTSCHEIDUNGEN.md`](docs/ENTSCHEIDUNGEN.md)
 - Plugins und ihre Schnittstellen: [`docs/PLUGINS.md`](docs/PLUGINS.md)
 - Mitteilungen aus anderen Systemen (Home Assistant & Co.): [`docs/QUELLEN.md`](docs/QUELLEN.md)
+- Sicherheit (Prüfbericht, Melden von Lücken): [`docs/SICHERHEIT.md`](docs/SICHERHEIT.md)
 - Arbeitsregeln für Beitragende und Agenten: [`CLAUDE.md`](CLAUDE.md), [`docs/BUILD_PROMPT.md`](docs/BUILD_PROMPT.md)
 
 ## Entwicklung
