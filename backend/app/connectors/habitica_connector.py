@@ -56,6 +56,23 @@ async def remote_request(account, method, path, **kwargs):
         return body["data"]
 
 
+
+def habitica_day(value):
+    """Habitica stores a to-do's day as a UTC timestamp (e.g. 22:00Z the evening before); the app needs the day."""
+    if not value or not isinstance(value, str):
+        return None
+    if len(value) == 10:
+        return value
+    from datetime import datetime
+
+    from app.core.timeutil import local_tz
+
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return value
+    return (dt.astimezone(local_tz()) if dt.tzinfo else dt).date().isoformat()
+
 class HabiticaConnector:
     def __init__(self, user_id, db):
         self.user_id, self.db = user_id, db
@@ -85,7 +102,7 @@ class HabiticaConnector:
     def task(self, remote):
         self.owned(remote)
         return {"uid": remote.get("id", remote.get("_id")), "title": remote.get("text", ""),
-                "notes": remote.get("notes", ""), "due": remote.get("date") if remote["type"] == "todo" else None,
+                "notes": remote.get("notes", ""), "due": habitica_day(remote.get("date")) if remote["type"] == "todo" else None,
                 "priority": None, "done": bool(remote.get("completed", False)),
                 "list": {"name": "Habitica", "kind": "personal"}, "assignee": self.user_id,
                 "created_by": None, "native": remote, "etag": remote.get("updatedAt"),

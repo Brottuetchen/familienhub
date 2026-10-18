@@ -40,6 +40,29 @@ def _url_key(url) -> str:
 
     return _normalize_url(str(url))
 
+
+def format_due(value: Any) -> Optional[str]:
+    """Due date for the app: a day as "YYYY-MM-DD", a time as ISO datetime.
+
+    Tasks written with a time of exactly 00:00 (older hub versions, some clients) mean "on that day";
+    sending them as midnight made them overdue for the whole day.
+    """
+    from app.core.timeutil import local_tz
+
+    dt = getattr(value, "dt", value)
+    if dt is None or dt == "":
+        return None
+    if isinstance(dt, str):
+        return dt
+    if isinstance(dt, datetime):
+        local = dt.astimezone(local_tz()) if dt.tzinfo else dt
+        if (local.hour, local.minute, local.second, local.microsecond) == (0, 0, 0, 0):
+            return local.date().isoformat()
+        return dt.isoformat()
+    if isinstance(dt, date):
+        return dt.isoformat()
+    return str(dt)
+
 class HouseholdUnavailable(RuntimeError):
     """Haushaltsabschluss bleibt nach einem Fachsystemfehler wiederholbar."""
 
@@ -480,11 +503,11 @@ class NextcloudTasksConnector(BaseConnector):
                 # Parse ISO 8601
                 from dateutil import parser as dateparser
                 due_dt = dateparser.parse(due)
-                if rotation:
+                if len(due) == 10:
+                    due_dt = date.fromisoformat(due)  # due on a day: DUE;VALUE=DATE, not midnight
+                elif rotation:
                     from app.core.timeutil import local_tz
-                    due_dt = (date.fromisoformat(due) if len(due) == 10 else
-                              due_dt.astimezone(local_tz()) if due_dt.tzinfo else
-                              due_dt.replace(tzinfo=local_tz()))
+                    due_dt = due_dt.astimezone(local_tz()) if due_dt.tzinfo else due_dt.replace(tzinfo=local_tz())
                 todo.add("due", due_dt)
             if priority is not None:
                 todo.add("priority", int(priority))
@@ -558,10 +581,11 @@ class NextcloudTasksConnector(BaseConnector):
                                 from dateutil import parser as dateparser
                                 due = kwargs["due"]
                                 due_dt = dateparser.parse(due)
-                                if task["rotation"]:
+                                if len(due) == 10:
+                                    due_dt = date.fromisoformat(due)  # due on a day, not at midnight
+                                elif task["rotation"]:
                                     from app.core.timeutil import local_tz
-                                    due_dt = (date.fromisoformat(due) if len(due) == 10 else
-                                              due_dt.astimezone(local_tz()) if due_dt.tzinfo else
+                                    due_dt = (due_dt.astimezone(local_tz()) if due_dt.tzinfo else
                                               due_dt.replace(tzinfo=local_tz()))
                                 comp.pop("due", None)
                                 comp.add("due", due_dt)
@@ -786,7 +810,7 @@ class NextcloudTasksConnector(BaseConnector):
             "uid": str(component.get("uid", "")),
             "title": str(component.get("summary", "Aufgabe")),
             "notes": str(component.get("description", "") or ""),
-            "due": self._format_date(component.get("due")),
+            "due": format_due(component.get("due")),
             "priority": int(component.get("priority", 0)) if component.get("priority") else None,
             "done": str(component.get("status", "")).upper() == "COMPLETED",
             "list": {
