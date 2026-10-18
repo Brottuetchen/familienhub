@@ -710,5 +710,11 @@
   "taskLandsWhereTheyWork": "The task lands where {name} receives it.",
   "taskAssignedVia": "stored in {place}",
   "taskStatusUnknown": "Status unknown",
-  "taskPriority": "Priority"
+  "taskPriority": "Priority",
+  "taskOptionsIn": "Options in {place}",
+  "@taskOptionsIn": {
+    "placeholders": {
+      "place": {}
+    }
+  }
 }

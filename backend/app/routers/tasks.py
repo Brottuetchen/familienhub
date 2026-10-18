@@ -308,7 +308,8 @@ async def _create_task_auto(task: TaskCreateRequest, current_user: User, db: Ses
 
     if assignee is not None and assignee.id != current_user.id and not family:
         placed = await task_routing.create_for_recipient(
-            current_user, assignee, db, title=task.title, notes=task.notes, due=task.due, priority=task.priority)
+            current_user, assignee, db, title=task.title, notes=task.notes, due=task.due, priority=task.priority,
+            native=task.native)
         if placed is None:
             raise HTTPException(status_code=409, detail="Kein Aufgabenort verfügbar")
         result, connector, row, plugin = placed
@@ -334,9 +335,13 @@ async def _create_task_auto(task: TaskCreateRequest, current_user: User, db: Ses
         connector = plugin.task_connector(current_user.id, db)
         if connector is None:
             continue
-        attempt = task
-        if not family and hasattr(connector, "action") and task.native is None:
-            attempt = task.model_copy(update={"native": {"type": "todo"}, "operation_id": uuid.uuid4()})
+        # Options depend on where the task finally lands (also after a fallback): Habitica gets its native to-do
+        # options (difficulty via native.priority), every other provider only the plain priority.
+        if not family and hasattr(connector, "action"):
+            attempt = task.model_copy(update={"native": task_routing.habitica_native(task.native, own=True),
+                                              "priority": None, "operation_id": task.operation_id or uuid.uuid4()})
+        else:
+            attempt = task.model_copy(update={"native": None, "operation_id": None})
         try:
             result = await _create_task_in(attempt, plugin.id, connector.account_ref, current_user, db)
         except HTTPException as exc:
@@ -417,6 +422,33 @@ def get_task_place(current_user: User = Depends(get_current_user), db: Session =
     from app.services import task_routing
 
     return task_routing.place_info(current_user, db)
+
+
+def _place_id(user: User, db: Session) -> str:
+    from app.services import task_routing
+
+    fb = task_routing.fallback_plugin()
+    return task_routing.effective_place(user, db) or (fb.id if fb else "")
+
+
+@router.get("/place/family")
+def get_family_place(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Place type of the family list (where family tasks land), nothing else."""
+    from app.services import task_routing
+
+    plugin = task_routing.family_plugin() or task_routing.fallback_plugin()
+    return {"place": plugin.id if plugin else ""}
+
+
+@router.get("/place/{user_id}")
+def get_place_of(user_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Only the place type where tasks for this family member land, so the creator's sheet can show matching
+    fields. No accounts, lists or other data."""
+    user = db.query(User).filter(User.id == user_id, User.is_active == True,  # noqa: E712
+                                 User.role != "guest").first()
+    if user is None:
+        raise HTTPException(404, "Person nicht gefunden")
+    return {"place": _place_id(user, db)}
 
 
 @router.put("/me/place")

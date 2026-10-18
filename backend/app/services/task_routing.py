@@ -77,20 +77,39 @@ def effective_place(user: User, db: Session) -> Optional[str]:
     return place_info(user, db)["place"]
 
 
+# Options of a Habitica to-do that may be set when a task is created through the router (#58). Everything
+# else is stripped: the checklist is only editable after creation (native contract), ``date`` is the
+# task's ``due`` and reminders/alias belong to the account screen.
+_NATIVE_OPTIONS_OWN = {"priority", "attribute", "tags", "collapseChecklist"}
+_NATIVE_OPTIONS_OTHER = {"priority", "attribute"}  # tags are ids of the recipient's own account: unknown here
+
+
+def habitica_native(native: Optional[Dict[str, Any]], *, own: bool) -> Dict[str, Any]:
+    """Native options for a Habitica to-do created via ``provider=auto``; unknown or foreign options are dropped."""
+    from app.connectors.habitica_connector import TYPES
+
+    native = native if isinstance(native, dict) else {}
+    kind = native.get("type", "todo") if own else "todo"
+    if kind not in TYPES:
+        kind = "todo"
+    allowed = (_NATIVE_OPTIONS_OWN if own else _NATIVE_OPTIONS_OTHER) if kind == "todo" else set()
+    return {"type": kind, **{k: v for k, v in native.items() if k in allowed}}
+
+
 def family_plugin():
     """Source of the family list / household rotation: first active source that can hold one (hub last)."""
     return next((p for p in _ordered_providers() if p.family_tasks), None)
 
 
 async def _create_in(plugin, recipient_id: int, creator: User, db: Session, *, notes: Optional[str],
-                     **fields) -> Optional[tuple]:
+                     native: Optional[Dict[str, Any]] = None, **fields) -> Optional[tuple]:
     connector = _connector(plugin, recipient_id, db)
     if not _can_receive(connector):
         return None
     extra: Dict[str, Any] = {}
     if hasattr(connector, "action"):  # native provider (Habitica): plain todo, guarded by an operation id;
         # it has no creator field, so the notes say who assigned it
-        extra = {"native": {"type": "todo"}, "operation_id": str(uuid.uuid4())}
+        extra = {"native": habitica_native(native, own=False), "operation_id": str(uuid.uuid4())}
         notes = _with_creator(notes, creator)
     try:
         result = await connector.create_task(assignee_id=recipient_id, created_by=creator.id, notes=notes,
@@ -102,7 +121,8 @@ async def _create_in(plugin, recipient_id: int, creator: User, db: Session, *, n
 
 
 async def create_for_recipient(creator: User, recipient: User, db: Session, *, title: str, notes: Optional[str],
-                               due: Optional[str], priority: Optional[int]):
+                               due: Optional[str], priority: Optional[int],
+                               native: Optional[Dict[str, Any]] = None):
     """Create the task in the recipient's place (fallback: hub). Returns (task dict, connector, assignment row)."""
     place = effective_place(recipient, db)
     fb = fallback_plugin()
@@ -113,7 +133,7 @@ async def create_for_recipient(creator: User, recipient: User, db: Session, *, t
         if plugin is None:
             continue
         created = await _create_in(plugin, recipient.id, creator, db, title=title, notes=notes, due=due,
-                                   priority=priority)
+                                   priority=priority, native=native)
         if created is None:
             continue
         result, connector = created

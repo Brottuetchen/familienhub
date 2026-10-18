@@ -1296,5 +1296,11 @@
     }
   },
   "taskStatusUnknown": "Status unbekannt",
-  "taskPriority": "Priorität"
+  "taskPriority": "Priorität",
+  "taskOptionsIn": "Optionen in {place}",
+  "@taskOptionsIn": {
+    "placeholders": {
+      "place": {}
+    }
+  }
 }
