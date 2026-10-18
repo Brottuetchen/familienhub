@@ -11,6 +11,7 @@ Thread ausgeführt, um den async Event-Loop nicht zu blockieren.
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -97,7 +98,7 @@ class CalDAVConnector(BaseConnector):
                 continue  # task-only lists (VTODO)
             url = str(cal.url)
             out.append({"id": calendar_id(url), "name": _safe(lambda: str(cal.name)) or "Kalender",
-                        "color": _safe(lambda: str(cal.get_property(_color_prop()))), "url": url})
+                        "color": calendar_color(cal), "url": url})
         return out
 
     async def update_event(self, calendar_url: str, uid: str, changes: Dict[str, Any]) -> bool:
@@ -212,7 +213,7 @@ class CalDAVConnector(BaseConnector):
 
         for calendar in principal.calendars():
             cal_name = _safe(lambda: str(calendar.name)) or "Kalender"
-            cal_color = _safe(lambda: str(calendar.get_property(_color_prop())))
+            cal_color = calendar_color(calendar)
             try:
                 found = calendar.search(start=start, end=end, event=True, expand=True)
             except Exception:  # noqa: BLE001
@@ -327,13 +328,45 @@ def calendar_id(url: str) -> str:
 
     return "caldav:" + sha256(url.rstrip("/").encode()).hexdigest()[:12]
 
-def _color_prop():
-    try:
-        import caldav
+CALENDAR_COLOR_TAG = "{http://apple.com/ns/ical/}calendar-color"
 
-        return caldav.elements.ical.CalendarColor()
+_HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+
+
+def normalize_color(raw: Any) -> Optional[str]:
+    """``#RGB``, ``#RRGGBB`` or ``#RRGGBBAA`` (Nextcloud) -> ``#RRGGBB`` upper case; anything else -> None.
+
+    Never returns the string "None": a missing property must stay missing so the app uses its palette.
+    """
+    if not isinstance(raw, str):
+        return None
+    m = _HEX_RE.match(raw.strip())
+    if not m:
+        return None
+    digits = m.group(1)
+    if len(digits) == 3:
+        digits = "".join(ch * 2 for ch in digits)
+    return "#" + digits[:6].upper()
+
+
+def calendar_color(cal: Any) -> Optional[str]:
+    """Colour of a CalDAV calendar (Apple ``calendar-color`` property) as ``#RRGGBB``, or None.
+
+    ``caldav.elements.ical`` is not imported by ``import caldav``; it has to be imported explicitly,
+    otherwise the lookup fails with AttributeError and every calendar looks colourless.
+    """
+    try:
+        from caldav.elements.ical import CalendarColor
+
+        props = cal.get_properties([CalendarColor()])
     except Exception:  # noqa: BLE001
         return None
+    if not isinstance(props, dict):
+        return None
+    value = props.get(CALENDAR_COLOR_TAG)
+    if value is None:  # some servers key the answer differently; match by tag suffix
+        value = next((v for k, v in props.items() if str(k).endswith("calendar-color")), None)
+    return normalize_color(value)
 
 
 def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> Dict[str, Any]:
