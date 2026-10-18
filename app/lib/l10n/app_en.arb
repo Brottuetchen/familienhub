@@ -646,5 +646,8 @@
   "deleteRecipeHint": "“{title}” will be deleted from the recipe book.",
   "servingsMinutes": "{servings} servings · {minutes} min",
   "servingsOnly": "{servings} servings",
-  "openLink": "Open link"
+  "openLink": "Open link",
+  "recipeFromSource": "Recipe from {name}",
+  "searchInSource": "Search recipe in {name}",
+  "openInSource": "Open in {name}"
 }

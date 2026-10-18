@@ -36,6 +36,14 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
   }
 
   Future<void> _addMeal(DateTime day) async {
+    // Recipe sources (Cookidoo, Mealie …); older servers without the endpoint: Cookidoo if the module is on
+    var sources = <RecipeSource>[];
+    try {
+      sources = await ref.read(apiClientProvider).recipeSources();
+    } catch (_) {
+      if (_planning) sources = const [RecipeSource('cookidoo', 'Cookidoo')];
+    }
+    if (!mounted) return;
     {
       final choice = await showModalBottomSheet<String>(
         context: context,
@@ -54,11 +62,12 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                 title: Text(l10n.recipeFromBook),
                 onTap: () => Navigator.pop(ctx, 'book'),
               ),
-              if (_planning)
+              for (final s in sources)
                 ListTile(
+                  key: Key('meal-from-${s.id}'),
                   leading: const Icon(Icons.menu_book_outlined),
-                  title: Text(l10n.recipeFromCookidoo),
-                  onTap: () => Navigator.pop(ctx, 'cookidoo'),
+                  title: Text(s.id == 'cookidoo' ? l10n.recipeFromCookidoo : l10n.recipeFromSource(s.name)),
+                  onTap: () => Navigator.pop(ctx, s.id),
                 ),
             ],
           ),
@@ -71,9 +80,10 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
         if (planned == true && mounted) await _reload();
         return;
       }
-      if (choice == 'cookidoo') {
-        final planned = await Navigator.push<bool>(
-            context, MaterialPageRoute(builder: (_) => CookidooSearchScreen(day: day)));
+      if (choice != 'own') {
+        final source = sources.firstWhere((s) => s.id == choice);
+        final planned = await Navigator.push<bool>(context, MaterialPageRoute(
+            builder: (_) => CookidooSearchScreen(day: day, source: source.id, sourceName: source.name)));
         if (planned == true && mounted) await _reload();
         return;
       }
@@ -131,18 +141,26 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
   Future<void> _cookidooAction(DateTime day, MealEntry entry, String action) async {
     final api = ref.read(apiClientProvider);
     final id = entry.cookidooId!;
+    final cookidoo = entry.isCookidoo; // Cookidoo keeps its own endpoints, other sources use /api/recipe-sources
     switch (action) {
       case 'shopping':
         try {
-          final n = await api.cookidooToShopping([id]);
-          if (mounted) showInfo(context, l10n.ingredientsOnCookidooList(n));
+          if (cookidoo) {
+            final n = await api.cookidooToShopping([id]);
+            if (mounted) showInfo(context, l10n.ingredientsOnCookidooList(n));
+          } else {
+            await api.sourceToShopping(entry.source, [id]);
+            if (mounted) showInfo(context, l10n.ingredientsToList);
+          }
         } catch (e) {
           if (mounted) showError(context, e);
         }
       case 'open':
         if (entry.url != null) await launchUrl(Uri.parse(entry.url!), mode: LaunchMode.externalApplication);
       case 'remove':
-        if (await runAction(context, () => api.unplanCookidoo(day, id))) await _reload();
+        if (await runAction(context, () => cookidoo ? api.unplanCookidoo(day, id) : api.unplanFromSource(entry.source, day, id))) {
+          await _reload();
+        }
     }
   }
 
@@ -259,24 +277,24 @@ class _DayTile extends StatelessWidget {
 
   Widget? _trailing(MealEntry e) {
     if (!editable) {
-      return e.isCookidoo && e.cookidooId != null && e.url != null
-          ? IconButton(tooltip: l10n.openInCookidoo, onPressed: () => onCookidoo(e, 'open'), icon: const Icon(Icons.open_in_new))
+      return e.isExternal && e.cookidooId != null && e.url != null
+          ? IconButton(tooltip: l10n.openInSource(e.sourceName), onPressed: () => onCookidoo(e, 'open'), icon: const Icon(Icons.open_in_new))
           : null;
     }
-    if (e.isCookidoo && planning && e.cookidooId != null) {
+    if (e.isExternal && planning && e.cookidooId != null) {
       return PopupMenuButton<String>(
         tooltip: l10n.recipeActions,
         onSelected: (action) => onCookidoo(e, action),
         itemBuilder: (_) => [
           PopupMenuItem(value: 'shopping', child: Text(l10n.ingredientsToList)),
-          if (e.url != null) PopupMenuItem(value: 'open', child: Text(l10n.openInCookidoo)),
+          if (e.url != null) PopupMenuItem(value: 'open', child: Text(l10n.openInSource(e.sourceName))),
           PopupMenuItem(value: 'remove', child: Text(l10n.removeFromPlan)),
         ],
       );
     }
-    if (e.isCookidoo) {
-      return const Chip(
-        label: Text('Cookidoo'),
+    if (e.isExternal) {
+      return Chip(
+        label: Text(e.sourceName),
         avatar: Icon(Icons.lock_outline, size: 16),
         side: BorderSide(color: AppColors.cookidoo),
         visualDensity: VisualDensity.compact,

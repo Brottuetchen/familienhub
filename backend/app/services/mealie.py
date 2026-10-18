@@ -6,7 +6,7 @@ Errors come as ``MealieUnavailable`` with a short message, never as raw exceptio
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from typing import Any, Dict, List, Optional
 
 import httpx
