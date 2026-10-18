@@ -114,7 +114,12 @@ class ReadStatusIcon extends ConsumerWidget {
       child: Semantics(
         label: label,
         excludeSemantics: true,
-        child: Padding(padding: const EdgeInsets.all(8), child: Icon(icon, size: 20, color: color)),
+        // Same 48 dp box and 24 dp glyph as an IconButton so it shares a centre line with its neighbours.
+        child: SizedBox(
+          width: kMinInteractiveDimension,
+          height: kMinInteractiveDimension,
+          child: Center(child: Icon(icon, size: 24, color: color)),
+        ),
       ),
     );
   }
@@ -414,7 +419,7 @@ class PendingChangesButton extends StatelessWidget {
         label: Text('${changes.length}'),
         backgroundColor: conflicts > 0 ? scheme.error : scheme.primary,
         child: Icon(conflicts > 0 ? Icons.sync_problem : Icons.cloud_upload_outlined,
-            size: 20, color: conflicts > 0 ? scheme.error : scheme.primary),
+            size: 24, color: conflicts > 0 ? scheme.error : scheme.primary),
       ),
     );
   }
