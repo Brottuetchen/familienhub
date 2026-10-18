@@ -100,6 +100,58 @@ class CalDAVConnector(BaseConnector):
                         "color": _safe(lambda: str(cal.get_property(_color_prop()))), "url": url})
         return out
 
+    async def update_event(self, calendar_url: str, uid: str, changes: Dict[str, Any]) -> bool:
+        """Changes title/location/notes (and times for single events). False if the event isn't there."""
+        return await asyncio.to_thread(self._update_event_sync, calendar_url, uid, changes)
+
+    async def delete_event(self, calendar_url: str, uid: str) -> bool:
+        return await asyncio.to_thread(self._delete_event_sync, calendar_url, uid)
+
+    def _event_by_uid(self, calendar_url: str, uid: str):
+        import caldav
+        from caldav.lib.error import NotFoundError
+
+        client = caldav.DAVClient(url=self.url, username=self.username, password=self.password,
+                                  ssl_verify_cert=settings.verify_tls)
+        wanted = calendar_url.rstrip("/")
+        cal = next((c for c in client.principal().calendars() if str(c.url).rstrip("/") == wanted), None)
+        if cal is None:
+            return None
+        try:
+            return cal.event_by_uid(uid)
+        except NotFoundError:
+            return None
+
+    def _update_event_sync(self, calendar_url: str, uid: str, changes: Dict[str, Any]) -> bool:
+        ev = self._event_by_uid(calendar_url, uid)
+        if ev is None:
+            return False
+        comp = ev.icalendar_component
+        series = bool(comp.get("rrule"))
+        for key, prop in (("title", "summary"), ("location", "location"), ("notes", "description")):
+            if key in changes:
+                comp.pop(prop, None)
+                if changes[key]:
+                    comp.add(prop, changes[key])
+        if not series and "start" in changes and "end" in changes:
+            for prop in ("dtstart", "dtend"):
+                comp.pop(prop, None)
+            if changes.get("all_day"):
+                comp.add("dtstart", datetime.fromisoformat(changes["start"]).date())
+                comp.add("dtend", datetime.fromisoformat(changes["end"]).date())
+            else:
+                comp.add("dtstart", datetime.fromisoformat(changes["start"]))
+                comp.add("dtend", datetime.fromisoformat(changes["end"]))
+        ev.save()
+        return True
+
+    def _delete_event_sync(self, calendar_url: str, uid: str) -> bool:
+        ev = self._event_by_uid(calendar_url, uid)
+        if ev is None:
+            return False
+        ev.delete()
+        return True
+
     async def get_today(self) -> List[Dict[str, Any]]:
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         events = await self.get_events(days_ahead=1, start=today)
@@ -287,6 +339,10 @@ def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> D
         "end": _iso(end_val),
         "all_day": all_day,
         "location": str(comp.get("location", "")) or None,
+        "notes": str(comp.get("description", "")) or None,
+        "uid": str(comp.get("uid", "")) or None,
+        # Part of a series: editing changes the whole series
+        "recurring": bool(comp.get("rrule") or comp.get("recurrence-id")),
         "calendar": cal_name,
         "color": cal_color or "#4f46e5",
     }

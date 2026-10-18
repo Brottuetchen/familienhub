@@ -364,6 +364,12 @@ class _EventTile extends ConsumerWidget {
       leading: Container(width: 4, height: 36, decoration: BoxDecoration(color: eventColor(context, event, ref.watch(calendarColorsProvider)), borderRadius: BorderRadius.circular(2))),
       title: Text(event.title),
       subtitle: Text(sub.join(' · ')),
+      onTap: () => showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        builder: (_) => EventDetailsSheet(event: event),
+      ),
       trailing: deletable
           ? IconButton(
               key: ValueKey('event-delete-${event.id}'),
@@ -376,11 +382,117 @@ class _EventTile extends ConsumerWidget {
   }
 }
 
+/// Details of an event; edit and delete where the person may (hub family calendar, own CalDAV calendars).
+class EventDetailsSheet extends ConsumerWidget {
+  final CalendarEvent event;
+  const EventDetailsSheet({super.key, required this.event});
+
+  bool _editable(WidgetRef ref) {
+    if (!ref.watch(canEditProvider)) return false;
+    if (event.source == 'hub') return event.id != null;
+    if (event.source != 'caldav' || event.uid == null || event.calendarId == null) return false;
+    final cals = ref.watch(calendarsProvider).valueOrNull ?? const <CalendarInfo>[];
+    return cals.any((c) => c.id == event.calendarId && c.writable);
+  }
+
+  String _when() {
+    final s = event.start;
+    if (s == null) return '';
+    final e = event.end;
+    if (event.allDay) {
+      final lastDay = e == null ? s : e.subtract(const Duration(days: 1));
+      return lastDay.isAfter(s) ? '${dayLabel(s)} – ${dayLabel(lastDay)} · ${l10n.allDayLower}' : '${dayLabel(s)} · ${l10n.allDayLower}';
+    }
+    if (e == null) return '${dayLabel(s)}, ${timeLabel(s)}';
+    final sameDay = s.year == e.year && s.month == e.month && s.day == e.day;
+    return sameDay ? '${dayLabel(s)}, ${timeLabel(s)} – ${timeLabel(e)}' : '${dayLabel(s)}, ${timeLabel(s)} – ${dayLabel(e)}, ${timeLabel(e)}';
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(event.recurring ? l10n.deleteSeriesQuestion(event.title) : l10n.deleteEventPlain(event.title)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.delete)),
+        ],
+      ),
+    );
+    if (sure != true || !context.mounted) return;
+    if (await runAction(context, () => ref.read(apiClientProvider).deleteAnyEvent(event))) {
+      ref.invalidate(eventsProvider);
+      ref.invalidate(eventsRangeProvider);
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = ref.watch(calendarColorsProvider);
+    final editable = _editable(ref);
+    Widget row(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 12),
+            Expanded(child: Text(text)),
+          ]),
+        );
+    final repeat = event.recurrence != 'none'
+        ? switch (event.recurrence) {
+            'daily' => l10n.recurDaily, 'weekly' => l10n.recurWeekly, 'monthly' => l10n.recurMonthly,
+            'yearly' => l10n.recurYearly, _ => event.recurrence }
+        : event.recurring ? l10n.partOfSeries : null;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(width: 6, height: 28, decoration: BoxDecoration(color: eventColor(context, event, colors), borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 12),
+          Expanded(child: Text(event.title, style: theme.textTheme.titleLarge)),
+          IconButton(tooltip: l10n.close, onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+        ]),
+        const SizedBox(height: 8),
+        row(Icons.schedule, _when()),
+        if (event.calendar != null) row(Icons.calendar_month_outlined, event.calendar!),
+        if (repeat != null) row(Icons.repeat, repeat),
+        if (event.location != null && event.location!.isNotEmpty) row(Icons.place_outlined, event.location!),
+        if (event.notes != null && event.notes!.isNotEmpty) row(Icons.notes, event.notes!),
+        if (editable) ...[
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.spaceBetween, children: [
+            FilledButton.tonalIcon(
+              key: const Key('event-edit'),
+              icon: const Icon(Icons.edit_outlined),
+              label: Text(l10n.editEvent),
+              onPressed: () async {
+                Navigator.pop(context);
+                await showModalBottomSheet<bool>(context: context, isScrollControlled: true, useSafeArea: true,
+                    builder: (_) => EventCreateSheet(initial: event));
+              },
+            ),
+            TextButton.icon(
+              key: const Key('event-details-delete'),
+              icon: const Icon(Icons.delete_outline),
+              label: Text(l10n.delete),
+              onPressed: () => _delete(context, ref),
+            ),
+          ]),
+        ],
+      ]),
+    );
+  }
+}
+
 const _targetKey = 'calendar_last_target';
 
 /// New event: target calendar (family calendar suggested, then the last choice), times, place, notes, repeat.
 class EventCreateSheet extends ConsumerStatefulWidget {
-  const EventCreateSheet({super.key});
+  /// Edit this event instead of creating one (calendar stays fixed).
+  final CalendarEvent? initial;
+  const EventCreateSheet({super.key, this.initial});
 
   @override
   ConsumerState<EventCreateSheet> createState() => _EventCreateSheetState();
@@ -402,9 +514,29 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
 
   static const _recurrences = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
 
+  bool get _editing => widget.initial != null;
+
+  /// CalDAV series: times can't be changed here (the hub would move the whole series).
+  bool get _timesLocked => _editing && widget.initial!.source == 'caldav' && widget.initial!.recurring;
+
   @override
   void initState() {
     super.initState();
+    final e = widget.initial;
+    if (e != null) {
+      _title.text = e.title;
+      _location.text = e.location ?? '';
+      _notes.text = e.notes ?? '';
+      _allDay = e.allDay;
+      _recurrence = e.source == 'hub' ? e.recurrence : 'none';
+      final s = e.start ?? DateTime.now();
+      final end = e.end ?? s.add(const Duration(hours: 1));
+      _day = s;
+      _start = TimeOfDay.fromDateTime(s);
+      _end = TimeOfDay.fromDateTime(end);
+      _endDay = e.allDay ? end.subtract(const Duration(days: 1)) : end;
+      if (_endDay.isBefore(_day)) _endDay = _day;
+    }
     SharedPreferences.getInstance().then((p) {
       if (mounted) setState(() => _lastTarget = p.getString(_targetKey));
     }).catchError((Object _) {});
@@ -446,10 +578,16 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
     if (_allDay && !end.isAfter(start)) end = start.add(const Duration(days: 1));
     setState(() => _saving = true);
     try {
-      await ref.read(apiClientProvider).createEvent(
+      final api = ref.read(apiClientProvider);
+      if (_editing) {
+        await api.updateEvent(widget.initial!, title: title, start: start, end: end, allDay: _allDay,
+            location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence);
+      } else {
+        await api.createEvent(
             title: title, start: start, end: end, allDay: _allDay, calendarId: target,
             location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence);
-      if (target != null) {
+      }
+      if (target != null && !_editing) {
         try {
           (await SharedPreferences.getInstance()).setString(_targetKey, target);
         } catch (_) {}
@@ -489,7 +627,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.newEvent, style: theme.textTheme.titleLarge),
+            Text(_editing ? l10n.editEvent : l10n.newEvent, style: theme.textTheme.titleLarge),
             const SizedBox(height: 16),
             TextField(
               key: const Key('event-title'),
@@ -498,7 +636,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: l10n.title),
             ),
-            if (writable.length > 1) ...[
+            if (writable.length > 1 && !_editing) ...[
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 key: const Key('event-calendar'),
@@ -525,6 +663,12 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
               ),
             ],
             const SizedBox(height: 8),
+            if (_timesLocked)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(l10n.seriesTimesHint, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+              )
+            else ...[
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.allDay),
@@ -578,6 +722,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
                 ),
               ],
             ]),
+            ],
             const SizedBox(height: 12),
             TextField(
               key: const Key('event-location'),
@@ -595,6 +740,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
               decoration: InputDecoration(labelText: l10n.notes, prefixIcon: const Icon(Icons.notes)),
             ),
             const SizedBox(height: 8),
+            if (!_editing || widget.initial!.source == 'hub')
             DropdownButtonFormField<String>(
               key: const Key('event-repeat'),
               initialValue: _recurrence,

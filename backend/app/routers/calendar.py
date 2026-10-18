@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
@@ -17,6 +19,7 @@ from app.models.user import User, ROLE_PARTNER
 from app.services.holidays import upcoming_holidays
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
+logger = logging.getLogger("hermes.calendar")
 
 
 class EventCreateRequest(BaseModel):
@@ -264,4 +267,83 @@ async def delete_event(event_id: int, current_user: User = Depends(require_min_r
         raise HTTPException(status_code=404, detail="Termin nicht gefunden")
     db.delete(row)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class EventUpdateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    start: str
+    end: str
+    all_day: bool
+    location: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    recurrence: Literal["none", "daily", "weekly", "monthly", "yearly"] = "none"
+
+    @model_validator(mode="after")
+    def _times(self):
+        try:
+            start, end = _parse(self.start), _parse(self.end)
+        except ValueError as exc:
+            raise ValueError("Start und Ende als ISO-Datum angeben") from exc
+        if end < start:
+            raise ValueError("Ende liegt vor dem Start")
+        return self
+
+
+@router.put("/events/{event_id}")
+async def update_event(event_id: int, data: EventUpdateRequest, current_user: User = Depends(require_min_role(ROLE_PARTNER)),
+                       db: Session = Depends(get_db)):
+    """Edits an event of the hub's family calendar (the whole series for repeating events)."""
+    from app.models.hub import HubEvent
+
+    row = db.get(HubEvent, event_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
+    row.title, row.start, row.end, row.all_day = data.title.strip(), _parse(data.start), _parse(data.end), data.all_day
+    row.location = (data.location or "").strip() or None
+    row.notes = (data.notes or "").strip() or None
+    row.recurrence = data.recurrence
+    db.commit()
+    return _hub_event(row)
+
+
+async def _own_calendar_url(db: Session, user: User, calendar_id: str) -> str:
+    if not calendar_id.startswith("caldav:") or not (_caldav_active() and _user_account(db, user)):
+        raise HTTPException(status_code=404, detail="Kalender nicht gefunden")
+    match = [c for c in await connector_for_user(db, user).list_calendars() if c["id"] == calendar_id]
+    if not match:
+        raise HTTPException(status_code=404, detail="Kalender nicht gefunden")
+    return match[0]["url"]
+
+
+@router.put("/caldav/{calendar_id}/{uid}")
+async def update_caldav_event(calendar_id: str, uid: str, data: EventUpdateRequest,
+                              current_user: User = Depends(require_min_role(ROLE_PARTNER)), db: Session = Depends(get_db)):
+    """Edits an event in one of the person's own CalDAV calendars. Series: title, place and notes only."""
+    url = await _own_calendar_url(db, current_user, calendar_id)
+    changes = {"title": data.title.strip(), "location": (data.location or "").strip(), "notes": (data.notes or "").strip(),
+               "start": _parse(data.start).isoformat() if not data.all_day else _parse(data.start).date().isoformat(),
+               "end": _parse(data.end).isoformat() if not data.all_day else _parse(data.end).date().isoformat(),
+               "all_day": data.all_day}
+    try:
+        ok = await connector_for_user(db, current_user).update_event(url, uid, changes)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("CalDAV-Termin nicht geändert: %s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Kalender gerade nicht erreichbar") from exc
+    if not ok:
+        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
+    return {"updated": True}
+
+
+@router.delete("/caldav/{calendar_id}/{uid}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_caldav_event(calendar_id: str, uid: str, current_user: User = Depends(require_min_role(ROLE_PARTNER)),
+                              db: Session = Depends(get_db)):
+    url = await _own_calendar_url(db, current_user, calendar_id)
+    try:
+        ok = await connector_for_user(db, current_user).delete_event(url, uid)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("CalDAV-Termin nicht gelöscht: %s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Kalender gerade nicht erreichbar") from exc
+    if not ok:
+        raise HTTPException(status_code=404, detail="Termin nicht gefunden")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

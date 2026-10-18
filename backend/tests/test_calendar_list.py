@@ -117,3 +117,41 @@ def test_hub_event_with_details_and_weekly_repeat(client):
     assert client.post("/api/calendar/events", headers=h, json={
         "title": "x", "start": "2099-04-06T16:00:00", "end": "2099-04-06T17:00:00", "all_day": False,
         "recurrence": "hourly"}).status_code == 422
+
+
+def test_edit_hub_event(client):
+    h = _auth(client, "cl_edit")
+    ev = client.post("/api/calendar/events", headers=h, json={
+        "title": "Probe", "start": "2099-09-01T10:00:00", "end": "2099-09-01T11:00:00", "all_day": False, "calendar_id": "hub"}).json()
+    r = client.put(f"/api/calendar/events/{ev['id']}", headers=h, json={
+        "title": "Generalprobe", "start": "2099-09-02T18:00:00", "end": "2099-09-02T20:00:00", "all_day": False,
+        "location": "Bühne", "notes": "Kostüm", "recurrence": "none"})
+    assert r.status_code == 200 and r.json()["title"] == "Generalprobe" and r.json()["location"] == "Bühne"
+    sept = client.get("/api/calendar/events", params={"start": "2099-09-01", "days": 3}, headers=h).json()
+    e = next(x for x in sept if x["id"] == ev["id"])
+    assert e["start"] == "2099-09-02T18:00:00" and e["notes"] == "Kostüm"
+    assert client.put("/api/calendar/events/999999", headers=h, json={
+        "title": "x", "start": "2099-09-02T18:00:00", "end": "2099-09-02T19:00:00", "all_day": False}).status_code == 404
+    kid = _auth(client, "cl_edit_kid", role="child")
+    assert client.put(f"/api/calendar/events/{ev['id']}", headers=kid, json={
+        "title": "x", "start": "2099-09-02T18:00:00", "end": "2099-09-02T19:00:00", "all_day": False}).status_code == 403
+
+
+def test_edit_and_delete_own_caldav_event(client, monkeypatch):
+    from app.connectors import caldav_connector
+
+    calls = []
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_list_calendars_sync", lambda self: CALS)
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_update_event_sync",
+                        lambda self, url, uid, changes: calls.append(("update", url, uid, changes["title"])) or uid == "u1")
+    monkeypatch.setattr(caldav_connector.CalDAVConnector, "_delete_event_sync",
+                        lambda self, url, uid: calls.append(("delete", url, uid)) or uid == "u1")
+    h = _auth(client, "cl_caldav_edit", caldav=True)
+    body = {"title": "Neu", "start": "2099-03-03T19:00:00", "end": "2099-03-03T20:00:00", "all_day": False}
+    assert client.put("/api/calendar/caldav/caldav:fam/u1", headers=h, json=body).status_code == 200
+    assert client.put("/api/calendar/caldav/caldav:fam/nope", headers=h, json=body).status_code == 404
+    assert client.put("/api/calendar/caldav/caldav:fremd/u1", headers=h, json=body).status_code == 404  # not her calendar
+    assert client.delete("/api/calendar/caldav/caldav:fam/u1", headers=h).status_code == 204
+    assert calls[0] == ("update", "https://dav.example.test/c/anna/familie_shared/", "u1", "Neu")
+    assert calls[-1] == ("delete", "https://dav.example.test/c/anna/familie_shared/", "u1")
+    assert ("update", "https://dav.example.test/c/anna/familie_shared/", "u1", "Neu") in calls
