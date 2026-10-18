@@ -564,16 +564,35 @@ class ApiClient {
       {'username': username, 'password': password, 'client': 'app'});
 
   /// URL für Authentik. `client`: `app` (Rücksprung per familienhub://) oder `pwa` (Web-App, Rücksprung auf die Seite).
+  ///
+  /// PKCE-Bindung: Die App merkt sich ein zufälliges Geheimnis und schickt nur dessen SHA-256 mit. Den
+  /// Rücksprung-Code kann danach nur einlösen, wer das Geheimnis kennt – eine fremde App, die
+  /// `familienhub://` abfängt, nicht.
   Future<String> oidcStartUrl({String client = 'app'}) async {
     final epoch = _epoch;
     await _sessionWrites;
     if (epoch != _epoch) throw UnauthorizedException();
-    final json = await _send('GET', '/api/auth/oidc/start?client=$client', auth: false);
+    final verifier = _newVerifier();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_oidcVerifierKey, verifier); // übersteht, dass die App im Browser beendet wird
+    final challenge = base64Url.encode(sha256.convert(utf8.encode(verifier)).bytes).replaceAll('=', '');
+    final json = await _send('GET', '/api/auth/oidc/start?client=$client&challenge=$challenge', auth: false);
     return (json as Map<String, dynamic>)['url'] as String;
   }
 
-  Future<AppUser> exchangeOidcCode(String code) =>
-      _authenticate('/api/auth/oidc/exchange', {'code': code});
+  static const _oidcVerifierKey = 'oidc_verifier';
+
+  static String _newVerifier() {
+    final r = Random.secure();
+    return base64Url.encode(List<int>.generate(48, (_) => r.nextInt(256))).replaceAll('=', '');
+  }
+
+  Future<AppUser> exchangeOidcCode(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final verifier = prefs.getString(_oidcVerifierKey);
+    await prefs.remove(_oidcVerifierKey); // nur einmal verwendbar
+    return _authenticate('/api/auth/oidc/exchange', {'code': code, if (verifier != null) 'verifier': verifier});
+  }
 
   Future<AppUser> _authenticate(String path, Object body) async {
     // Anmeldung gehört ab ihrem Beginn zu genau einer Sitzung. Bereits
