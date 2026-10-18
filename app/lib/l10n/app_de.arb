@@ -1295,5 +1295,6 @@
       "place": {}
     }
   },
-  "taskStatusUnknown": "Status unbekannt"
+  "taskStatusUnknown": "Status unbekannt",
+  "taskPriority": "Priorität"
 }

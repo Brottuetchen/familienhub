@@ -709,5 +709,6 @@
   "taskPlaceSaved": "Task place saved",
   "taskLandsWhereTheyWork": "The task lands where {name} receives it.",
   "taskAssignedVia": "stored in {place}",
-  "taskStatusUnknown": "Status unknown"
+  "taskStatusUnknown": "Status unknown",
+  "taskPriority": "Priority"
 }
