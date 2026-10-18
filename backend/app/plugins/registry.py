@@ -48,8 +48,19 @@ class PluginRegistry:
         return self._plugins.get(plugin_id)
 
     def provider(self, capability: str) -> Optional[Plugin]:
-        """Erstes aktives Plugin mit dieser Fähigkeit (eingebaute zuerst)."""
-        for plugin in self._plugins.values():
+        """Source of an area: the admin's choice (``<CAPABILITY>_SOURCE``), else the first active plugin.
+
+        Built-in plugins come before external ones; the hub's own sources (``fallback``) come last,
+        so they only serve an area when nothing else does.
+        """
+        from app.plugins.base import get_setting
+
+        choice = str(get_setting(f"{capability.upper()}_SOURCE") or "").strip()
+        chosen = self._plugins.get(choice)
+        if chosen and capability in chosen.capabilities and chosen.active:
+            return chosen
+        ordered = sorted(self._plugins.values(), key=lambda p: p.fallback)  # stable: keeps registration order
+        for plugin in ordered:
             if capability in plugin.capabilities and plugin.active:
                 return plugin
         return None

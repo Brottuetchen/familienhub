@@ -2,6 +2,9 @@ import 'common.dart';
 import '../l10n/l10n.dart';
 
 class CalendarEvent {
+  /// Only events of the hub's family calendar have an id (and can be deleted in the app).
+  final int? id;
+  final String? source; // caldav | hub | ics …
   final String title;
   final DateTime? start;
   final DateTime? end;
@@ -11,6 +14,8 @@ class CalendarEvent {
   final String? color;
 
   const CalendarEvent({
+    this.id,
+    this.source,
     required this.title,
     this.start,
     this.end,
@@ -24,6 +29,8 @@ class CalendarEvent {
     final allDay = json['all_day'] == true;
     DateTime? parse(Object? raw) => allDay ? parseDay(raw) : parseDate(raw);
     return CalendarEvent(
+      id: json['id'] is int ? json['id'] as int : null,
+      source: json['source'] as String?,
       title: (json['title'] as String?) ?? l10n.event,
       start: parse(json['start']),
       end: parse(json['end']),

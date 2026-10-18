@@ -64,9 +64,26 @@ class CalendarScreen extends ConsumerWidget {
   }
 }
 
-class _EventTile extends StatelessWidget {
+class _EventTile extends ConsumerWidget {
   final CalendarEvent event;
   const _EventTile({required this.event});
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(l10n.deleteEventQuestion(event.title)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.delete)),
+        ],
+      ),
+    );
+    if (sure != true || !context.mounted) return;
+    if (await runAction(context, () => ref.read(apiClientProvider).deleteEvent(event.id!))) {
+      await ref.read(eventsProvider.notifier).refresh();
+    }
+  }
 
   Color _color(BuildContext context) {
     final hex = event.color?.replaceFirst('#', '');
@@ -75,7 +92,8 @@ class _EventTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final deletable = event.source == 'hub' && event.id != null && ref.watch(canEditProvider);
     final time = event.allDay || event.start == null
         ? l10n.allDayLower
         : event.end == null
@@ -86,6 +104,14 @@ class _EventTile extends StatelessWidget {
       leading: Container(width: 4, height: 36, decoration: BoxDecoration(color: _color(context), borderRadius: BorderRadius.circular(2))),
       title: Text(event.title),
       subtitle: Text(sub.join(' · ')),
+      trailing: deletable
+          ? IconButton(
+              key: ValueKey('event-delete-${event.id}'),
+              tooltip: l10n.deleteEvent,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _delete(context, ref),
+            )
+          : null,
     );
   }
 }

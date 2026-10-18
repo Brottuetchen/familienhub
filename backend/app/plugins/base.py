@@ -61,6 +61,8 @@ class Plugin:
     capabilities: frozenset = field(default_factory=frozenset)
     settings: tuple = ()
     builtin: bool = False
+    # Hub's own source of an area (tasks, shopping, calendar): used when no other plugin provides it
+    fallback: bool = False
 
     def routers(self) -> List[APIRouter]:
         """FastAPI-Router des Plugins (werden beim Start eingebunden)."""
@@ -97,6 +99,7 @@ class Plugin:
             "version": self.version,
             "description": self.description,
             "builtin": self.builtin,
+            "fallback": self.fallback,
             "capabilities": sorted(self.capabilities),
             "configured": configured,
             "disabled": disabled,

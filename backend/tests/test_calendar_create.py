@@ -53,7 +53,7 @@ def test_create_event_uses_user_account(client, auth, session):
         assert response.status_code == 201
 
 
-def test_create_event_without_account_409(client, auth, session):
+def test_create_event_without_account_409(client, auth, session, monkeypatch):
     """POST /api/calendar/events ohne CalDAV-Konto → 409."""
     from app.models.user import User
     from app.models.caldav import CalDAVAccount
@@ -63,6 +63,10 @@ def test_create_event_without_account_409(client, auth, session):
         user = User(username="testuser", email="test@example.com", role="admin")
         session.add(user)
         session.commit()
+
+    # The hub's family calendar would take the event otherwise (built-in sources, 18.10.)
+    from app.config import settings
+    monkeypatch.setattr(settings, "plugins_disabled", "hub_calendar")
 
     # Sicherstellen, dass kein CalDAV-Account existiert
     session.query(CalDAVAccount).filter(CalDAVAccount.user_id == user.id).delete()

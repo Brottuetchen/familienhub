@@ -44,12 +44,10 @@ async def get_today(
     # Events (heute + morgen, max 10), mit dem Kalenderkonto des Nutzers
     events = []
     try:
-        from app.routers.calendar import connector_for_user
+        from app.routers.calendar import collect_events
 
         midnight = datetime.combine(today, datetime.min.time())
-        cal_events = await connector_for_user(db, current_user).get_events(
-            days_ahead=2, start=midnight
-        )
+        cal_events = await collect_events(db, current_user, 2, start=midnight)
         for e in (cal_events or [])[:10]:
             events.append({
                 "title": e.get("title", ""),
@@ -136,7 +134,15 @@ async def get_today(
 
     # Shopping (Anzahl offener Einträge)
     shopping_open = 0
-    if ha and ha.is_configured:
+    from app.routers.shopping import _hub_source
+
+    hub_list = _hub_source()
+    if hub_list:
+        try:
+            shopping_open = await hub_list.open_count()
+        except Exception as exc:
+            logger.warning("Failed to count hub shopping: %s", exc, exc_info=True)
+    elif ha and ha.is_configured:
         try:
             from app.config import settings
             manual = await ha.get_todo_items(settings.ha_shopping_todo)
