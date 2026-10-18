@@ -29,7 +29,7 @@ One app for everyone in the family, which **works on its own and connects to wha
 |---|:-:|---|
 | Tasks | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica – several side by side |
 | Shopping list | ✓ | Home Assistant to-do lists |
-| Calendar | ✓ family calendar | CalDAV, merged with the hub calendar |
+| Calendar | ✓ family calendar | CalDAV, calendar subscriptions (ICS), all merged |
 | Meal plan & recipes | ✓ | Cookidoo (recipes), Home Assistant (Cookidoo plan) |
 | Reminders, notifications | ✓ | Home Assistant, Shelfarr, Paperless … as notification sources |
 | Documents · books · movies & shows | – | Paperless-ngx · Shelfarr · Seerr |

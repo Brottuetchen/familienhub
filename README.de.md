@@ -29,7 +29,7 @@ Eine App für alle in der Familie, die **allein funktioniert und anbindet, was i
 |---|:-:|---|
 | Aufgaben | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica, auch mehrere nebeneinander |
 | Einkaufsliste | ✓ | Home Assistant |
-| Kalender | ✓ Familienkalender | CalDAV, zusammen mit dem Hub-Kalender |
+| Kalender | ✓ Familienkalender | CalDAV, Kalender-Abos (ICS), alles zusammen |
 | Essensplan & Rezepte | ✓ | Cookidoo |
 | Dokumente · Bücher · Filme & Serien | – | Paperless-ngx · Shelfarr · Seerr |
 

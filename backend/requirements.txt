@@ -36,6 +36,7 @@ cookidoo-api==0.18.4
 # --- Kalender (CalDAV/Nextcloud) ---
 caldav==1.4.0
 icalendar==6.1.0
+recurring-ical-events==3.8.2  # calendar subscriptions (ICS) with repeating events
 python-dateutil==2.9.0.post0
 
 # --- Tests (optional) ---

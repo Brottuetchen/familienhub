@@ -82,6 +82,12 @@ async def collect_events(db: Session, user: User, days: int, start: Optional[dat
             events.extend({**e, "source": e.get("source", "caldav")} for e in (caldav_events or []))
         except HTTPException:
             pass  # CalDAV connector switched off: the other sources still count
+    from app.plugins.registry import plugin_registry
+
+    if plugin_registry.serves("calendar", "ics"):
+        from app.services import ics
+
+        events.extend(await ics.events_between(start, end))
     if _hub_active():
         rows = db.query(HubEvent).filter(HubEvent.end >= start.replace(hour=0, minute=0, second=0, microsecond=0),
                                          HubEvent.start < end).all()
