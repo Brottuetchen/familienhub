@@ -39,7 +39,7 @@ def _user(name, role="partner"):
 
 
 class World:
-    """creator (Nextcloud + family list), carina (Nextcloud), const (Habitica), kid (hub only)."""
+    """creator (Nextcloud + family list), mia (Nextcloud), const (Habitica), kid (hub only)."""
 
     def __init__(self, http):
         self.http = http
@@ -47,13 +47,13 @@ class World:
         self.clients = {}
         self.calendars = {}
         self.creator, self.h_creator = _user("rt-creator")
-        self.carina, self.h_carina = _user("rt-carina")
-        self.const, self.h_const = _user("rt-const")
+        self.mia, self.h_mia = _user("rt-mia")
+        self.const, self.h_leo = _user("rt-const")
         self.kid, self.h_kid = _user("rt-kid", role="child")
         self.remote_task = None  # Habitica remote object created for const
         with SessionLocal() as db:
             self._caldav(db, "rt-creator", self.creator, personal=True, family=True)
-            self._caldav(db, "rt-carina", self.carina, personal=True)
+            self._caldav(db, "rt-mia", self.mia, personal=True)
             db.add(HabiticaAccount(user_id=self.const, server_url=HABITICA, remote_user_id=REMOTE_USER,
                                    api_key_enc=encrypt("rt-key")))
             db.commit()
@@ -126,63 +126,63 @@ def test_default_place_is_derived_from_connected_accounts(client, world):
         return client.get("/api/tasks/me/place", headers=h).json()
 
     assert place(world.h_kid)["place"] == "hub_tasks" and place(world.h_kid)["explicit"] is None
-    assert place(world.h_carina)["place"] == "nextcloud"
-    assert place(world.h_const)["place"] == "habitica"
-    options = {o["id"]: o["available"] for o in place(world.h_carina)["options"]}
+    assert place(world.h_mia)["place"] == "nextcloud"
+    assert place(world.h_leo)["place"] == "habitica"
+    options = {o["id"]: o["available"] for o in place(world.h_mia)["options"]}
     assert options == {"nextcloud": True, "habitica": False, "hub_tasks": True}
     # Both connected: CalDAV wins by default
     with SessionLocal() as db:
         db.add(CalDAVAccount(user_id=world.const, url="https://cloud.example/dav", username="rt-creator",
                              password_enc=encrypt("pw")))
         db.commit()
-    assert place(world.h_const)["place"] == "nextcloud"
+    assert place(world.h_leo)["place"] == "nextcloud"
 
 
 def test_place_can_be_chosen_and_reset(client, world):
-    put = client.put("/api/tasks/me/place", headers=world.h_carina, json={"place": "hub_tasks"})
+    put = client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": "hub_tasks"})
     assert put.status_code == 200 and put.json()["place"] == "hub_tasks" and put.json()["explicit"] == "hub_tasks"
-    assert client.get("/api/tasks/me/place", headers=world.h_carina).json()["place"] == "hub_tasks"
+    assert client.get("/api/tasks/me/place", headers=world.h_mia).json()["place"] == "hub_tasks"
     # a place she has no account for is refused
-    assert client.put("/api/tasks/me/place", headers=world.h_carina, json={"place": "habitica"}).status_code == 422
-    assert client.put("/api/tasks/me/place", headers=world.h_carina, json={"place": "nope"}).status_code == 422
-    reset = client.put("/api/tasks/me/place", headers=world.h_carina, json={"place": None})
+    assert client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": "habitica"}).status_code == 422
+    assert client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": "nope"}).status_code == 422
+    reset = client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": None})
     assert reset.json()["place"] == "nextcloud" and reset.json()["explicit"] is None
 
 
 def test_explicit_place_is_used_when_the_account_goes_away(client, world):
-    client.put("/api/tasks/me/place", headers=world.h_const, json={"place": "habitica"})
+    client.put("/api/tasks/me/place", headers=world.h_leo, json={"place": "habitica"})
     with SessionLocal() as db:
         db.query(HabiticaAccount).filter(HabiticaAccount.user_id == world.const).delete()
         db.commit()
-    info = client.get("/api/tasks/me/place", headers=world.h_const).json()
+    info = client.get("/api/tasks/me/place", headers=world.h_leo).json()
     assert info["explicit"] == "habitica" and info["place"] == "hub_tasks"  # stale choice never blocks
 
 
 # --- routing ---
 
 
-def test_task_for_carina_lands_in_her_nextcloud_written_with_her_account(client, world):
-    r = world.create(world.h_creator, assignee_id=world.carina, due="2099-01-02", notes="Tonne raus")
+def test_task_for_mia_lands_in_her_nextcloud_written_with_her_account(client, world):
+    r = world.create(world.h_creator, assignee_id=world.mia, due="2099-01-02", notes="Tonne raus")
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["placed"] == {"provider": "nextcloud", "fallback": False, "recipient": world.carina}
+    assert body["placed"] == {"provider": "nextcloud", "fallback": False, "recipient": world.mia}
     assert body["provider"] == "assigned" and body["read_only"] is True and body["done"] is False
-    carina_cal = world.calendars["rt-carina"]
-    todo = _todos(carina_cal)
+    mia_cal = world.calendars["rt-mia"]
+    todo = _todos(mia_cal)
     assert len(todo) == 1 and "Müll" in todo[0]
     assert f"X-FAMILIENHUB-CREATED-BY:{world.creator}" in todo[0]
-    assert f"X-FAMILIENHUB-ASSIGNEE:{world.carina}" in todo[0]
+    assert f"X-FAMILIENHUB-ASSIGNEE:{world.mia}" in todo[0]
     assert _todos(world.calendars["rt-creator"]) == []  # the creator's own list and account stay untouched
-    # Carina sees it under "for me"
-    mine = client.get("/api/tasks?provider=nextcloud&view=for_me", headers=world.h_carina).json()["items"]
+    # Mia sees it under "for me"
+    mine = client.get("/api/tasks?provider=nextcloud&view=for_me", headers=world.h_mia).json()["items"]
     assert [t["title"] for t in mine] == ["Müll"]
 
 
 def test_von_mir_shows_the_task_and_follows_completion_by_the_recipient(client, world):
-    created = world.create(world.h_creator, assignee_id=world.carina).json()
+    created = world.create(world.h_creator, assignee_id=world.mia).json()
     items = _from_me(client, world.h_creator)["items"]
     assert [(t["title"], t["done"], t["via"]) for t in items] == [("Müll", False, "nextcloud")]
-    done = client.post(f"/api/tasks/{created['uid']}/complete?provider=nextcloud", headers=world.h_carina)
+    done = client.post(f"/api/tasks/{created['uid']}/complete?provider=nextcloud", headers=world.h_mia)
     assert done.status_code == 200, done.text
     items = _from_me(client, world.h_creator)["items"]
     assert [(t["title"], t["done"], t["stale"]) for t in items] == [("Müll", True, False)]
@@ -190,13 +190,13 @@ def test_von_mir_shows_the_task_and_follows_completion_by_the_recipient(client, 
 
 
 def test_creator_sees_only_the_tasks_he_assigned(client, world):
-    # Carina's own task and one from the hub-less third person sit in the same list
-    own = client.post("/api/tasks?provider=nextcloud", headers=world.h_carina, json={"title": "Privat von Carina"})
+    # Mia's own task and one from the hub-less third person sit in the same list
+    own = client.post("/api/tasks?provider=nextcloud", headers=world.h_mia, json={"title": "Privat von Mia"})
     assert own.status_code == 201
-    other = client.post("/api/tasks?provider=auto", headers=world.h_const,
-                        json={"title": "Von Const", "assignee_id": world.carina})
+    other = client.post("/api/tasks?provider=auto", headers=world.h_leo,
+                        json={"title": "Von Const", "assignee_id": world.mia})
     assert other.status_code == 201, other.text
-    mine = world.create(world.h_creator, assignee_id=world.carina)
+    mine = world.create(world.h_creator, assignee_id=world.mia)
     assert mine.status_code == 201
     titles = [t["title"] for t in _from_me(client, world.h_creator)["items"]]
     assert titles == ["Müll"]
@@ -235,17 +235,17 @@ def test_task_for_kid_lands_in_the_hub(client, world):
 
 
 def test_explicit_place_of_the_recipient_wins(client, world):
-    client.put("/api/tasks/me/place", headers=world.h_carina, json={"place": "hub_tasks"})
-    r = world.create(world.h_creator, assignee_id=world.carina)
+    client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": "hub_tasks"})
+    r = world.create(world.h_creator, assignee_id=world.mia)
     assert r.json()["placed"]["provider"] == "hub_tasks"
-    assert _todos(world.calendars["rt-carina"]) == []
+    assert _todos(world.calendars["rt-mia"]) == []
 
 
 # --- fallback ---
 
 
 def test_recipient_without_account_for_a_stale_choice_falls_back_to_hub(client, world):
-    client.put("/api/tasks/me/place", headers=world.h_const, json={"place": "habitica"})
+    client.put("/api/tasks/me/place", headers=world.h_leo, json={"place": "habitica"})
     with SessionLocal() as db:
         db.query(HabiticaAccount).filter(HabiticaAccount.user_id == world.const).delete()
         db.commit()
@@ -265,14 +265,14 @@ def test_habitica_error_falls_back_to_hub_storage(client, world):
 
 
 def test_nextcloud_write_error_falls_back_to_hub_storage(client, world):
-    world.calendars["rt-carina"]._writable = False  # server answers 403
-    r = world.create(world.h_creator, assignee_id=world.carina)
+    world.calendars["rt-mia"]._writable = False  # server answers 403
+    r = world.create(world.h_creator, assignee_id=world.mia)
     assert r.status_code == 201, r.text
     assert r.json()["placed"]["provider"] == "hub_tasks" and r.json()["placed"]["fallback"] is True
 
 
 def test_von_mir_survives_an_unreachable_recipient_provider(client, world):
-    world.create(world.h_creator, assignee_id=world.carina)
+    world.create(world.h_creator, assignee_id=world.mia)
 
     def boom(**kw):
         raise ConnectionError("down")
@@ -282,8 +282,8 @@ def test_von_mir_survives_an_unreachable_recipient_provider(client, world):
 
 
 def test_task_removed_by_the_recipient_disappears_from_von_mir(client, world):
-    world.create(world.h_creator, assignee_id=world.carina)
-    world.calendars["rt-carina"]._todos_data.clear()  # she deletes it in her Nextcloud app
+    world.create(world.h_creator, assignee_id=world.mia)
+    world.calendars["rt-mia"]._todos_data.clear()  # she deletes it in her Nextcloud app
     assert _from_me(client, world.h_creator)["items"] == []
 
 
@@ -293,10 +293,10 @@ def test_unknown_or_guest_assignee_is_refused(client, world):
 
 def test_retry_with_the_same_idempotency_key_creates_one_task(client, world):
     h = {**world.h_creator, "Idempotency-Key": str(uuid.uuid4())}
-    a = world.create(h, assignee_id=world.carina)
-    b = world.create(h, assignee_id=world.carina)
+    a = world.create(h, assignee_id=world.mia)
+    b = world.create(h, assignee_id=world.mia)
     assert a.status_code == b.status_code == 201
-    assert len(_todos(world.calendars["rt-carina"])) == 1
+    assert len(_todos(world.calendars["rt-mia"])) == 1
 
 
 # --- own and family tasks ---
@@ -307,7 +307,7 @@ def test_family_task_goes_to_the_family_list_of_nextcloud(client, world):
     assert r.status_code == 201, r.text
     assert r.json()["placed"] == {"provider": "nextcloud", "fallback": False, "recipient": None}
     assert len(_todos(world.calendars["rt-creator-family"])) == 1
-    assert _todos(world.calendars["rt-carina"]) == []
+    assert _todos(world.calendars["rt-mia"]) == []
 
 
 def test_family_task_honours_sources_per_area(client, world, monkeypatch):
@@ -321,13 +321,13 @@ def test_family_task_honours_sources_per_area(client, world, monkeypatch):
 
 
 def test_family_task_without_nextcloud_family_list_uses_the_hub(client, world):
-    r = world.create(world.h_const, list="family")  # Constantin has no CalDAV account
+    r = world.create(world.h_leo, list="family")  # Leo has no CalDAV account
     assert r.status_code == 201, r.text
     assert r.json()["placed"] == {"provider": "hub_tasks", "fallback": True, "recipient": None}
 
 
 def test_household_rotation_goes_to_the_family_list(client, world):
-    r = world.create(world.h_creator, list="family", recurrence="weekly", rotation=[world.creator, world.carina],
+    r = world.create(world.h_creator, list="family", recurrence="weekly", rotation=[world.creator, world.mia],
                      due="2099-01-02")
     assert r.status_code == 201, r.text
     assert r.json()["placed"]["provider"] == "nextcloud"
@@ -336,21 +336,21 @@ def test_household_rotation_goes_to_the_family_list(client, world):
 
 def test_own_task_goes_to_my_preferred_place(client, world):
     world.habitica_remote()
-    r = world.create(world.h_const)
+    r = world.create(world.h_leo)
     assert r.status_code == 201, r.text
     assert r.json()["placed"]["provider"] == "habitica" and world.remote_task["text"] == "Müll"
-    r = world.create(world.h_carina)
+    r = world.create(world.h_mia)
     assert r.json()["placed"]["provider"] == "nextcloud"
-    assert len(_todos(world.calendars["rt-carina"])) == 1
+    assert len(_todos(world.calendars["rt-mia"])) == 1
     r = world.create(world.h_creator, assignee_id=world.creator)  # assigning to myself is an own task
     assert r.json()["placed"]["provider"] == "nextcloud"
 
 
 def test_explicit_provider_keeps_the_legacy_path(client, world):
     """Old clients name the provider themselves: no routing, no assignment record."""
-    r = client.post("/api/tasks?provider=nextcloud", headers=world.h_carina, json={"title": "Alt"})
+    r = client.post("/api/tasks?provider=nextcloud", headers=world.h_mia, json={"title": "Alt"})
     assert r.status_code == 201, r.text
     assert "placed" not in r.json()
-    assert len(_todos(world.calendars["rt-carina"])) == 1
+    assert len(_todos(world.calendars["rt-mia"])) == 1
     with SessionLocal() as db:
-        assert db.query(TaskAssignment).filter_by(creator_id=world.carina).count() == 0
+        assert db.query(TaskAssignment).filter_by(creator_id=world.mia).count() == 0
