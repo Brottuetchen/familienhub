@@ -104,6 +104,11 @@ app = FastAPI(
     openapi_url=None if settings.is_production and not settings.debug else "/openapi.json",
 )
 
+# Error and status texts in the client's language (#24); added before CORS so CORS stays outermost
+from app.core import i18n  # noqa: E402
+
+i18n.install(app)
+
 if settings.cors_origin_list:
     app.add_middleware(
         CORSMiddleware,
