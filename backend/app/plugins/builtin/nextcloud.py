@@ -19,6 +19,7 @@ class NextcloudPlugin(Plugin):
                         help="So heißt der geteilte Familienkalender in Nextcloud o. Ä. (mehrere mit Komma). Er wird beim Anlegen vorgeschlagen."),
             ),
             builtin=True,
+            family_tasks=True,
         )
 
     def is_configured(self) -> bool:

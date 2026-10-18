@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import uuid
 from typing import List, Literal, Optional
 from urllib.parse import urlsplit
 
@@ -103,6 +104,15 @@ async def read_tasks(user_id, db, provider="all", account=None, view="all", incl
             result = {"status": "unavailable", "error": "Aufgabenanbieter nicht erreichbar", "items": []}
         statuses[name] = {"status": result["status"], "error": result.get("error")}
         items.extend(context_task(t, name, connector) for t in result.get("items", []))
+    if view == "from_me" and provider == "all":
+        # Tasks given to others that live in the recipient's own provider (#38); status read via her connector
+        from app.services import task_routing
+
+        try:
+            seen = {(t.get("provider"), t.get("uid")) for t in items if isinstance(t, dict)}
+            items.extend(await task_routing.assigned_items(user_id, db, include_done, skip=seen))
+        except Exception:  # noqa: BLE001 - never an exception into the UI
+            logger.warning("Zugewiesene Aufgaben nicht lesbar", exc_info=True)
     state = "ok" if items or any(s["status"] == "ok" for s in statuses.values()) else (
         "unavailable" if any(s["status"] == "unavailable" for s in statuses.values()) else "not_configured")
     return {"status": state, "error": next((s["error"] for s in statuses.values() if s["error"]), None),
@@ -241,10 +251,8 @@ async def create_task(
         lambda: _create_task(task, provider, account, current_user, db))
 
 
-async def _create_task(task: TaskCreateRequest, provider: str, account: str | None, current_user: User, db: Session):
-    """Erstellt eine neue Aufgabe."""
-    from app.services.notify import notify
-
+def _validate_people(task: TaskCreateRequest, current_user: User, db: Session):
+    """Rotation members and the assignee must be active family members. Returns the assignee (or None)."""
     if task.rotation:
         if current_user.role not in ("admin", "partner"):
             raise HTTPException(status_code=403, detail="Nur Erwachsene verwalten Haushaltsaufgaben")
@@ -258,6 +266,91 @@ async def _create_task(task: TaskCreateRequest, provider: str, account: str | No
                                          User.role != "guest").first()
         if assignee is None:
             raise HTTPException(status_code=422, detail="Zuweisung nur an aktive Familienmitglieder")
+        return assignee
+    return None
+
+
+async def _notify_assigned(task: TaskCreateRequest, current_user: User, assignee_id: int | None, uid: str):
+    from app.services.notify import notify
+
+    if assignee_id and assignee_id != current_user.id:
+        try:
+            await notify(
+                user_id=assignee_id,
+                title="Neue Aufgabe zugewiesen",
+                body=f"{current_user.full_name or current_user.username}: {task.title}",
+                data={"task_uid": uid, "route": "/tasks?view=for_me"},
+                category="task_assigned",
+            )
+        except Exception:
+            # Fehler bei Benachrichtigung blockiert nicht die Erstellung
+            pass
+
+
+async def _create_task(task: TaskCreateRequest, provider: str, account: str | None, current_user: User, db: Session):
+    """Erstellt eine neue Aufgabe; ``provider=auto`` routet nach Empfänger bzw. Familienliste (#38)."""
+    if provider == "auto":
+        return await _create_task_auto(task, current_user, db)
+    return await _create_task_in(task, provider, account, current_user, db)
+
+
+async def _create_task_auto(task: TaskCreateRequest, current_user: User, db: Session):
+    """Where the task lands is not the creator's decision.
+
+    - family list / household rotation: first source of the area that can hold a family list, else the hub
+    - task for another person: that person's preferred place, written with *her own* account; else the hub
+    - own task: the creator's own preferred place; else the hub
+    """
+    from app.services import task_routing
+
+    assignee = _validate_people(task, current_user, db)
+    family = bool(task.rotation) or task.list == "family"
+
+    if assignee is not None and assignee.id != current_user.id and not family:
+        placed = await task_routing.create_for_recipient(
+            current_user, assignee, db, title=task.title, notes=task.notes, due=task.due, priority=task.priority)
+        if placed is None:
+            raise HTTPException(status_code=409, detail="Kein Aufgabenort verfügbar")
+        result, connector, row, plugin = placed
+        await _notify_assigned(task, current_user, assignee.id, str(result["uid"]))
+        info = {"provider": plugin.id, "fallback": bool(row.fallback), "recipient": assignee.id}
+        if plugin.fallback:  # hub task: the creator can open and edit it like any other hub task
+            mine = plugin.task_connector(current_user.id, db)
+            return {**context_task(result, plugin.id, mine), "placed": info}
+        return {**task_routing.to_item(row), "placed": info}
+
+    if family:
+        first = task_routing.family_plugin()
+    else:
+        wanted = task_routing.effective_place(current_user, db)
+        first = plugin_registry.get(wanted) if wanted else None
+    fb = task_routing.fallback_plugin()
+    chain = [p for p in (first, fb) if p is not None]
+    chain = [p for i, p in enumerate(chain) if p.id not in {q.id for q in chain[:i]}]
+    if not chain:
+        raise HTTPException(status_code=409, detail="Kein Aufgabenort verfügbar")
+    last: HTTPException | None = None
+    for plugin in chain:
+        connector = plugin.task_connector(current_user.id, db)
+        if connector is None:
+            continue
+        attempt = task
+        if not family and hasattr(connector, "action") and task.native is None:
+            attempt = task.model_copy(update={"native": {"type": "todo"}, "operation_id": uuid.uuid4()})
+        try:
+            result = await _create_task_in(attempt, plugin.id, connector.account_ref, current_user, db)
+        except HTTPException as exc:
+            if exc.status_code not in (409, 422, 500, 503) or plugin is chain[-1]:
+                raise
+            last = exc
+            continue
+        return {**result, "placed": {"provider": plugin.id, "fallback": plugin is not first, "recipient": None}}
+    raise last or HTTPException(status_code=409, detail="Kein Aufgabenort verfügbar")
+
+
+async def _create_task_in(task: TaskCreateRequest, provider: str, account: str | None, current_user: User, db: Session):
+    """Erstellt eine neue Aufgabe im ausdrücklich gewählten Anbieter (Legacy-Pfad und Ziel des Routings)."""
+    _validate_people(task, current_user, db)
 
     connector = plugin_registry.task_connector(provider, current_user.id, db, account)
 
@@ -287,21 +380,9 @@ async def _create_task(task: TaskCreateRequest, provider: str, account: str | No
                 detail="Failed to create task",
             )
 
-        # Push-Benachrichtigung bei Zuweisung an anderen Nutzer
-        # ponytail: use resolved assignee (rotation[0] or task.assignee_id)
-        resolved_assignee = task.rotation[0] if task.rotation else task.assignee_id
-        if resolved_assignee and resolved_assignee != current_user.id:
-            try:
-                await notify(
-                    user_id=resolved_assignee,
-                    title="Neue Aufgabe zugewiesen",
-                    body=f"{current_user.full_name or current_user.username}: {task.title}",
-                    data={"task_uid": result["uid"], "route": "/tasks?view=for_me"},
-                    category="task_assigned",
-                )
-            except Exception:
-                # Fehler bei Benachrichtigung blockiert nicht die Erstellung
-                pass
+        # Push-Benachrichtigung bei Zuweisung an anderen Nutzer (resolved assignee: rotation[0] or assignee_id)
+        await _notify_assigned(task, current_user, task.rotation[0] if task.rotation else task.assignee_id,
+                               result.get("uid"))
 
         return context_task(result, provider, connector)
 
@@ -324,6 +405,32 @@ async def _create_task(task: TaskCreateRequest, provider: str, account: str | No
             detail="Aufgabe konnte nicht angelegt werden",
         ) from exc
 
+
+
+class TaskPlaceRequest(BaseModel):
+    place: str | None = Field(None, max_length=32)  # task provider id; null = derive from connected accounts
+
+
+@router.get("/me/place")
+def get_task_place(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Where tasks that others give me land: ``place`` (effective), ``explicit`` (my choice), ``auto`` (derived)."""
+    from app.services import task_routing
+
+    return task_routing.place_info(current_user, db)
+
+
+@router.put("/me/place")
+def set_task_place(data: TaskPlaceRequest, current_user: User = Depends(require_min_role(ROLE_CHILD)),
+                   db: Session = Depends(get_db)):
+    from app.services import task_routing
+
+    options = task_routing.place_options(current_user.id, db)
+    if data.place is not None and not any(o["id"] == data.place and o["available"] for o in options):
+        raise HTTPException(422, "Dieser Aufgabenort ist nicht verfügbar. Bitte zuerst das Konto verbinden.")
+    current_user.task_place = data.place
+    db.commit()
+    db.refresh(current_user)
+    return task_routing.place_info(current_user, db)
 
 
 class SelectionRequest(BaseModel):

@@ -162,6 +162,7 @@ class NextcloudTasksConnector(BaseConnector):
         recurrence: str = "none",
         rotation: Optional[List[int]] = None,
         habitica: bool = False,
+        created_by: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """Erstellt eine neue Aufgabe.
 
@@ -194,6 +195,7 @@ class NextcloudTasksConnector(BaseConnector):
                 recurrence=recurrence,
                 rotation=rotation,
                 habitica=habitica,
+                created_by=created_by,
             )
             return task
         except ValueError as exc:
@@ -406,8 +408,9 @@ class NextcloudTasksConnector(BaseConnector):
         recurrence: str = "none",
         rotation: Optional[List[int]] = None,
         habitica: bool = False,
+        created_by: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Erstellt VTODO."""
+        """Erstellt VTODO. ``created_by``: the person who assigned the task (this account belongs to the recipient)."""
         from icalendar import Calendar, Todo
 
         db = SessionLocal()
@@ -482,8 +485,8 @@ class NextcloudTasksConnector(BaseConnector):
                 todo.add("priority", int(priority))
 
             # X-Properties
-            if self.user_id:
-                todo.add("x-familienhub-created-by", str(self.user_id))
+            if created_by or self.user_id:
+                todo.add("x-familienhub-created-by", str(created_by or self.user_id))
             if assignee_id:
                 todo.add("x-familienhub-assignee", str(assignee_id))
 

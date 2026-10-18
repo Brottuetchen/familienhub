@@ -32,6 +32,10 @@ class User(Base):
     has_avatar = Column(Boolean, default=False, nullable=False, server_default=false())
     avatar_version = Column(Integer, default=0, nullable=False, server_default="0")
 
+    # Where tasks that others assign to this person land: a task provider id, or NULL = derived from the
+    # connected accounts (see app/services/task_routing.py)
+    task_place = Column(String(32), nullable=True)
+
     # Rolle: admin | partner | child | guest
     role = Column(String, default=ROLE_PARTNER, nullable=False)
     is_active = Column(Boolean, default=True)

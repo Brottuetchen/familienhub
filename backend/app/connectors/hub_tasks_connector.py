@@ -97,10 +97,11 @@ class HubTasksConnector:
     async def create_task(self, title: str, notes: Optional[str] = None, due: Optional[str] = None,
                           priority: Optional[int] = None, assignee_id: Optional[int] = None,
                           list_kind: Optional[str] = None, recurrence: str = "none",
-                          rotation: Optional[List[int]] = None, habitica: bool = False, **_: Any) -> Dict[str, Any]:
+                          rotation: Optional[List[int]] = None, habitica: bool = False,
+                          created_by: Optional[int] = None, **_: Any) -> Dict[str, Any]:
         with SessionLocal() as db:
             t = HubTask(uid=str(uuid.uuid4()), title=title.strip()[:200], notes=notes or "", due=due, priority=priority,
-                        family=list_kind == "family", created_by=self.user_id, assignee_id=assignee_id,
+                        family=list_kind == "family", created_by=created_by or self.user_id, assignee_id=assignee_id,
                         recurrence=recurrence or "none", rotation=list(rotation or []))
             db.add(t)
             db.commit()
