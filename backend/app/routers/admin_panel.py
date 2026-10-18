@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app import __version__
@@ -280,3 +280,59 @@ async def put_sources(data: SourceChoice, db: Session = Depends(get_db), _: User
         raise HTTPException(422, "Für diesen Bereich gibt es genau eine Quelle")
     config_store.save_overrides(db, {key: ",".join(ids)})
     return _sources_view()
+
+
+# --- Calendar subscriptions (ICS) ---
+
+class IcsFeed(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    url: str = Field(min_length=8, max_length=500)
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        v = v.strip()
+        if not v or any(c in v for c in "|;\n"):
+            raise ValueError("Name ohne | und ;")
+        return v
+
+    @field_validator("url")
+    @classmethod
+    def _url(cls, v: str) -> str:
+        v = v.strip()
+        if not v.lower().startswith(("http://", "https://")) or any(c in v for c in "|; \n"):
+            raise ValueError("Adresse muss mit http:// oder https:// beginnen")
+        return v
+
+
+class IcsFeeds(BaseModel):
+    feeds: List[IcsFeed] = Field(default_factory=list, max_length=20)
+
+
+class IcsProbe(BaseModel):
+    url: str = Field(min_length=8, max_length=500)
+
+
+@router.get("/ics")
+async def get_ics(_: User = Depends(admin_only)):
+    from app.plugins.base import get_setting
+    from app.services.ics import parse_feeds
+
+    return {"feeds": [{"name": n, "url": u} for n, u in parse_feeds(get_setting("ICS_FEEDS"))]}
+
+
+@router.put("/ics")
+async def put_ics(data: IcsFeeds, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    from app.services import config_store, ics
+
+    config_store.save_overrides(db, {"ICS_FEEDS": "\n".join(f"{f.name} | {f.url}" for f in data.feeds)})
+    ics.clear_cache()
+    return {"feeds": [f.model_dump() for f in data.feeds]}
+
+
+@router.post("/ics/test")
+async def test_ics(data: IcsProbe, _: User = Depends(admin_only)):
+    """Checks a calendar link before it is added (reachable, ICS, events in the next 90 days)."""
+    from app.services.ics import probe
+
+    return await probe(data.url.strip())

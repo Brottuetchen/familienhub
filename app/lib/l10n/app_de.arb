@@ -1191,5 +1191,40 @@
   "shelfFantasy": "Fantasy",
   "shelfRomance": "Liebesromane",
   "shelfKids": "Kinder & Jugend",
-  "discoverHint": "Bücher, die es auf Deutsch gibt – beliebt bei Lesern auf Open Library."
+  "discoverHint": "Bücher, die es auf Deutsch gibt – beliebt bei Lesern auf Open Library.",
+  "icsTitle": "Kalender-Abos",
+  "icsExplain": "Schulferien, Müllabfuhr, Vereinstermine: abonnierte Kalender erscheinen bei allen im Kalender und auf „Heute“ (nur lesen).",
+  "icsAdd": "Kalender hinzufügen",
+  "icsNone": "Noch keine Kalender abonniert.",
+  "icsName": "Name, z. B. „Schulferien“",
+  "icsUrl": "Link zur Kalenderdatei (.ics)",
+  "icsUrlHint": "Oft unter „Kalender abonnieren“, „iCal“ oder „Export“ zu finden",
+  "icsCheck": "Prüfen",
+  "icsFound": "{count, plural, =0{Erreichbar, aber keine Termine in den nächsten 90 Tagen} =1{1 Termin in den nächsten 90 Tagen} other{{count} Termine in den nächsten 90 Tagen}}",
+  "@icsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "icsRemoveQuestion": "„{name}“ nicht mehr abonnieren?",
+  "@icsRemoveQuestion": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "stepAreas": "Bereiche",
+  "areasQuestion": "Wo sollen eure Daten liegen? Der Hub speichert alles selbst – angeschlossene Dienste ersetzen oder ergänzen das. Ihr könnt das später jederzeit ändern.",
+  "inTheHub": "Im Hub",
+  "inTheHubHint": "Sofort nutzbar, kein weiterer Dienst nötig",
+  "alsoFrom": "Aus einem Dienst:",
+  "forYourChoice": "Für eure Auswahl einrichten",
+  "moreServices": "Weitere Dienste (optional)",
+  "notSetUpStaysInHub": "{services} noch nicht eingerichtet – bis dahin im Hub.",
+  "@notSetUpStaysInHub": {
+    "placeholders": {
+      "services": {}
+    }
+  }
 }

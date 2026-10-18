@@ -13,7 +13,7 @@ The shipped plugins live in `backend/app/plugins/builtin/`:
 | Tasks / shopping list / family calendar in the hub | tasks, shopping, calendar | – (stored in the hub) |
 | CalDAV (Nextcloud, iCloud, Radicale …) | tasks, calendar | own CalDAV account and app password |
 | Mealie | meal_planning, meal_source, shopping: search and plan recipes, household meal plan in the week, shopping list | – (household API token) |
-| Calendar subscriptions (ICS) | calendar (read-only): school holidays, waste collection, clubs | – (admin adds feeds: `Name \| https://…/feed.ics; …`) |
+| Calendar subscriptions (ICS) | calendar (read-only): school holidays, waste collection, clubs | – (admin adds calendars as a list, each link checked before saving) |
 | Habitica | tasks (dailies, habits, rewards) | own Habitica user ID and API key |
 | Home Assistant | shopping list, house tiles, Cookidoo meal plan (read) | – (shared, admin chooses entities) |
 | Cookidoo | search recipes, plan them, ingredients to the list | – |

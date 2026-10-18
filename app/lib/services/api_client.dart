@@ -1334,6 +1334,20 @@ class ApiClient {
 
   // ── Admin: Plugins & Zugänge ───────────────────────────────────────────────
 
+  // ── Calendar subscriptions (ICS, admin) ────────────────────────────────────
+
+  Future<List<({String name, String url})>> icsFeeds() async =>
+      _maps(((await _send('GET', '/api/admin/ics')) as Map<String, dynamic>)['feeds'])
+          .map((f) => (name: f['name'] as String, url: f['url'] as String))
+          .toList();
+
+  Future<void> saveIcsFeeds(List<({String name, String url})> feeds) =>
+      _send('PUT', '/api/admin/ics', body: {'feeds': [for (final f in feeds) {'name': f.name, 'url': f.url}]});
+
+  /// Checks a link before adding it: {ok, error, events, sample}.
+  Future<Map<String, dynamic>> probeIcs(String url) async =>
+      (await _send('POST', '/api/admin/ics/test', body: {'url': url})) as Map<String, dynamic>;
+
   Future<List<SourceArea>> adminSources() async => _maps(
           ((await _send('GET', '/api/admin/sources')) as Map<String, dynamic>)['areas'])
       .map(SourceArea.fromJson)
