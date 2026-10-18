@@ -20,8 +20,10 @@ String _key(DateTime start, int days) =>
     '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}:$days';
 
 Color? _hex(String? raw) {
-  final hex = raw?.replaceFirst('#', '');
-  final value = hex != null && hex.length >= 6 ? int.tryParse(hex.substring(0, 6), radix: 16) : null;
+  var hex = raw?.trim().replaceFirst('#', '');
+  if (hex != null && hex.length == 3) hex = hex.split('').map((c) => '$c$c').join();
+  // #RRGGBBAA (some servers) -> the alpha digits are dropped, calendars are never translucent.
+  final value = hex != null && (hex.length == 6 || hex.length == 8) ? int.tryParse(hex.substring(0, 6), radix: 16) : null;
   return value == null ? null : Color(0xFF000000 | value);
 }
 
