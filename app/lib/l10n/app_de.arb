@@ -1226,5 +1226,24 @@
     "placeholders": {
       "services": {}
     }
+  },
+  "viewList": "Liste",
+  "viewWeek": "Woche",
+  "viewMonth": "Monat",
+  "noEventsThisDay": "Keine Termine an diesem Tag",
+  "previousMonth": "Voriger Monat",
+  "nextMonth": "Nächster Monat",
+  "untilDate": "bis {date}",
+  "@untilDate": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "weekRange": "KW {week} · {range}",
+  "@weekRange": {
+    "placeholders": {
+      "week": {},
+      "range": {}
+    }
   }
 }

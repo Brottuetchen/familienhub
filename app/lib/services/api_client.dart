@@ -1056,6 +1056,11 @@ class ApiClient {
 
   // ── Termine ────────────────────────────────────────────────────────────────
 
+  /// Events of a range (month or week grid), also in the past.
+  Future<ApiResult<List<CalendarEvent>>> eventsRange(DateTime start, int days) => _cachedGet(
+      '/api/calendar/events?start=${_dateOnly(start)}&days=$days', 'events:${_dateOnly(start)}:$days',
+      (j) => _maps(j).map(CalendarEvent.fromJson).toList());
+
   Future<ApiResult<List<CalendarEvent>>> events({int days = 14}) => _cachedGet(
       '/api/calendar/events?days=$days', 'events:$days', (j) => _maps(j).map(CalendarEvent.fromJson).toList());
 

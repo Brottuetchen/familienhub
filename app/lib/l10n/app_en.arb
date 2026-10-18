@@ -676,5 +676,13 @@
   "alsoFrom": "From a service:",
   "forYourChoice": "Set up for your choice",
   "moreServices": "More services (optional)",
-  "notSetUpStaysInHub": "{services} not set up yet – the hub is used until then."
+  "notSetUpStaysInHub": "{services} not set up yet – the hub is used until then.",
+  "viewList": "List",
+  "viewWeek": "Week",
+  "viewMonth": "Month",
+  "noEventsThisDay": "No events on this day",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "untilDate": "until {date}",
+  "weekRange": "Week {week} · {range}"
 }

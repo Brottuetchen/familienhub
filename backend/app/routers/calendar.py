@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -126,10 +126,14 @@ async def today(current_user: User = Depends(get_current_user), db: Session = De
 @router.get("/events")
 async def events(
     days: int = 7,
+    start: Optional[date] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return await collect_events(db, current_user, days)
+    """Events from all sources; with ``start`` (YYYY-MM-DD) a whole month or week, also in the past."""
+    days = max(1, min(days, 400))
+    begin = datetime.combine(start, datetime.min.time()) if start else None
+    return await collect_events(db, current_user, days, start=begin)
 
 
 @router.get("/holidays")
