@@ -28,6 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   HealthInfo? _health;
   String? _server;
+  bool _codeRequired = true;
   bool _needsSetup = false; // neuer Hub ohne Admin → Einrichtung statt Anmeldung
 
   @override
@@ -48,7 +49,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     try {
       final setup = await api.setupStatus();
-      if (mounted) setState(() => _needsSetup = setup.needsSetup);
+      if (mounted) {
+        setState(() {
+          _needsSetup = setup.needsSetup;
+          _codeRequired = setup.codeRequired;
+        });
+      }
     } catch (_) {
       // Ältere Server kennen /api/setup nicht: normale Anmeldung.
     }
@@ -132,7 +138,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(widget.message!, textAlign: TextAlign.center),
                 ],
                 const SizedBox(height: 28),
-                if (_needsSetup) const FirstAdminForm(),
+                if (_needsSetup) FirstAdminForm(codeRequired: _codeRequired),
                 if (!_needsSetup && oidc) ...[
                   FilledButton.icon(
                     onPressed: _busy ? null : _loginOidc,

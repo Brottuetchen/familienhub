@@ -523,6 +523,7 @@
   "welcomeNewHub": "Welcome! This hub is new.",
   "firstAdminExplain": "Create the first account – it manages the hub. You find the setup code in the server log, e.g. with “docker compose logs familienhub”.",
   "setupCode": "Setup code",
+  "firstAdminExplainNoCode": "Create the first account – it manages the hub. Whoever opens the hub first becomes admin.",
   "yourName": "Your name",
   "repeatPassword": "Repeat password",
   "createAccountSetUp": "Create account and set up",

@@ -891,6 +891,7 @@
   "welcomeNewHub": "Willkommen! Dieser Hub ist neu.",
   "firstAdminExplain": "Lege das erste Konto an – es verwaltet den Hub. Den Einrichtungscode findest du im Server-Log, z. B. mit „docker compose logs familienhub“.",
   "setupCode": "Einrichtungscode",
+  "firstAdminExplainNoCode": "Lege das erste Konto an – es verwaltet den Hub. Wer den Hub zuerst öffnet, wird Admin.",
   "yourName": "Dein Name",
   "repeatPassword": "Passwort wiederholen",
   "createAccountSetUp": "Konto anlegen und einrichten",
