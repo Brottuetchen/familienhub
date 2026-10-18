@@ -121,7 +121,7 @@ class TodayHeader extends ConsumerWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 8), // first text line on the icons' centre line
               child: Text(greeting,
                   key: const Key('today-greeting'),
                   style: theme.textTheme.headlineMedium?.copyWith(fontWeight: style.titleWeight, height: 1.1)),
@@ -143,14 +143,15 @@ class TodayHeader extends ConsumerWidget {
           ),
           if (people.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 6, right: 4),
+              padding: const EdgeInsets.only(right: 4),
               child: SizedBox(
                 width: 22.0 * people.take(3).length + 10,
-                height: 32,
+                height: kMinInteractiveDimension, // same height as the icon buttons: one centre line
                 child: Stack(
+                  alignment: Alignment.centerLeft,
                   children: [
                     for (final (i, p) in people.take(3).indexed)
-                      Positioned(left: i * 22.0, child: PersonAvatar.of(p, size: 32)),
+                      Positioned(left: i * 22.0, top: (kMinInteractiveDimension - 32) / 2, child: PersonAvatar.of(p, size: 32)),
                   ],
                 ),
               ),

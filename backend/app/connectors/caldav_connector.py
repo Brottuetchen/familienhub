@@ -354,7 +354,7 @@ def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> D
         # Part of a series: editing changes the whole series
         "recurring": bool(comp.get("rrule") or comp.get("recurrence-id")),
         "calendar": cal_name,
-        "color": cal_color or "#4f46e5",
+        "color": cal_color or None,  # no invented default: the app colours by calendar id
     }
 
 

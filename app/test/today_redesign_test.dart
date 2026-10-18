@@ -85,6 +85,17 @@ void main() {
     expect(find.byTooltip('Sam'), findsWidgets); // auch an der zugewiesenen Aufgabe
   });
 
+  testWidgets('Kopf: Wolke, Glocke und Avatare liegen auf einer Mittellinie', (tester) async {
+    await setScreenSize(tester, const Size(360, 1800));
+    await tester.pumpWidget(_app(_backend()));
+    await tester.pumpAndSettle();
+    final cloud = tester.getCenter(find.byKey(const Key('read-status'))).dy;
+    final bell = tester.getCenter(find.byKey(const Key('today-bell'))).dy;
+    final avatar = tester.getCenter(find.byTooltip('Alex').first).dy;
+    expect(cloud, closeTo(bell, 0.5));
+    expect(avatar, closeTo(bell, 0.5));
+  });
+
   testWidgets('Aufgabe direkt auf Heute abhaken', (tester) async {
     await setScreenSize(tester, const Size(420, 1800));
     final b = _backend();
