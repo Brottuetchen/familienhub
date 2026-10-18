@@ -343,7 +343,9 @@ class _TaskListState extends ConsumerState<_TaskList> {
 
   Widget? _subtitle(Task t, Map<int, String> names) {
     final parts = <String>[
-      if (view == TaskView.forMe && t.createdBy != null) l10n.fromName(names[t.createdBy] ?? l10n.someoneDat),
+      if ((view == TaskView.forMe && t.createdBy != null) ||
+          (view == TaskView.mine && t.createdBy != null && t.createdBy != ref.read(sessionProvider).user?.id))
+        l10n.fromName(names[t.createdBy] ?? l10n.someoneDat),
       if (view == TaskView.fromMe && t.assignee != null) l10n.forName(names[t.assignee] ?? l10n.someoneAcc),
       if (view == TaskView.family && t.assignee != null) l10n.forName(names[t.assignee] ?? l10n.someoneAcc),
       if (t.listName != null && view != TaskView.mine) t.listName!,

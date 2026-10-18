@@ -347,7 +347,7 @@ def test_lists_only_vtodo_calendars(client, auth_a, user_a, monkeypatch):
 
 
 def test_view_mine(client, auth_a, user_a, monkeypatch):
-    """Ansicht 'mine': Aufgaben in meiner personal-Liste, erstellt von mir oder ohne Ersteller."""
+    """View 'mine': all tasks in my personal list (own, without creator, and from others)."""
     # Setup
     db = SessionLocal()
     try:
@@ -1106,7 +1106,8 @@ def test_shared_foreign_personal_list_not_in_mine_or_for_me(client, auth_a, user
         for_me = client.get("/api/tasks?view=for_me", headers=auth_a).json()
         from_me = client.get("/api/tasks?view=from_me", headers=auth_a).json()
 
-    assert [t["title"] for t in mine["items"]] == ["Meins"]
+    # "mine" is the overview of everything I have to do, including tasks others gave me
+    assert [t["title"] for t in mine["items"]] == ["Meins", "Von B für mich"]
     assert [t["title"] for t in for_me["items"]] == ["Von B für mich"]
     assert [t["title"] for t in from_me["items"]] == ["Von mir für B"]
 
