@@ -107,14 +107,21 @@ FakeBackend _demo(String lang) {
     for (var i = 0; i < 7; i++)
       {'date': _d(monday.add(Duration(days: i))), 'entries': [{'id': i + 1, 'title': dishes[i], 'source': 'hub', 'minutes': 20 + i * 5}]},
   ]}));
+  b.json('GET', '/api/calendar/calendars', [
+    {'id': 'hub', 'name': t('Familie', 'Family'), 'source': 'hub', 'writable': true, 'family': true},
+    {'id': 'caldav:alex', 'name': 'Alex', 'source': 'caldav', 'color': '#E07A5F', 'writable': true},
+    {'id': 'ics:ferien', 'name': t('Schulferien', 'School holidays'), 'source': 'ics', 'color': '#81B29A'},
+    {'id': 'ics:muell', 'name': t('Müll', 'Bins'), 'source': 'ics', 'color': '#E3B23C'},
+  ]);
   b.json('GET', '/api/calendar/events', [
-    {'title': t('Kita-Sommerfest', 'Nursery summer party'), 'start': '${_d(now)}T15:00:00', 'end': '${_d(now)}T17:00:00'},
-    {'title': t('Elternabend', 'Parents\' evening'), 'start': '${_d(now.add(const Duration(days: 1)))}T19:30:00', 'end': '${_d(now.add(const Duration(days: 1)))}T21:00:00'},
-    {'title': t('Schwimmkurs Mia', 'Swimming lesson Mia'), 'start': '${_d(now.add(const Duration(days: 2)))}T16:00:00', 'end': '${_d(now.add(const Duration(days: 2)))}T17:00:00'},
-    {'title': t('Oma Geburtstag', 'Grandma\'s birthday'), 'start': _d(now.add(const Duration(days: 4))), 'all_day': true},
+    {'title': t('Kita-Sommerfest', 'Nursery summer party'), 'start': '${_d(now)}T15:00:00', 'end': '${_d(now)}T17:00:00', 'calendar_id': 'hub', 'calendar': t('Familie', 'Family')},
+    {'title': t('Elternabend', 'Parents\' evening'), 'start': '${_d(now.add(const Duration(days: 1)))}T19:30:00', 'end': '${_d(now.add(const Duration(days: 1)))}T21:00:00', 'calendar_id': 'hub', 'calendar': t('Familie', 'Family')},
+    {'title': t('Schwimmkurs Mia', 'Swimming lesson Mia'), 'start': '${_d(now.add(const Duration(days: 2)))}T16:00:00', 'end': '${_d(now.add(const Duration(days: 2)))}T17:00:00', 'calendar_id': 'hub', 'calendar': t('Familie', 'Family')},
+    {'title': t('Zahnarzt', 'Dentist'), 'start': '${_d(now.add(const Duration(days: 3)))}T08:30:00', 'end': '${_d(now.add(const Duration(days: 3)))}T09:30:00', 'calendar_id': 'caldav:alex', 'calendar': 'Alex'},
+    {'title': t('Oma Geburtstag', 'Grandma\'s birthday'), 'start': _d(now.add(const Duration(days: 4))), 'all_day': true, 'calendar_id': 'hub', 'calendar': t('Familie', 'Family')},
     {'title': t('Herbstferien', 'Autumn half-term'), 'start': _d(now.add(const Duration(days: 6))),
-     'end': _d(now.add(const Duration(days: 13))), 'all_day': true, 'calendar': t('Schulferien', 'School holidays'), 'color': '#81B29A'},
-    {'title': t('Gelbe Tonne', 'Recycling bin'), 'start': _d(now.add(const Duration(days: 1))), 'all_day': true, 'color': '#E3B23C'},
+     'end': _d(now.add(const Duration(days: 13))), 'all_day': true, 'calendar': t('Schulferien', 'School holidays'), 'calendar_id': 'ics:ferien'},
+    {'title': t('Gelbe Tonne', 'Recycling bin'), 'start': _d(now.add(const Duration(days: 1))), 'all_day': true, 'calendar_id': 'ics:muell', 'calendar': t('Müll', 'Bins')},
   ]);
   b.json('GET', '/api/reminders', []);
   b.json('GET', '/api/themes', {'items': [
@@ -162,6 +169,7 @@ void main() {
   for (final lang in ['en', 'de']) {
     for (final (name, theme, home, tab) in shots) {
       testWidgets('$lang/$name', (tester) async {
+        // ignore: invalid_use_of_visible_for_testing_member
         if (name == 'calendar-month') SharedPreferences.setMockInitialValues({'calendar_view': 'month'});
         setAppLanguage(lang);
         tester.platformDispatcher.localeTestValue = Locale(lang);

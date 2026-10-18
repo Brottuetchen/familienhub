@@ -75,6 +75,31 @@ class CalDAVConnector(BaseConnector):
             self.logger.warning("caldav get_events failed: %s", exc)
             return []
 
+    async def list_calendars(self) -> List[Dict[str, Any]]:
+        """Calendars of this account that hold events: id, name, colour, url."""
+        if not self.is_configured:
+            return []
+        try:
+            return await asyncio.to_thread(self._list_calendars_sync)
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning("caldav list_calendars failed: %s", exc)
+            return []
+
+    def _list_calendars_sync(self) -> List[Dict[str, Any]]:
+        import caldav
+
+        client = caldav.DAVClient(url=self.url, username=self.username, password=self.password,
+                                  ssl_verify_cert=settings.verify_tls)
+        out = []
+        for cal in client.principal().calendars():
+            components = _safe(lambda: [str(c).upper() for c in cal.get_supported_components()]) or ["VEVENT"]
+            if "VEVENT" not in components:
+                continue  # task-only lists (VTODO)
+            url = str(cal.url)
+            out.append({"id": calendar_id(url), "name": _safe(lambda: str(cal.name)) or "Kalender",
+                        "color": _safe(lambda: str(cal.get_property(_color_prop()))), "url": url})
+        return out
+
     async def get_today(self) -> List[Dict[str, Any]]:
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         events = await self.get_events(days_ahead=1, start=today)
@@ -140,11 +165,12 @@ class CalDAVConnector(BaseConnector):
                 # Nicht alle Server unterstützen expand/search identisch.
                 found = calendar.date_search(start=start, end=end)
 
+            cal_id = calendar_id(str(calendar.url))
             for ev in found:
                 comp = _safe(lambda: ev.icalendar_component)
                 if comp is None:
                     continue
-                results.append(_component_to_event(comp, cal_name, cal_color))
+                results.append({**_component_to_event(comp, cal_name, cal_color), "calendar_id": cal_id})
 
         results.sort(key=lambda e: e.get("start") or "")
         return results
@@ -221,6 +247,12 @@ class CalDAVConnector(BaseConnector):
 
 
 # --- Hilfsfunktionen ---
+
+def calendar_id(url: str) -> str:
+    """Stable, non-revealing id of a CalDAV calendar (the URL contains user names)."""
+    from hashlib import sha256
+
+    return "caldav:" + sha256(url.rstrip("/").encode()).hexdigest()[:12]
 
 def _color_prop():
     try:

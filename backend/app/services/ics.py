@@ -23,6 +23,10 @@ def clear_cache() -> None:
     _cache.clear()
 
 
+def feed_id(name: str) -> str:
+    return "ics:" + "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
+
+
 def parse_feeds(raw: Optional[str]) -> List[Tuple[str, str]]:
     """'Name | https://…' per line (or separated by ';'). Without a name, the host is used. Only http(s)."""
     feeds = []
@@ -87,7 +91,7 @@ def _events(name: str, data: bytes, start: datetime, end: datetime) -> List[Dict
         e = _fmt(e_raw.dt)[0] if e_raw is not None else s
         out.append({"title": str(ev.get("summary") or name), "start": s, "end": e, "all_day": all_day,
                     "location": str(ev.get("location")) if ev.get("location") else None,
-                    "calendar": name, "source": "ics"})
+                    "calendar": name, "calendar_id": feed_id(name), "source": "ics"})
     return out
 
 
