@@ -5,6 +5,7 @@ class CalendarEvent {
   /// Only events of the hub's family calendar have an id (and can be deleted in the app).
   final int? id;
   final String? source; // caldav | hub | ics …
+  final String? calendarId; // hub | caldav:… | ics:…
   final String title;
   final DateTime? start;
   final DateTime? end;
@@ -16,6 +17,7 @@ class CalendarEvent {
   const CalendarEvent({
     this.id,
     this.source,
+    this.calendarId,
     required this.title,
     this.start,
     this.end,
@@ -56,6 +58,7 @@ class CalendarEvent {
     return CalendarEvent(
       id: json['id'] is int ? json['id'] as int : null,
       source: json['source'] as String?,
+      calendarId: json['calendar_id'] as String?,
       title: (json['title'] as String?) ?? l10n.event,
       start: parse(json['start']),
       end: parse(json['end']),
@@ -65,4 +68,26 @@ class CalendarEvent {
       color: json['color'] as String?,
     );
   }
+}
+
+
+/// A calendar the person sees (`/api/calendar/calendars`).
+class CalendarInfo {
+  final String id;
+  final String name;
+  final String source; // hub | caldav | ics
+  final String? color; // #RRGGBB from the server (CalDAV), else chosen by the app
+  final bool writable;
+  final bool family;
+
+  const CalendarInfo({required this.id, required this.name, required this.source, this.color, this.writable = false, this.family = false});
+
+  factory CalendarInfo.fromJson(Map<String, dynamic> j) => CalendarInfo(
+        id: j['id'] as String,
+        name: (j['name'] as String?) ?? '',
+        source: (j['source'] as String?) ?? 'hub',
+        color: j['color'] as String?,
+        writable: j['writable'] == true,
+        family: j['family'] == true,
+      );
 }

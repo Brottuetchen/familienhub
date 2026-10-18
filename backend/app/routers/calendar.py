@@ -66,7 +66,7 @@ def _caldav_active() -> bool:
 def _hub_event(e) -> Dict[str, Any]:
     fmt = (lambda d: d.date().isoformat()) if e.all_day else (lambda d: d.isoformat())
     return {"id": e.id, "title": e.title, "start": fmt(e.start), "end": fmt(e.end), "all_day": bool(e.all_day),
-            "location": e.location, "calendar": "Familie", "source": "hub"}
+            "location": e.location, "calendar": "Familie", "calendar_id": "hub", "source": "hub"}
 
 
 async def collect_events(db: Session, user: User, days: int, start: Optional[datetime] = None) -> List[Dict[str, Any]]:
@@ -134,6 +134,34 @@ async def events(
     days = max(1, min(days, 400))
     begin = datetime.combine(start, datetime.min.time()) if start else None
     return await collect_events(db, current_user, days, start=begin)
+
+
+@router.get("/calendars")
+async def calendars(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """All calendars the person sees, for colours, filters and choosing where a new event goes.
+
+    ``writable``: events can be created there by this person (family calendar from partner on, own CalDAV calendars).
+    """
+    from app.core.security import ROLE_LEVEL
+    from app.models.user import ROLE_PARTNER
+    from app.plugins.base import get_setting
+    from app.plugins.registry import plugin_registry
+    from app.services.ics import parse_feeds
+
+    can_edit = current_user.is_admin or ROLE_LEVEL.get(current_user.role or ROLE_PARTNER, 0) >= ROLE_LEVEL[ROLE_PARTNER]
+    out: List[Dict[str, Any]] = []
+    if _hub_active():
+        out.append({"id": "hub", "name": "Familie", "source": "hub", "color": None, "writable": can_edit, "family": True})
+    if _caldav_active() and _user_account(db, current_user):
+        for c in await connector_for_user(db, current_user).list_calendars():
+            out.append({"id": c["id"], "name": c["name"], "source": "caldav", "color": c.get("color"),
+                        "writable": can_edit, "family": False})
+    if plugin_registry.serves("calendar", "ics"):
+        from app.services.ics import feed_id
+
+        for name, _url in parse_feeds(get_setting("ICS_FEEDS")):
+            out.append({"id": feed_id(name), "name": name, "source": "ics", "color": None, "writable": False, "family": True})
+    return out
 
 
 @router.get("/holidays")

@@ -85,4 +85,29 @@ void main() {
     expect(find.textContaining('KW '), findsOneWidget);
     expect((await SharedPreferences.getInstance()).getString('calendar_view'), 'week');
   });
+
+  testWidgets('calendar chips: colour per calendar, switching one off hides its events and is remembered', (tester) async {
+    final b = backend();
+    b.json('GET', '/api/calendar/calendars', [
+      {'id': 'hub', 'name': 'Familie', 'source': 'hub', 'writable': true, 'family': true},
+      {'id': 'ics:ferien', 'name': 'Schulferien', 'source': 'ics', 'color': '#81B29A'},
+    ]);
+    final now = DateTime.now();
+    b.json('GET', '/api/calendar/events', [
+      {'title': 'Kinderfest', 'start': '${d(now)}T15:00:00', 'end': '${d(now)}T16:00:00', 'calendar_id': 'hub'},
+      {'title': 'Herbstferien', 'start': d(now), 'end': d(now.add(const Duration(days: 3))), 'all_day': true, 'calendar_id': 'ics:ferien'},
+    ]);
+    await setScreenSize(tester, const Size(420, 1400));
+    await tester.pumpWidget(appWith(b.api(), const CalendarScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Herbstferien'), findsOneWidget);
+    final avatar = tester.widget<FilterChip>(find.byKey(const Key('cal-filter-ics:ferien'))).avatar as CircleAvatar;
+    expect(avatar.backgroundColor, const Color(0xFF81B29A));
+
+    await tester.tap(find.byKey(const Key('cal-filter-ics:ferien')));
+    await tester.pumpAndSettle();
+    expect(find.text('Herbstferien'), findsNothing);
+    expect(find.text('Kinderfest'), findsOneWidget);
+    expect((await SharedPreferences.getInstance()).getStringList('calendar_hidden'), ['ics:ferien']);
+  });
 }

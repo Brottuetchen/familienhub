@@ -19,11 +19,35 @@ DateTime _monday(DateTime d) => _day(d).subtract(Duration(days: d.weekday - 1));
 String _key(DateTime start, int days) =>
     '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}:$days';
 
-Color eventColor(BuildContext context, CalendarEvent e) {
-  final hex = e.color?.replaceFirst('#', '');
+Color? _hex(String? raw) {
+  final hex = raw?.replaceFirst('#', '');
   final value = hex != null && hex.length >= 6 ? int.tryParse(hex.substring(0, 6), radix: 16) : null;
-  return value == null ? Theme.of(context).colorScheme.primary : Color(0xFF000000 | value);
+  return value == null ? null : Color(0xFF000000 | value);
 }
+
+/// Calendars the person sees; failures (older server, offline) just mean "no list".
+final calendarsProvider = FutureProvider.autoDispose<List<CalendarInfo>>((ref) async {
+  try {
+    return await ref.watch(apiClientProvider).calendars();
+  } catch (_) {
+    return const [];
+  }
+});
+
+/// Readable on light and dark themes; used when a calendar brings no colour of its own.
+const _palette = [Color(0xFF3D85C6), Color(0xFFE07A5F), Color(0xFF81B29A), Color(0xFFE3B23C), Color(0xFF9B5DE5),
+  Color(0xFF00A6A6), Color(0xFFF15BB5), Color(0xFF8D6E63)];
+
+/// Colour per calendar id: the server's colour (CalDAV), otherwise a stable palette colour.
+final calendarColorsProvider = Provider.autoDispose<Map<String, Color>>((ref) {
+  final cals = ref.watch(calendarsProvider).valueOrNull ?? const <CalendarInfo>[];
+  return {for (final (i, c) in cals.indexed) c.id: _hex(c.color) ?? _palette[i % _palette.length]};
+});
+
+Color eventColor(BuildContext context, CalendarEvent e, [Map<String, Color> colors = const {}]) =>
+    _hex(e.color) ?? colors[e.calendarId] ?? Theme.of(context).colorScheme.primary;
+
+const _hiddenKey = 'calendar_hidden';
 
 /// Calendar: list (next 30 days), week or month; the choice is remembered on the device.
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -35,6 +59,7 @@ class CalendarScreen extends ConsumerStatefulWidget {
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   CalendarView _view = CalendarView.list;
+  Set<String> _hidden = {}; // calendar ids switched off with the chips
   DateTime _anchor = _day(DateTime.now()); // shown week/month
   DateTime _selected = _day(DateTime.now());
 
@@ -43,7 +68,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     super.initState();
     SharedPreferences.getInstance().then((p) {
       final v = CalendarView.values.where((v) => v.name == p.getString(_viewKey)).firstOrNull;
-      if (v != null && mounted) setState(() => _view = v);
+      final hidden = p.getStringList(_hiddenKey);
+      if (mounted) {
+        setState(() {
+          if (v != null) _view = v;
+          if (hidden != null) _hidden = hidden.toSet();
+        });
+      }
     }).catchError((Object _) {});
   }
 
@@ -52,6 +83,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     try {
       (await SharedPreferences.getInstance()).setString(_viewKey, v.name);
     } catch (_) {}
+  }
+
+  Future<void> _toggle(String id) async {
+    setState(() => _hidden.contains(id) ? _hidden.remove(id) : _hidden.add(id));
+    try {
+      (await SharedPreferences.getInstance()).setStringList(_hiddenKey, _hidden.toList());
+    } catch (_) {}
+  }
+
+  List<CalendarEvent> _visible(List<CalendarEvent> all) =>
+      [for (final e in all) if (e.calendarId == null || !_hidden.contains(e.calendarId)) e];
+
+  Widget _filters() {
+    final cals = ref.watch(calendarsProvider).valueOrNull ?? const <CalendarInfo>[];
+    if (cals.length < 2) return const SizedBox.shrink();
+    final colors = ref.watch(calendarColorsProvider);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Row(children: [
+        for (final c in cals)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: FilterChip(
+              key: Key('cal-filter-${c.id}'),
+              avatar: CircleAvatar(radius: 6, backgroundColor: colors[c.id]),
+              label: Text(c.name),
+              selected: !_hidden.contains(c.id),
+              showCheckmark: false,
+              onSelected: (_) => _toggle(c.id),
+            ),
+          ),
+      ]),
+    );
   }
 
   (DateTime, int) get _range {
@@ -110,6 +175,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             onSelectionChanged: (v) => _setView(v.first),
           ),
         ),
+        _filters(),
         Expanded(child: HubRefresh(onRefresh: _refresh, child: switch (_view) {
           CalendarView.list => _list(listAsync),
           CalendarView.week => _rangeView(_week),
@@ -124,7 +190,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         error: (e, _) => ErrorView(error: e, onRetry: _refresh),
         data: (result) {
           final byDay = <DateTime, List<CalendarEvent>>{};
-          for (final e in result.data.where((e) => e.start != null)) {
+          for (final e in _visible(result.data).where((e) => e.start != null)) {
             byDay.putIfAbsent(_day(e.start!), () => []).add(e);
           }
           final days = byDay.keys.toList()..sort();
@@ -151,7 +217,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return async.when(
       loading: () => const Center(child: HubLoader()),
       error: (e, _) => ErrorView(error: e, onRetry: _refresh),
-      data: (r) => build(r.data),
+      data: (r) => build(_visible(r.data)),
     );
   }
 
@@ -231,6 +297,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final dots = [for (final e in events) if (!e.isMultiDay) e].take(3).toList();
     final selected = day == _selected;
     final outside = day.month != month;
+    final colors = ref.watch(calendarColorsProvider);
     return InkWell(
       key: ValueKey('cal-day-${day.month}-${day.day}'),
       borderRadius: BorderRadius.circular(10),
@@ -250,11 +317,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               color: outside ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5) : null)),
           const SizedBox(height: 3),
           for (final e in bars)
-            Container(height: 4, margin: const EdgeInsets.only(bottom: 2), color: eventColor(context, e).withValues(alpha: 0.8)),
+            Container(height: 4, margin: const EdgeInsets.only(bottom: 2), color: eventColor(context, e, colors).withValues(alpha: 0.8)),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             for (final e in dots)
               Container(width: 6, height: 6, margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                  decoration: BoxDecoration(color: eventColor(context, e), shape: BoxShape.circle)),
+                  decoration: BoxDecoration(color: eventColor(context, e, colors), shape: BoxShape.circle)),
           ]),
         ]),
       ),
@@ -294,7 +361,7 @@ class _EventTile extends ConsumerWidget {
             : '${timeLabel(event.start!)} – ${timeLabel(event.end!)}';
     final sub = [time, if (event.location != null) event.location!, if (event.calendar != null) event.calendar!];
     return ListTile(
-      leading: Container(width: 4, height: 36, decoration: BoxDecoration(color: eventColor(context, event), borderRadius: BorderRadius.circular(2))),
+      leading: Container(width: 4, height: 36, decoration: BoxDecoration(color: eventColor(context, event, ref.watch(calendarColorsProvider)), borderRadius: BorderRadius.circular(2))),
       title: Text(event.title),
       subtitle: Text(sub.join(' · ')),
       trailing: deletable
