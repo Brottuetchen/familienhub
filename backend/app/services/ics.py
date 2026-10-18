@@ -102,3 +102,26 @@ async def events_between(start: datetime, end: datetime) -> List[Dict[str, Any]]
         except Exception as exc:  # noqa: BLE001 - a broken feed must not break the calendar
             logger.warning("Kalender-Abo %s nicht auswertbar: %s", name, type(exc).__name__)
     return out
+
+
+async def probe(url: str) -> Dict[str, Any]:
+    """Checks a feed for the admin UI (not cached): reachable, a calendar, how many events in the next 90 days."""
+    from datetime import timedelta
+
+    if not parse_feeds(url):
+        return {"ok": False, "error": "Nur http- oder https-Adressen", "events": 0, "sample": []}
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True, max_redirects=3) as client:
+            resp = await client.get(url, headers={"Accept": "text/calendar"})
+        if resp.status_code != 200:
+            return {"ok": False, "error": f"Adresse antwortet mit HTTP {resp.status_code}", "events": 0, "sample": []}
+        if len(resp.content) > MAX_BYTES:
+            return {"ok": False, "error": "Kalender größer als 2 MB", "events": 0, "sample": []}
+        now = datetime.now()
+        events = _events("", resp.content, now, now + timedelta(days=90))
+    except httpx.HTTPError as exc:
+        return {"ok": False, "error": f"Nicht erreichbar ({type(exc).__name__})", "events": 0, "sample": []}
+    except Exception:  # noqa: BLE001 - anything that doesn't parse is "not a calendar"
+        return {"ok": False, "error": "Das ist keine Kalenderdatei (ICS)", "events": 0, "sample": []}
+    events.sort(key=lambda e: e["start"])
+    return {"ok": True, "error": None, "events": len(events), "sample": [e["title"] for e in events[:3]]}

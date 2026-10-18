@@ -7,6 +7,7 @@ import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
+import '../admin/ics_feeds_screen.dart';
 
 String _status(AdminPlugin p) => p.disabled
     ? l10n.pluginDisabled
@@ -49,7 +50,7 @@ class PluginsAdminScreen extends ConsumerWidget {
                   ),
                   onTap: () async {
                     final saved = await Navigator.of(context).push<bool>(
-                        MaterialPageRoute(builder: (_) => PluginSettingsScreen(plugin: p)));
+                        MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
                     if (saved == true) {
                       ref.invalidate(adminPluginsProvider);
                       ref.invalidate(modulesProvider);
@@ -63,6 +64,9 @@ class PluginsAdminScreen extends ConsumerWidget {
     );
   }
 }
+
+/// Settings page of a plugin; calendar subscriptions get their own list instead of a text field.
+Widget pluginSettingsPage(AdminPlugin p) => p.id == 'ics' ? const IcsFeedsScreen() : PluginSettingsScreen(plugin: p);
 
 /// Zugänge eines Plugins. Geheimnisse werden nie angezeigt; leer lassen = unverändert.
 class PluginSettingsScreen extends ConsumerStatefulWidget {

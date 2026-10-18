@@ -30,6 +30,16 @@ FakeBackend _backend({bool needsSetup = true}) {
   b.json('GET', '/api/admin/users', [
     {'id': 1, 'username': 'chef', 'display_name': 'Chef', 'role': 'admin', 'is_active': true, 'links': {}},
   ]);
+  Map<String, dynamic> src(String id, String name, {bool fallback = false, bool selected = false, bool configured = true}) =>
+      {'id': id, 'name': name, 'description': '', 'fallback': fallback, 'configured': configured, 'active': configured, 'selected': selected};
+  b.json('GET', '/api/admin/sources', {'areas': [
+    {'area': 'tasks', 'multiple': true, 'sources': [src('hub_tasks', 'Aufgaben im Hub', fallback: true, selected: true),
+      src('nextcloud', 'CalDAV', configured: false)]},
+    {'area': 'shopping', 'multiple': false, 'sources': [src('hub_shopping', 'Einkaufsliste im Hub', fallback: true, selected: true),
+      src('homeassistant', 'Home Assistant', configured: false)]},
+    {'area': 'calendar', 'multiple': true, 'sources': [src('hub_calendar', 'Familienkalender im Hub', fallback: true, selected: true)]},
+  ]});
+  b.json('PUT', '/api/admin/sources', {'areas': []});
   return b;
 }
 
@@ -103,6 +113,11 @@ void main() {
     await tester.tap(find.byKey(const Key('wizard-next')));
     await tester.pumpAndSettle();
     expect(bodyOf(b.sent('PUT', '/api/admin/core').single), {'app_name': 'Familie Beispiel', 'timezone': 'Europe/Vienna'});
+
+    // New step "Bereiche" (18.10.): everything in the hub by default
+    expect(find.text('Im Hub'), findsNWidgets(3));
+    await tester.tap(find.byKey(const Key('wizard-next')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('wizard-plugin-homeassistant')), findsOneWidget);
     expect(find.text('Einrichten'), findsOneWidget);
