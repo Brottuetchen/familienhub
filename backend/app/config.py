@@ -143,7 +143,7 @@ class Settings(BaseSettings):
     # --- Push: Web Push (VAPID) und Firebase (FCM) ---
     vapid_private_key: Optional[str] = None
     vapid_public_key: Optional[str] = None
-    vapid_email: str = "mailto:admin@example.com"
+    vapid_email: str = ""  # empty: the first admin's email (see services/notify.vapid_contact)
     # Without VAPID_PRIVATE_KEY/VAPID_PUBLIC_KEY: generate them once into <DATA_DIR>/vapid.json
     vapid_auto: bool = True
     fcm_service_account_file: Optional[str] = None

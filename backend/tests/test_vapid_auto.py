@@ -43,3 +43,21 @@ def test_unusable_data_dir_fails_softly(tmp_path):
     blocker.write_text("x")
     s = Settings(_env_file=None, data_dir=str(blocker / "sub"), vapid_auto=True)
     assert s.vapid_private_key is None
+
+
+def test_push_contact_is_admin_email_unless_configured(client, auth, monkeypatch):
+    from app.config import settings
+    from app.core.database import SessionLocal
+    from app.models.user import ROLE_ADMIN, User
+    from app.services.notify import vapid_contact
+
+    db = SessionLocal()
+    admin = db.query(User).filter(User.role == ROLE_ADMIN, User.is_active == True).order_by(User.id).first()  # noqa: E712
+    assert admin is not None
+    monkeypatch.setattr(settings, "vapid_email", "")
+    assert vapid_contact(db) == f"mailto:{admin.email}"
+    monkeypatch.setattr(settings, "vapid_email", "mailto:admin@example.org")  # placeholder from old .env files
+    assert vapid_contact(db) == f"mailto:{admin.email}"
+    monkeypatch.setattr(settings, "vapid_email", "push@family.test")
+    assert vapid_contact(db) == "mailto:push@family.test"
+    db.close()
