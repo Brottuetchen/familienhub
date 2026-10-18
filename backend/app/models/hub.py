@@ -48,5 +48,7 @@ class HubEvent(Base):
     end = Column(DateTime, nullable=False)
     all_day = Column(Boolean, nullable=False, default=False)
     location = Column(String(200), nullable=True)
+    notes = Column(Text, nullable=True)
+    recurrence = Column(String(16), nullable=False, default="none")  # none | daily | weekly | monthly | yearly
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

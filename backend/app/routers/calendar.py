@@ -29,6 +29,11 @@ class EventCreateRequest(BaseModel):
     calendar_url: Optional[str] = None
     # Target: the person's CalDAV calendar or the hub's family calendar. Default: CalDAV if set up, else hub.
     source: Optional[Literal["caldav", "hub"]] = None
+    # Exact target from GET /calendars ("hub" or "caldav:<id>"); takes precedence over source/calendar_url
+    calendar_id: Optional[str] = Field(default=None, max_length=60)
+    location: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+    recurrence: Literal["none", "daily", "weekly", "monthly", "yearly"] = "none"
 
     @model_validator(mode="after")
     def _times(self):
@@ -63,10 +68,28 @@ def _caldav_active() -> bool:
     return plugin_registry.serves("calendar", "nextcloud")
 
 
-def _hub_event(e) -> Dict[str, Any]:
+RRULE = {"daily": "DAILY", "weekly": "WEEKLY", "monthly": "MONTHLY", "yearly": "YEARLY"}
+
+
+def _hub_event(e, start: Optional[datetime] = None) -> Dict[str, Any]:
+    """Hub event as JSON; with ``start`` one occurrence of a repeating event."""
+    begin = start or e.start
+    finish = begin + (e.end - e.start)
     fmt = (lambda d: d.date().isoformat()) if e.all_day else (lambda d: d.isoformat())
-    return {"id": e.id, "title": e.title, "start": fmt(e.start), "end": fmt(e.end), "all_day": bool(e.all_day),
-            "location": e.location, "calendar": "Familie", "calendar_id": "hub", "source": "hub"}
+    return {"id": e.id, "title": e.title, "start": fmt(begin), "end": fmt(finish), "all_day": bool(e.all_day),
+            "location": e.location, "notes": getattr(e, "notes", None), "recurrence": getattr(e, "recurrence", None) or "none",
+            "calendar": "Familie", "calendar_id": "hub", "source": "hub"}
+
+
+def _hub_occurrences(e, window_start: datetime, window_end: datetime) -> List[Dict[str, Any]]:
+    rec = getattr(e, "recurrence", None) or "none"
+    if rec == "none":
+        return [_hub_event(e)]
+    from dateutil.rrule import rrulestr
+
+    rule = rrulestr(f"RRULE:FREQ={RRULE[rec]}", dtstart=e.start)
+    length = e.end - e.start
+    return [_hub_event(e, s) for s in rule.between(window_start - length, window_end, inc=True)[:400]]
 
 
 async def collect_events(db: Session, user: User, days: int, start: Optional[datetime] = None) -> List[Dict[str, Any]]:
@@ -89,9 +112,11 @@ async def collect_events(db: Session, user: User, days: int, start: Optional[dat
 
         events.extend(await ics.events_between(start, end))
     if _hub_active():
-        rows = db.query(HubEvent).filter(HubEvent.end >= start.replace(hour=0, minute=0, second=0, microsecond=0),
-                                         HubEvent.start < end).all()
-        events.extend(_hub_event(e) for e in rows)
+        midnight = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        rows = db.query(HubEvent).filter(HubEvent.start < end).filter(
+            (HubEvent.end >= midnight) | (HubEvent.recurrence != "none")).all()
+        for e in rows:
+            events.extend(o for o in _hub_occurrences(e, midnight, end) if o["end"] >= midnight.date().isoformat())
     events.sort(key=lambda e: e.get("start") or "")
     return events
 
@@ -153,9 +178,11 @@ async def calendars(current_user: User = Depends(get_current_user), db: Session 
     if _hub_active():
         out.append({"id": "hub", "name": "Familie", "source": "hub", "color": None, "writable": can_edit, "family": True})
     if _caldav_active() and _user_account(db, current_user):
+        family_names = {n.strip().lower() for n in str(get_setting("CALDAV_FAMILY_CALENDAR") or "").split(",") if n.strip()}
         for c in await connector_for_user(db, current_user).list_calendars():
             out.append({"id": c["id"], "name": c["name"], "source": "caldav", "color": c.get("color"),
-                        "writable": can_edit, "family": False})
+                        "writable": can_edit, "family": c["name"].strip().lower() in family_names})
+    out.sort(key=lambda c: (not c["family"], c["source"] == "ics"))  # family calendars first: default target
     if plugin_registry.serves("calendar", "ics"):
         from app.services.ics import feed_id
 
@@ -182,13 +209,23 @@ async def create_event(
     Der globale Kalenderzugang wird bewusst nicht verwendet, damit Termine dem richtigen Nutzer gehören.
     """
     has_account = _caldav_active() and _user_account(db, current_user) is not None
-    if event.source == "hub" or (event.source is None and not has_account and _hub_active()):
+    target_url = event.calendar_url
+    if event.calendar_id and event.calendar_id != "hub":
+        if not event.calendar_id.startswith("caldav:") or not has_account:
+            raise HTTPException(status_code=422, detail="In diesen Kalender kann der Hub nicht schreiben")
+        match = [c for c in await connector_for_user(db, current_user).list_calendars() if c["id"] == event.calendar_id]
+        if not match:
+            raise HTTPException(status_code=422, detail="Kalender nicht gefunden")
+        target_url = match[0]["url"]
+    if event.calendar_id == "hub" or (event.calendar_id is None and (
+            event.source == "hub" or (event.source is None and not has_account and _hub_active()))):
         if not _hub_active():
             raise HTTPException(status_code=409, detail="Der Familienkalender im Hub ist abgeschaltet")
         from app.models.hub import HubEvent
 
         row = HubEvent(title=event.title.strip(), start=_parse(event.start), end=_parse(event.end),
-                       all_day=event.all_day, created_by=current_user.id)
+                       all_day=event.all_day, location=(event.location or "").strip() or None,
+                       notes=(event.notes or "").strip() or None, recurrence=event.recurrence, created_by=current_user.id)
         db.add(row)
         db.commit()
         return _hub_event(row)
@@ -198,13 +235,16 @@ async def create_event(
             detail={"error": "no_caldav_account"},
         )
     connector = connector_for_user(db, current_user)
+    extras = {k: v for k, v in {"location": (event.location or "").strip(), "notes": (event.notes or "").strip(),
+                                 "rrule": RRULE.get(event.recurrence)}.items() if v}
     try:
         return await connector.create_event(
             title=event.title,
             start=event.start,
             end=event.end,
             all_day=event.all_day,
-            calendar_url=event.calendar_url,
+            calendar_url=target_url,
+            **extras,
         )
     except Exception as exc:
         raise HTTPException(
