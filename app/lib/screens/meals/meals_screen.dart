@@ -148,11 +148,12 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
         title: const Text('Essen'),
         actions: [
           ReadStatusIcon(result: async.valueOrNull),
-          IconButton(
-            tooltip: 'Zutaten der nächsten 7 Tage auf die Einkaufsliste',
-            icon: const Icon(Icons.add_shopping_cart),
-            onPressed: _toShoppingList,
-          ),
+          if (ref.watch(canEditProvider))
+            IconButton(
+              tooltip: 'Zutaten der nächsten 7 Tage auf die Einkaufsliste',
+              icon: const Icon(Icons.add_shopping_cart),
+              onPressed: _toShoppingList,
+            ),
         ],
       ),
       body: Column(
@@ -186,6 +187,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                     for (final day in result.data.days) _DayTile(
                       day: day,
                       planning: ref.watch(appModulesProvider).has('meal_planning'),
+                      editable: ref.watch(canEditProvider),
                       onAdd: () => _addMeal(day.date),
                       onDelete: _deleteMeal,
                       onCookidoo: (entry, action) => _cookidooAction(day.date, entry, action),
@@ -204,12 +206,16 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
 class _DayTile extends StatelessWidget {
   final MealDay day;
   final bool planning;
+
+  /// Essensplan ändern erst ab Partner; Kind und Gast sehen ihn nur.
+  final bool editable;
   final VoidCallback onAdd;
   final ValueChanged<MealEntry> onDelete;
   final void Function(MealEntry entry, String action) onCookidoo;
   const _DayTile({
     required this.day,
     required this.planning,
+    this.editable = true,
     required this.onAdd,
     required this.onDelete,
     required this.onCookidoo,
@@ -223,7 +229,12 @@ class _DayTile extends StatelessWidget {
     return parts.isEmpty ? null : Text(parts.join(' · '), maxLines: 2, overflow: TextOverflow.ellipsis);
   }
 
-  Widget _trailing(MealEntry e) {
+  Widget? _trailing(MealEntry e) {
+    if (!editable) {
+      return e.isCookidoo && e.cookidooId != null && e.url != null
+          ? IconButton(tooltip: 'In Cookidoo öffnen', onPressed: () => onCookidoo(e, 'open'), icon: const Icon(Icons.open_in_new))
+          : null;
+    }
     if (e.isCookidoo && planning && e.cookidooId != null) {
       return PopupMenuButton<String>(
         tooltip: 'Rezept-Aktionen',
@@ -275,7 +286,7 @@ class _DayTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(tooltip: 'Essen eintragen', onPressed: onAdd, icon: const Icon(Icons.add)),
+                  if (editable) IconButton(tooltip: 'Essen eintragen', onPressed: onAdd, icon: const Icon(Icons.add)),
                 ],
               ),
               if (day.entries.isEmpty)

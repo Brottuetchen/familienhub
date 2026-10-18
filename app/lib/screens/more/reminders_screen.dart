@@ -75,7 +75,8 @@ class RemindersScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  onChanged: (_) async {
+                  // Familien-Erinnerungen hakt ab Kind ab (Gast nur eigene)
+                  onChanged: r.forFamily && !ref.watch(canActProvider) ? null : (_) async {
                     if (await runAction(context, () => ref.read(apiClientProvider).completeReminder(r.id))) {
                       ref.invalidate(remindersProvider);
                     }
@@ -153,6 +154,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
             selected: {_onArrival},
             onSelectionChanged: (s) => setState(() => _onArrival = s.first),
           ),
+          if (ref.watch(canEditProvider))
           SwitchListTile(
             key: const Key('reminder-family'),
             contentPadding: EdgeInsets.zero,

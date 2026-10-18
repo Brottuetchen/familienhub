@@ -1,10 +1,15 @@
 import 'common.dart';
 
+const roleLevels = {'guest': 0, 'child': 1, 'partner': 2, 'admin': 3};
+
 class AppUser {
   final int id;
   final String username;
   final String? fullName;
   final bool isAdmin;
+
+  /// guest, child, partner oder admin (wie im Backend).
+  final String role;
 
   /// Selbst gepflegter Anzeigename (Server liefert bereits mit Rückfall auf vollen Namen/Benutzernamen).
   final String? profileName;
@@ -16,10 +21,14 @@ class AppUser {
     required this.username,
     this.fullName,
     this.isAdmin = false,
+    this.role = 'partner',
     this.profileName,
     this.avatarColor,
     this.avatarUrl,
   });
+
+  /// Stufe wie `ROLE_LEVEL` im Backend: Gast 0, Kind 1, Partner 2, Admin 3.
+  int get roleLevel => roleLevels[role] ?? (isAdmin ? 3 : 2);
 
   String get displayName {
     for (final n in [profileName, fullName]) {
@@ -32,7 +41,8 @@ class AppUser {
         id: parseInt(json['id']) ?? 0,
         username: (json['username'] as String?) ?? '',
         fullName: json['full_name'] as String?,
-        isAdmin: json['is_admin'] == true,
+        isAdmin: json['is_admin'] == true || json['role'] == 'admin',
+        role: (json['role'] as String?) ?? (json['is_admin'] == true ? 'admin' : 'partner'),
         profileName: json['display_name'] as String?,
         avatarColor: json['avatar_color'] as String?,
         avatarUrl: json['avatar_url'] as String?,

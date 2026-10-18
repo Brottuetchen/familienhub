@@ -162,6 +162,16 @@ final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>(
   (ref) => SessionNotifier(ref.watch(apiClientProvider)),
 );
 
+/// Rollenstufe der Anmeldung. Ohne bekannte Rolle (offline gestartet) wie Partner:
+/// Der Server prüft ohnehin und lehnt Unerlaubtes mit einer Meldung ab.
+final roleLevelProvider = Provider<int>((ref) => ref.watch(sessionProvider.select((s) => s.user?.roleLevel ?? 2)));
+
+/// Ab Kind: abhaken, Wünsche, eigene Konten verbinden, Einkauf löschen.
+final canActProvider = Provider<bool>((ref) => ref.watch(roleLevelProvider) >= 1);
+
+/// Ab Partner: Aufgaben, Termine, Essensplan, Rezepte und Familien-Erinnerungen anlegen und ändern.
+final canEditProvider = Provider<bool>((ref) => ref.watch(roleLevelProvider) >= 2);
+
 // ── Navigation ───────────────────────────────────────────────────────────────
 
 enum AppTab { today, calendar, tasks, shopping, meals, more }

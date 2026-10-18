@@ -104,7 +104,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           _TaskList(
             view: v,
             selectedUid: wide ? _selected?.identity : null,
-            onOpen: (t) => t.isHabitica ? showNativeEditor(context, ref, t.account, task: t) : wide ? setState(() {
+            onOpen: (t) => t.isHabitica ? (ref.read(canEditProvider) ? showNativeEditor(context, ref, t.account, task: t) : null) : wide ? setState(() {
               _selected = t;
               _selectedView = v;
             }) : _showDetails(t, v),
@@ -122,7 +122,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
             icon: Icon(ref.watch(showDoneTasksProvider) ? Icons.visibility_off_outlined : Icons.visibility_outlined),
             onPressed: () => ref.read(showDoneTasksProvider.notifier).state = !ref.read(showDoneTasksProvider),
           ),
-          if (ref.watch(taskAccountsProvider).valueOrNull?.any((p) => p.id == 'habitica') == true)
+          if (ref.watch(canActProvider) && ref.watch(taskAccountsProvider).valueOrNull?.any((p) => p.id == 'habitica') == true)
           IconButton(tooltip: 'Habitica-Konto und Aufgabenauswahl', icon: const Icon(Icons.account_tree_outlined), onPressed: () async {
             await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProtectedReadModal(
               provider: tasksProvider(TaskView.mine), child: const HabiticaAccountScreen())));
@@ -135,11 +135,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           tabs: [for (final v in TaskView.values) Tab(text: v.label)],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _create,
-        icon: const Icon(Icons.add),
-        label: const Text('Aufgabe'),
-      ),
+      floatingActionButton: ref.watch(canEditProvider)
+          ? FloatingActionButton.extended(
+              onPressed: _create,
+              icon: const Icon(Icons.add),
+              label: const Text('Aufgabe'),
+            )
+          : null,
       body: wide
           ? Row(
               children: [
@@ -158,7 +160,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
   }
 
   void _showDetails(Task t, TaskView view) {
-    if (t.isHabitica) { showNativeEditor(context, ref, t.account, task: t); return; }
+    if (t.isHabitica) {
+      if (ref.read(canEditProvider)) showNativeEditor(context, ref, t.account, task: t);
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -235,13 +240,15 @@ class _TaskListState extends ConsumerState<_TaskList> {
           final done = ref.watch(showDoneTasksProvider)
               ? data.items.where((t) => t.done && !_gone.contains(t.identity)).toList()
               : const <Task>[];
-          final habiticaEnabled = !result.offline && !result.refreshing && result.refreshError == null;
+          final canAct = ref.watch(canActProvider);
+          final canEdit = ref.watch(canEditProvider);
+          final habiticaEnabled = canAct && !result.offline && !result.refreshing && result.refreshError == null;
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 96),
             children: [
               SourceBanner(source: 'Aufgabenanbieter', status: data.error != null ? SourceStatus.unavailable : data.status, error: data.error),
-              if (data.status == SourceStatus.notConfigured)
+              if (data.status == SourceStatus.notConfigured && canAct)
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: FilledButton.tonal(
@@ -255,7 +262,9 @@ class _TaskListState extends ConsumerState<_TaskList> {
               for (final t in open)
                 Dismissible(
                   key: ValueKey('task-${view.apiName}-${t.identity}'),
-                  direction: t.isHabitica || t.localOnly ? DismissDirection.none : DismissDirection.horizontal,
+                  direction: t.isHabitica || t.localOnly || !canAct
+                      ? DismissDirection.none
+                      : canEdit ? DismissDirection.horizontal : DismissDirection.startToEnd,
                   background: _swipeBackground(context, Icons.check, 'Erledigt',
                       Colors.green.shade700, Alignment.centerLeft),
                   secondaryBackground: _swipeBackground(context, Icons.delete_outline,
@@ -270,14 +279,14 @@ class _TaskListState extends ConsumerState<_TaskList> {
                     return runAction(context, () => api.deleteTask(t.uid, provider: t.provider, account: t.account));
                   },
                   onDismissed: (dir) => _remove(t, deleted: dir == DismissDirection.endToStart),
-                  child: _tile(t, names, habiticaEnabled),
+                  child: _tile(t, names, habiticaEnabled, canAct),
                 ),
               if (done.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
                   child: Text('Erledigt (${done.length})', style: Theme.of(context).textTheme.titleSmall),
                 ),
-                for (final t in done) _tile(t, names, habiticaEnabled),
+                for (final t in done) _tile(t, names, habiticaEnabled, canAct),
               ],
             ],
           );
@@ -288,7 +297,7 @@ class _TaskListState extends ConsumerState<_TaskList> {
 
   /// Eine Zeile für alle Anbieter: Haken immer links (Habitica-Gewohnheiten/Belohnungen: Symbol),
   /// rechts Fälligkeit bzw. +/−- oder Einlöse-Knopf.
-  Widget _tile(Task t, Map<int, String> names, bool habiticaEnabled) {
+  Widget _tile(Task t, Map<int, String> names, bool habiticaEnabled, bool canAct) {
     Future<void> changed() async => refreshTasks(ref);
     final Widget leading;
     if (t.isHabitica && habiticaCheckable(t)) {
@@ -304,7 +313,7 @@ class _TaskListState extends ConsumerState<_TaskList> {
         shape: const CircleBorder(),
         value: t.done,
         semanticLabel: '„${t.title}“ erledigen',
-        onChanged: t.done || _completing.contains(t.identity) || t.localOnly ? null : (_) async {
+        onChanged: !canAct || t.done || _completing.contains(t.identity) || t.localOnly ? null : (_) async {
           if (await _complete(t) && mounted) _remove(t);
         },
       );
@@ -414,6 +423,7 @@ class TaskDetails extends ConsumerWidget {
             IconButton(onPressed: onClose, icon: const Icon(Icons.close), tooltip: 'Schließen'),
           ],
         ),
+        if (ref.watch(canEditProvider))
         TextButton.icon(icon: const Icon(Icons.edit_outlined), label: const Text('Aufgabe bearbeiten'), onPressed: () async {
           final changed = await showModalBottomSheet<bool>(context: context, isScrollControlled: true, useSafeArea: true,
             builder: (_) => ProtectedReadModal(provider: tasksProvider(view), child: TaskEditSheet(task: task)));

@@ -26,6 +26,7 @@ class MoreScreen extends ConsumerWidget {
     final modules = ref.watch(appModulesProvider);
     final unread = ref.watch(todayProvider).valueOrNull?.data.notificationsUnread ?? 0;
     final isAdmin = session.user?.isAdmin ?? false;
+    final canAct = ref.watch(canActProvider); // eigene Konten und Listen ab Kind
     void open(Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 
     return Scaffold(
@@ -85,14 +86,14 @@ class MoreScreen extends ConsumerWidget {
               onTap: () => open(const BooksScreen()),
             ),
           const _Header('Einstellungen'),
-          if (modules.has('tasks') || modules.has('calendar'))
+          if (canAct && (modules.has('tasks') || modules.has('calendar')))
             ListTile(
               leading: const Icon(Icons.cloud_outlined),
               title: const Text('Nextcloud-Konto'),
               subtitle: const Text('Für Aufgaben und eigene Termine'),
               onTap: () => open(const CalDavAccountScreen()),
             ),
-          if (modules.has('tasks'))
+          if (canAct && modules.has('tasks'))
             ListTile(
               leading: const Icon(Icons.list_alt),
               title: const Text('Aufgabenlisten'),

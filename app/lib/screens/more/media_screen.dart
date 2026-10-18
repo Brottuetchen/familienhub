@@ -131,6 +131,8 @@ class _MediaScreenState extends ConsumerState<MediaScreen> {
           trailing = _StatusChip(label: justRequested, done: true, key: ValueKey('media-done-$key'));
         } else if (!m.requestable) {
           trailing = _StatusChip(label: m.statusLabel ?? 'Vorhanden', done: m.statusLabel == 'Verfügbar');
+        } else if (!ref.watch(canActProvider)) {
+          trailing = const SizedBox.shrink(); // Gäste suchen nur, wünschen ab Kind
         } else {
           trailing = FilledButton.tonal(
             key: ValueKey('media-request-$key'),

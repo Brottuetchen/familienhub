@@ -173,7 +173,8 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       );
 
   /// Nur freie Artikel lassen sich wegwischen; Rezeptzutaten kommen aus Cookidoo.
-  Widget _deletable(ShoppingItem item, bool done) => item.localOnly ? _tile(item, done) : Dismissible(
+  // Löschen ab Kind; Gäste dürfen nur hinzufügen und abhaken
+  Widget _deletable(ShoppingItem item, bool done) => item.localOnly || !ref.watch(canActProvider) ? _tile(item, done) : Dismissible(
         key: Key('dismiss-${item.uid}'),
         direction: DismissDirection.endToStart,
         background: Container(

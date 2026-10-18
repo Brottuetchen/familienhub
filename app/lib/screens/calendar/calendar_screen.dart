@@ -18,7 +18,7 @@ class CalendarScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Termine'), actions: [ReadStatusIcon(result: async.valueOrNull)]),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: !ref.watch(canEditProvider) ? null : FloatingActionButton.extended(
         onPressed: () async {
           await showModalBottomSheet<bool>(
             context: context,

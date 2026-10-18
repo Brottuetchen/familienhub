@@ -156,6 +156,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
     // Schon gewünscht (gleicher Titel und gleiche Art): kein zweiter Wunsch
     final mine = ref.watch(bookRequestsProvider).valueOrNull?.data.items ?? const <BookRequest>[];
     final wished = {for (final w in mine) if (w.kind != null) '${w.kind!.api}:${w.title.toLowerCase()}'};
+    final canWish = ref.watch(canActProvider); // Gäste suchen nur, wünschen ab Kind
     return ListView.builder(
       itemCount: shown.length,
       itemBuilder: (context, i) {
@@ -176,7 +177,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
                   message: 'Schon gewünscht',
                   child: Icon(Icons.check_circle, key: ValueKey('book-done-${b.workId}'), color: Colors.green),
                 )
-              : FilledButton.tonal(
+              : !canWish ? null : FilledButton.tonal(
                   key: ValueKey('book-request-${b.workId}'),
                   onPressed: () => _request(b),
                   child: const Text('Wünschen'),

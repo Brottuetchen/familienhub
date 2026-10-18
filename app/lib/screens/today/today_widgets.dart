@@ -266,6 +266,7 @@ class _TaskChecklistState extends ConsumerState<TaskChecklist> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final me = ref.watch(sessionProvider).user?.id;
+    final canAct = ref.watch(canActProvider);
     final people = {for (final p in ref.watch(peopleProvider).valueOrNull ?? const <Person>[]) p.id: p};
     return Column(
       children: [
@@ -276,14 +277,14 @@ class _TaskChecklistState extends ConsumerState<TaskChecklist> {
             child: Row(
               children: [
                 if (t.isHabitica)
-                  HabiticaTaskButtons(task: t, enabled: widget.online, onChanged: () => refreshTasks(ref))
+                  HabiticaTaskButtons(task: t, enabled: canAct && widget.online, onChanged: () => refreshTasks(ref))
                 else
                   Checkbox(
                     shape: const CircleBorder(),
                     value: _done.contains(t.identity) || t.done,
                     visualDensity: VisualDensity.compact,
                     // Nextcloud-Aufgaben gehen auch offline (werden gemerkt), Habitica nicht
-                    onChanged: _done.contains(t.identity) || t.localOnly ? null : (_) => _complete(t),
+                    onChanged: !canAct || _done.contains(t.identity) || t.localOnly ? null : (_) => _complete(t),
                   ),
                 Expanded(
                   child: Text(
