@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_client.dart';
 import 'home_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// Eigener Geräte-Zugang (persönliches API-Token) nur für Widget-Aktualisierungen im Hintergrund.
 ///
@@ -13,7 +14,7 @@ class WidgetAccess {
   static const _storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
   static const _kToken = 'widget_api_token';
   static const _kId = 'widget_api_token_id';
-  static const tokenName = 'Widget (Android-Gerät)';
+  static String get tokenName => l10n.widgetAndroid;
 
   static Future<String?> token() async {
     try {

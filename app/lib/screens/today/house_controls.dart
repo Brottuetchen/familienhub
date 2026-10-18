@@ -8,6 +8,7 @@ import '../../models/today.dart';
 import '../../providers/providers.dart';
 import '../../core/theme/hub_style.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Eine Haus-Karte mit Kacheln wie in Home Assistant: ausgewählte Zustände (aus „Heute“) und
 /// freigegebene Geräte (Licht, Schalter, Szenen, Skripte) zusammen.
@@ -110,7 +111,7 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
       if (mounted && revision == _revision) setState(() { _merge(data); _error = null; });
     } catch (_) {
       if (mounted && revision == _revision && _controls == null) {
-        setState(() => _error = 'Haussteuerung nicht verfügbar. Bitte aktualisieren.');
+        setState(() => _error = l10n.houseControlsUnavailable);
       }
     } finally {
       if (revision == _revision) _loading = false;
@@ -214,21 +215,21 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
     return SectionCard(
       key: const Key('today-house'),
       icon: Icons.home_outlined,
-      title: 'Haus',
+      title: l10n.house,
       // Aktualisiert sich selbst; der Knopf erscheint nur, wenn etwas schiefging
       trailing: problem
           ? IconButton(
-              tooltip: 'Haus aktualisieren',
+              tooltip: l10n.refreshHouse,
               visualDensity: VisualDensity.compact,
               onPressed: widget.online ? () { api.clearHouseActionFailure(); setState(() => _error = null); _load(); } : null,
               icon: const Icon(Icons.refresh, size: 20),
             )
           : null,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (actionFailed) const Text('Aktion nicht bestätigt. Zustand aktualisieren; nicht automatisch erneut ausführen.'),
+        if (actionFailed) Text(l10n.houseActionUnconfirmed),
         if (_error != null) Text(_error!),
         if (_controls?.error != null) Text(_controls!.error!, style: muted),
-        if (statesShown && !widget.states.isOk) Text('Haus-Zustände gerade nicht verfügbar', style: muted),
+        if (statesShown && !widget.states.isOk) Text(l10n.houseStatesUnavailable, style: muted),
         LayoutBuilder(builder: (context, box) {
           const gap = 10.0;
           final cols = box.maxWidth >= 560 ? 3 : 2;
@@ -275,10 +276,10 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
     final dimmable = c.actions.contains('brightness');
     final level = _brightness[c.entityId] ?? (expected?.brightness ?? c.brightness ?? 0).toDouble();
     final percent = (level / 255 * 100).round();
-    final shownValue = state == null ? c.displayValue : (state == 'on' ? 'An' : state == 'off' ? 'Aus' : c.displayValue);
+    final shownValue = state == null ? c.displayValue : (state == 'on' ? l10n.stateOn : state == 'off' ? l10n.stateOff : c.displayValue);
     final value = switch (domain) {
-      'scene' => 'Szene',
-      'script' => 'Skript',
+      'scene' => l10n.scene,
+      'script' => l10n.script,
       _ => dimmable && state == 'on' ? '$shownValue · $percent %' : shownValue,
     };
     return HouseTile(
@@ -291,10 +292,10 @@ class _HouseCardState extends ConsumerState<HouseCard> with WidgetsBindingObserv
       slider: dimmable
           ? Slider(
               key: Key('${c.entityId}-brightness'),
-              label: 'Helligkeit',
+              label: l10n.brightness,
               min: 0, max: 255, divisions: 255,
               value: level,
-              semanticFormatterCallback: (v) => '${c.name}: Helligkeit ${v.round()} von 255',
+              semanticFormatterCallback: (v) => l10n.brightnessOf(c.name, v.round()),
               onChanged: enabled ? (v) => setState(() => _brightness[c.entityId] = v) : null,
               onChangeEnd: enabled ? (v) => _act(c, 'brightness', brightness: v.round()) : null,
             )

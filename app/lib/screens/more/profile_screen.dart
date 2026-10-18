@@ -11,6 +11,7 @@ import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../today/today_widgets.dart';
 import 'avatar_crop_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Farben zur Auswahl für den eigenen Avatar (ohne Bild: zwei Buchstaben in dieser Farbe).
 const avatarPalette = ['#8B5CF6', '#C2694A', '#2563EB', '#10B981', '#F59E0B', '#EC4899', '#22B8CF', '#64748B'];
@@ -83,12 +84,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           if (!kIsWeb)
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Foto aufnehmen'),
+              title: Text(l10n.takePhoto),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Aus der Galerie'),
+            title: Text(l10n.fromGallery),
             onTap: () => Navigator.pop(ctx, ImageSource.gallery),
           ),
         ]),
@@ -100,10 +101,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final bytes = await _crop(picked);
     if (bytes == null || !mounted) return;
     if (bytes.length > 512 * 1024) {
-      showInfo(context, 'Das Bild ist zu groß (höchstens 512 KB).');
+      showInfo(context, l10n.imageTooLarge);
       return;
     }
-    await _apply(() => ref.read(apiClientProvider).uploadAvatar(bytes), done: 'Profilbild gespeichert');
+    await _apply(() => ref.read(apiClientProvider).uploadAvatar(bytes), done: l10n.avatarSaved);
   }
 
   @override
@@ -113,7 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (user == null) return const Scaffold(body: Center(child: HubLoader()));
     final previewName = _name.text.trim().isEmpty ? (user.fullName ?? user.username) : _name.text.trim();
     return Scaffold(
-      appBar: AppBar(title: const Text('Mein Profil')),
+      appBar: AppBar(title: Text(l10n.myProfile)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
@@ -133,7 +134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   bottom: 0,
                   child: IconButton.filled(
                     key: const Key('profile-photo'),
-                    tooltip: 'Profilbild ändern',
+                    tooltip: l10n.changeAvatar,
                     onPressed: _busy ? null : _choosePhoto,
                     icon: const Icon(Icons.photo_camera_outlined),
                   ),
@@ -145,9 +146,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Center(
               child: TextButton.icon(
                 key: const Key('profile-photo-remove'),
-                onPressed: _busy ? null : () => _apply(() => ref.read(apiClientProvider).deleteAvatar(), done: 'Profilbild entfernt'),
+                onPressed: _busy ? null : () => _apply(() => ref.read(apiClientProvider).deleteAvatar(), done: l10n.avatarRemoved),
                 icon: const Icon(Icons.delete_outline),
-                label: const Text('Bild entfernen'),
+                label: Text(l10n.removeImage),
               ),
             ),
           const SizedBox(height: 20),
@@ -156,11 +157,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             controller: _name,
             maxLength: 40,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Anzeigename', helperText: 'So sieht dich die Familie im Hub'),
+            decoration: InputDecoration(labelText: l10n.displayName, helperText: l10n.displayNameHint),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
-          Text('Farbe', style: theme.textTheme.titleSmall),
+          Text(l10n.colour, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(spacing: 10, runSpacing: 10, children: [
             for (final c in avatarPalette)
@@ -191,16 +192,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             avatarColor: _color,
                             clearColor: _color == null,
                           ),
-                      done: 'Profil gespeichert',
+                      done: l10n.profileSaved,
                     ),
-            child: _busy ? const HubLoader(size: 20) : const Text('Speichern'),
+            child: _busy ? const HubLoader(size: 20) : Text(l10n.save),
           ),
           const SizedBox(height: 24),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.alternate_email),
-            title: const Text('Anmeldung'),
-            subtitle: Text('${user.username} · über Authentik verwaltet'),
+            title: Text(l10n.signIn),
+            subtitle: Text(l10n.managedByAuthentik(user.username)),
           ),
         ],
       ),

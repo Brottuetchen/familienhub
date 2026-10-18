@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/admin.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../invite/invite_widgets.dart';
 import '../today/today_widgets.dart' show PersonAvatar;
+import '../../l10n/l10n.dart';
 
 final adminUsersProvider = FutureProvider.autoDispose<List<AdminUser>>((ref) => ref.watch(apiClientProvider).adminUsers());
 final adminInvitesProvider = FutureProvider.autoDispose<List<InviteInfo>>((ref) => ref.watch(apiClientProvider).invites());
@@ -31,10 +31,10 @@ class AdminUsersScreen extends ConsumerWidget {
     final users = ref.watch(adminUsersProvider);
     final me = ref.watch(sessionProvider).user?.id;
     return Scaffold(
-      appBar: AppBar(title: const Text('Familie & Rollen'), actions: [
+      appBar: AppBar(title: Text(l10n.familyRoles), actions: [
         IconButton(
           key: const Key('admin-user-add'),
-          tooltip: 'Ohne Einladung anlegen (mit Start-Passwort)',
+          tooltip: l10n.createWithoutInvite,
           icon: const Icon(Icons.person_add_alt),
           onPressed: () async {
             if (await showDialog<bool>(context: context, builder: (_) => const CreateUserDialog()) == true) {
@@ -47,7 +47,7 @@ class AdminUsersScreen extends ConsumerWidget {
         key: const Key('admin-user-invite'),
         onPressed: () => inviteFlow(context, ref),
         icon: const Icon(Icons.mail_outline),
-        label: const Text('Person einladen'),
+        label: Text(l10n.invitePerson),
       ),
       body: HubRefresh(
         onRefresh: () => ref.refresh(adminUsersProvider.future),
@@ -61,10 +61,9 @@ class AdminUsersScreen extends ConsumerWidget {
               const _OpenInvites(),
               for (final u in list)
                 _UserTile(key: ValueKey('admin-user-${u.id}'), user: u, isMe: u.id == me),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Text('Anmeldung und Passwörter laufen über die Anmeldung (z. B. Authentik). '
-                    'Hier legst du fest, was jemand im Hub darf.'),
+                child: Text(l10n.familyRolesExplain),
               ),
             ],
           ),
@@ -90,7 +89,7 @@ class _UserTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final last = user.lastLogin == null ? 'noch nie angemeldet' : 'zuletzt ${DateFormat('d.M.yyyy', 'de_DE').format(user.lastLogin!.toLocal())}';
+    final last = user.lastLogin == null ? l10n.neverSignedIn : l10n.lastSignIn(localDate('d.M.yyyy').format(user.lastLogin!.toLocal()));
     return Opacity(
       opacity: user.active ? 1 : 0.55,
       child: Padding(
@@ -101,9 +100,9 @@ class _UserTile extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(isMe ? '${user.displayName} (du)' : user.displayName,
+                Text(isMe ? l10n.nameYou(user.displayName) : user.displayName,
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                Text('${user.username} · $last · ${user.devices} Geräte', style: muted),
+                Text(l10n.userLine(user.username, last, user.devices), style: muted),
               ]),
             ),
             Switch(
@@ -188,33 +187,33 @@ class CreateUserDialogState extends ConsumerState<CreateUserDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Person anlegen'),
+      title: Text(l10n.createPerson),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(key: const Key('new-user-username'), controller: _username, autocorrect: false,
-              decoration: const InputDecoration(labelText: 'Benutzername', helperText: 'klein, ohne Leerzeichen'),
+              decoration: InputDecoration(labelText: l10n.username, helperText: l10n.usernameHint),
               onChanged: (_) => setState(() {})),
-          TextField(controller: _name, decoration: const InputDecoration(labelText: 'Name')),
+          TextField(controller: _name, decoration: InputDecoration(labelText: l10n.name)),
           TextField(key: const Key('new-user-email'), controller: _email, keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'E-Mail'), onChanged: (_) => setState(() {})),
+              decoration: InputDecoration(labelText: l10n.email), onChanged: (_) => setState(() {})),
           TextField(key: const Key('new-user-password'), controller: _password, obscureText: true,
-              decoration: const InputDecoration(labelText: 'Start-Passwort', helperText: 'mindestens 10 Zeichen'),
+              decoration: InputDecoration(labelText: l10n.initialPassword, helperText: l10n.min10Chars),
               onChanged: (_) => setState(() {})),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _role,
-            decoration: const InputDecoration(labelText: 'Rolle'),
+            decoration: InputDecoration(labelText: l10n.role),
             items: [for (final e in roleLabels.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
             onChanged: (v) => setState(() => _role = v ?? 'partner'),
           ),
         ]),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
+        TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
         FilledButton(
           key: const Key('new-user-save'),
           onPressed: _busy || !_valid ? null : _save,
-          child: const Text('Anlegen'),
+          child: Text(l10n.create),
         ),
       ],
     );
@@ -234,7 +233,7 @@ class _OpenInvites extends ConsumerWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text('Offene Einladungen', style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+        child: Text(l10n.openInvites, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
       ),
       for (final i in list)
         ListTile(
@@ -242,10 +241,10 @@ class _OpenInvites extends ConsumerWidget {
           leading: Icon(i.expired ? Icons.timer_off_outlined : Icons.mail_outline),
           title: Text(i.displayName),
           subtitle: Text('${i.email} · ${roleLabels[i.role] ?? i.role} · '
-              '${i.expired ? 'abgelaufen' : 'gültig bis ${DateFormat('d.M.', 'de_DE').format(i.expiresAt!)}'}'),
+              '${i.expired ? 'abgelaufen' : 'gültig bis ${localDate('d.M.').format(i.expiresAt!)}'}'),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             IconButton(
-              tooltip: 'Neuen Code erzeugen',
+              tooltip: l10n.newCode,
               icon: const Icon(Icons.refresh),
               onPressed: () async {
                 try {
@@ -261,7 +260,7 @@ class _OpenInvites extends ConsumerWidget {
               },
             ),
             IconButton(
-              tooltip: 'Einladung zurückziehen',
+              tooltip: l10n.withdrawInvite,
               icon: const Icon(Icons.close),
               onPressed: () async {
                 if (await runAction(context, () => ref.read(apiClientProvider).revokeInvite(i.id))) {

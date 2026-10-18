@@ -53,6 +53,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true # Übersetzungen aus lib/l10n/*.arb
   # Theme-Schriften (SIL Open Font License, Lizenztexte daneben): feste Stärken 400/700, offline verfügbar
   assets:
     - assets/fonts/PixelifySans/OFL.txt

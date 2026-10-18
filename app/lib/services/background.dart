@@ -4,11 +4,11 @@ import 'dart:ui' show DartPluginRegistrant;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../models/shopping.dart';
 import '../models/today.dart';
+import '../l10n/l10n.dart';
 import 'home_widgets.dart';
 import 'session_store.dart';
 import 'widget_access.dart';
@@ -33,13 +33,13 @@ Future<void> backgroundWidgetRefresh({http.Client? client}) async {
   // Gleiche Sitzung = gleiche Widget-Kennung, gleicher Server, gleicher Widget-Zugang
   Future<bool> same() async =>
       await HomeWidgets.session() == session && await store.baseUrl() == base && await WidgetAccess.token() == token;
-  Intl.defaultLocale = 'de_DE';
-  await initializeDateFormatting('de_DE');
+  await initializeDateFormatting();
+  await loadAppLanguage();
   final c = client ?? http.Client();
   try {
     Future<Map<String, dynamic>?> get(String path) async {
       final r = await c
-          .get(Uri.parse('$base$path'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'})
+          .get(Uri.parse('$base$path'), headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json', 'Accept-Language': appLanguage})
           .timeout(const Duration(seconds: 15));
       if (r.statusCode == 401) throw const _Revoked();
       if (r.statusCode != 200) return null;

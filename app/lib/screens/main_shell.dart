@@ -16,6 +16,7 @@ import 'more/more_screen.dart';
 import 'shopping/shopping_screen.dart';
 import 'tasks/tasks_screen.dart';
 import 'today/today_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Breite, ab der die Seitenleiste statt der unteren Leiste erscheint (Fold aufgeklappt, Tablet).
 const wideLayoutBreakpoint = 600.0;
@@ -36,13 +37,13 @@ class _MainShellState extends ConsumerState<MainShell> {
   StreamSubscription<String>? _routes;
   StreamSubscription<void>? _refreshes;
 
-  static const _allDestinations = [
-    (AppTab.today, Icons.wb_sunny_outlined, Icons.wb_sunny, 'Heute'),
-    (AppTab.calendar, Icons.event_outlined, Icons.event, 'Termine'),
-    (AppTab.tasks, Icons.check_circle_outline, Icons.check_circle, 'Aufgaben'),
-    (AppTab.shopping, Icons.shopping_cart_outlined, Icons.shopping_cart, 'Einkauf'),
-    (AppTab.meals, Icons.restaurant_outlined, Icons.restaurant, 'Essen'),
-    (AppTab.more, Icons.more_horiz, Icons.more_horiz, 'Mehr'),
+  static List<(AppTab, IconData, IconData, String)> get _allDestinations => [
+    (AppTab.today, Icons.wb_sunny_outlined, Icons.wb_sunny, l10n.tabToday),
+    (AppTab.calendar, Icons.event_outlined, Icons.event, l10n.tabCalendar),
+    (AppTab.tasks, Icons.check_circle_outline, Icons.check_circle, l10n.tabTasks),
+    (AppTab.shopping, Icons.shopping_cart_outlined, Icons.shopping_cart, l10n.tabShopping),
+    (AppTab.meals, Icons.restaurant_outlined, Icons.restaurant, l10n.tabMeals),
+    (AppTab.more, Icons.more_horiz, Icons.more_horiz, l10n.tabMore),
   ];
 
   /// Bereich → Modul aus /api/modules (Heute, Essen, Mehr gibt es immer).
@@ -66,10 +67,10 @@ class _MainShellState extends ConsumerState<MainShell> {
         // App-Symbol lange drücken → direkt in den Bereich
         const actions = QuickActions();
         actions.initialize((route) => openRoute(ref, route));
-        actions.setShortcutItems(const [
-          ShortcutItem(type: '/shopping', localizedTitle: 'Einkauf'),
-          ShortcutItem(type: '/tasks', localizedTitle: 'Neue Aufgabe'),
-          ShortcutItem(type: '/today', localizedTitle: 'Heute'),
+        actions.setShortcutItems([
+          ShortcutItem(type: '/shopping', localizedTitle: l10n.tabShopping),
+          ShortcutItem(type: '/tasks', localizedTitle: l10n.shortcutNewTask),
+          ShortcutItem(type: '/today', localizedTitle: l10n.tabToday),
         ]);
       }
     }

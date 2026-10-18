@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final inboxProvider = FutureProvider.autoDispose<NotificationInbox>(
     (ref) => ref.watch(apiClientProvider).notifications());
@@ -43,13 +43,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(inboxProvider);
-    final fmt = DateFormat('EEE d.M., HH:mm', 'de_DE');
+    final fmt = localDate('EEE d.M., HH:mm');
     // Beim Ansehen als gelesen markieren; die Markierung „neu“ bleibt bis zum nächsten Öffnen sichtbar.
     ref.listen(inboxProvider, (_, next) {
       if (next.valueOrNull?.unread case final n? when n > 0) _markAllRead();
     });
     return Scaffold(
-      appBar: AppBar(title: const Text('Mitteilungen')),
+      appBar: AppBar(title: Text(l10n.notifications)),
       body: HubRefresh(
         onRefresh: () => ref.refresh(inboxProvider.future),
         child: async.when(
@@ -58,7 +58,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           data: (inbox) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              if (inbox.items.isEmpty) const EmptyHint(icon: Icons.notifications_none, text: 'Noch keine Mitteilungen'),
+              if (inbox.items.isEmpty) EmptyHint(icon: Icons.notifications_none, text: l10n.noNotifications),
               for (final n in inbox.items)
                 ListTile(
                   key: ValueKey('notification-${n.id}'),
@@ -69,7 +69,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     [
                       if (n.createdAt != null) fmt.format(n.createdAt!),
                       if (n.source != 'hub') n.source,
-                      if (!n.pushed) 'ohne Push',
+                      if (!n.pushed) l10n.withoutPush,
                     ].join(' · '),
                   ].join('\n')),
                   isThreeLine: n.body.isNotEmpty,

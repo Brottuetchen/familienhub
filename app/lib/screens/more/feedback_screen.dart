@@ -5,9 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/providers.dart';
 import '../../services/app_info.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
-const feedbackAreas = ['Heute', 'Aufgaben', 'Einkauf', 'Essen', 'Termine', 'Haus', 'Erinnerungen', 'Bücher',
-  'Filme & Serien', 'Dokumente', 'Darstellung', 'Anmeldung', 'Anderes'];
+List<String> get feedbackAreas => [l10n.today, l10n.tabTasks, l10n.tabShopping, l10n.tabMeals, l10n.tabCalendar, l10n.house, l10n.reminders, l10n.books,
+  l10n.moviesShows, l10n.documents, l10n.appearance, l10n.signIn, l10n.other];
 
 /// Rückmeldung: an die Verwaltung der Familie (im Hub) oder an die Entwickler (GitHub-Issue, eigenes Konto).
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -21,7 +22,7 @@ class FeedbackScreen extends ConsumerStatefulWidget {
 
 class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _text = TextEditingController();
-  String _area = 'Anderes';
+  String _area = l10n.other;
   bool _busy = false;
 
   @override
@@ -38,7 +39,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (ok) {
-      showInfo(context, 'Danke! Die Verwaltung hat deine Rückmeldung bekommen.');
+      showInfo(context, l10n.feedbackThanks);
       Navigator.pop(context);
     }
   }
@@ -46,23 +47,23 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Future<void> _toGithub() async {
     final uri = githubIssueUri(text: _text.text, area: _area);
     final open = widget.openUrl ?? (u) => launchUrl(u, mode: LaunchMode.externalApplication);
-    if (!await open(uri) && mounted) showInfo(context, 'Browser konnte nicht geöffnet werden');
+    if (!await open(uri) && mounted) showInfo(context, l10n.browserFailed);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Feedback senden')),
+      appBar: AppBar(title: Text(l10n.sendFeedback)),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        const Text('Was ist dir aufgefallen? Fehler, Wunsch oder Lob – je genauer, desto besser.'),
+        Text(l10n.feedbackPrompt),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           key: const Key('feedback-area'),
           initialValue: _area,
-          decoration: const InputDecoration(labelText: 'Bereich'),
+          decoration: InputDecoration(labelText: l10n.area),
           items: [for (final a in feedbackAreas) DropdownMenuItem(value: a, child: Text(a))],
-          onChanged: (v) => setState(() => _area = v ?? 'Anderes'),
+          onChanged: (v) => setState(() => _area = v ?? l10n.other),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -72,27 +73,27 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
           maxLines: 10,
           maxLength: 4000,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(labelText: 'Deine Rückmeldung', alignLabelWithHint: true),
+          decoration: InputDecoration(labelText: l10n.yourFeedback, alignLabelWithHint: true),
           onChanged: (_) => setState(() {}),
         ),
-        Text('Mitgeschickt werden App-Version ($appVersion) und Plattform ($appPlatform).',
+        Text(l10n.feedbackIncludes(appVersion, appPlatform),
             style: theme.textTheme.bodySmall),
         const SizedBox(height: 16),
         FilledButton.icon(
           key: const Key('feedback-family'),
           onPressed: _busy || !_valid ? null : _toFamily,
           icon: const Icon(Icons.family_restroom),
-          label: const Text('An die Verwaltung der Familie'),
+          label: Text(l10n.toFamilyAdmins),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           key: const Key('feedback-github'),
           onPressed: !_valid ? null : _toGithub,
           icon: const Icon(Icons.bug_report_outlined),
-          label: const Text('An die Entwickler (GitHub)'),
+          label: Text(l10n.toDevelopers),
         ),
         const SizedBox(height: 4),
-        Text('Öffnet ein vorausgefülltes GitHub-Issue; abschicken mit deinem eigenen GitHub-Konto.',
+        Text(l10n.githubIssueHint,
             style: theme.textTheme.bodySmall),
       ]),
     );

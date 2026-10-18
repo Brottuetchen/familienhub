@@ -20,6 +20,7 @@ import '../services/widget_access.dart';
 import '../services/push_service.dart';
 import '../services/session_store.dart';
 import '../services/web_platform.dart' as webp;
+import '../l10n/l10n.dart';
 
 /// In Tests mit einem ApiClient auf MockClient-Basis überschreiben.
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -49,8 +50,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
       : super(const SessionState(SessionPhase.loading)) {
     _sub = api.loggedOut.listen((_) {
       unawaited(WidgetAccess.forget()); // Sitzung beendet: keine Inhalte mehr auf dem Startbildschirm
-      state = const SessionState(SessionPhase.loggedOut,
-          error: 'Sitzung abgelaufen, bitte neu anmelden');
+      state = SessionState(SessionPhase.loggedOut,
+          error: l10n.sessionExpired);
     });
     if (autoStart) start();
   }

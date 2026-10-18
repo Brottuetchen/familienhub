@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/theme/hub_style.dart';
 import '../../models/account.dart';
@@ -15,6 +14,7 @@ import '../../widgets/common.dart';
 import '../more/notifications_screen.dart';
 import '../tasks/habitica_tasks.dart';
 import '../tasks/tasks_screen.dart' show taskDueLabel;
+import '../../l10n/l10n.dart';
 
 /// Filter der Aufgaben auf „Heute“: null = fällig/zugewiesen (wie bisher), sonst eine Ansicht.
 final todayTaskFilterProvider = StateProvider<TaskView?>((ref) => null);
@@ -130,7 +130,7 @@ class TodayHeader extends ConsumerWidget {
           if (status != null) status!,
           IconButton(
             key: const Key('today-bell'),
-            tooltip: unread == 0 ? 'Mitteilungen' : '$unread neue Mitteilungen',
+            tooltip: unread == 0 ? l10n.notifications : l10n.unreadNotifications(unread),
             onPressed: () async {
               await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
               await ref.read(todayProvider.notifier).refresh();
@@ -208,11 +208,11 @@ class StylePill extends StatelessWidget {
 class TaskFilterBar extends ConsumerWidget {
   const TaskFilterBar({super.key});
 
-  static const options = [
-    (null, 'Heute'),
-    (TaskView.mine, 'Meine'),
-    (TaskView.forMe, 'Für mich'),
-    (TaskView.family, 'Familie')
+  static List<(TaskView?, String)> get options => [
+    (null, l10n.today),
+    (TaskView.mine, l10n.mine),
+    (TaskView.forMe, l10n.forMe),
+    (TaskView.family, l10n.family)
   ];
 
   @override
@@ -253,7 +253,7 @@ class _TaskChecklistState extends ConsumerState<TaskChecklist> {
     setState(() => _done.add(t.identity));
     try {
       final sent = await ref.read(apiClientProvider).completeTask(t.uid, provider: t.provider, account: t.account, title: t.title);
-      if (!sent && mounted) showInfo(context, 'Ohne Netz gemerkt – wird gesendet, sobald der Hub erreichbar ist');
+      if (!sent && mounted) showInfo(context, l10n.savedOffline);
       if (sent) await refreshTasks(ref);
     } catch (e) {
       if (!mounted) return;
@@ -321,7 +321,7 @@ class _TaskTag extends StatelessWidget {
     if (who != null) return PersonAvatar.of(who, size: 24);
     final overdue = task.isOverdue(DateTime.now());
     final due = taskDueLabel(task);
-    final label = due.isNotEmpty ? due : (task.listKind == 'family' ? 'Familie' : null);
+    final label = due.isNotEmpty ? due : (task.listKind == 'family' ? l10n.family : null);
     if (label == null) return const SizedBox.shrink();
     final color = overdue ? scheme.error : scheme.primary; // primary: auf jedem Kartenhintergrund lesbar
     return Container(
@@ -392,11 +392,7 @@ class _ShoppingQuickState extends ConsumerState<ShoppingQuick> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-            count == 0
-                ? 'Einkaufsliste ist leer'
-                : count == 1
-                    ? '1 Artikel offen'
-                    : '$count Artikel offen',
+            l10n.shoppingOpenCount(count),
             style: muted),
         for (final i in open.take(4))
           Row(
@@ -412,7 +408,7 @@ class _ShoppingQuickState extends ConsumerState<ShoppingQuick> {
             ],
           ),
         if (open.length > 4)
-          Padding(padding: const EdgeInsets.only(left: 12), child: Text('+ ${open.length - 4} weitere', style: muted)),
+          Padding(padding: const EdgeInsets.only(left: 12), child: Text(l10n.moreCount(open.length - 4), style: muted)),
         Padding( // auch offline: wird gemerkt
             padding: const EdgeInsets.only(top: 6),
             child: TextField(
@@ -423,7 +419,7 @@ class _ShoppingQuickState extends ConsumerState<ShoppingQuick> {
               onSubmitted: _submit,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Hinzufügen…',
+                hintText: l10n.addEllipsis,
                 prefixIcon: const Icon(Icons.add, size: 20),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
@@ -473,7 +469,7 @@ class MealWeekStrip extends ConsumerWidget {
                 width: slot,
                 child: Column(
                   children: [
-                    Text(DateFormat('E', 'de_DE').format(d.date).substring(0, 2),
+                    Text(localDate('E').format(d.date).substring(0, 2),
                         style: theme.textTheme.labelMedium?.copyWith(
                             fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
                             color: isToday ? theme.colorScheme.primary : null)),
@@ -535,7 +531,7 @@ class EventsTile extends StatelessWidget {
             Text('$count', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
           ],
         ),
-        Text(count == 1 ? 'Termin' : 'Termine', style: theme.textTheme.bodyMedium),
+        Text(l10n.eventsCountLabel(count), style: theme.textTheme.bodyMedium),
         if (next != null)
           Text(next!,
               maxLines: 2,

@@ -1,0 +1,1090 @@
+{
+  "@@locale": "de",
+  "pendingRejected": "{count, plural, =1{1 Änderung abgelehnt} other{{count} Änderungen abgelehnt}}",
+  "@pendingRejected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingWaiting": "{count, plural, =1{1 Änderung wartet auf Netz} other{{count} Änderungen warten auf Netz}}",
+  "@pendingWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oidcUnknownUser": "Dein Authentik-Konto ist im Familienhub nicht freigeschaltet. Die E-Mail-Adresse muss zu einem Hub-Konto passen.",
+  "oidcDisabled": "Dein Familienhub-Konto ist deaktiviert.",
+  "oidcCancelled": "Anmeldung abgebrochen.",
+  "oidcExpired": "Die Anmeldung hat zu lange gedauert. Bitte noch einmal versuchen.",
+  "oidcFailed": "Anmeldung über Authentik fehlgeschlagen.",
+  "tabToday": "Heute",
+  "tabCalendar": "Termine",
+  "tabTasks": "Aufgaben",
+  "tabShopping": "Einkauf",
+  "tabMeals": "Essen",
+  "tabMore": "Mehr",
+  "shortcutNewTask": "Neue Aufgabe",
+  "themeFromGithub": "Theme aus GitHub",
+  "githubAddress": "GitHub-Adresse",
+  "themeRepoNeedsJson": "Das Repository braucht eine theme.json.",
+  "cancel": "Abbrechen",
+  "install": "Installieren",
+  "themeRemoveQuestion": "Theme entfernen?",
+  "themeRemoveHint": "„{name}“ steht danach niemandem mehr zur Auswahl.",
+  "@themeRemoveHint": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "remove": "Entfernen",
+  "appearance": "Darstellung",
+  "fromGithub": "Aus GitHub",
+  "onlyThisDevice": "Gilt nur für dieses Gerät.",
+  "modeAuto": "Automatisch",
+  "modeLight": "Hell",
+  "modeDark": "Dunkel",
+  "themeDefault": "Standard",
+  "themeDefaultHint": "Dunkel, violett",
+  "themeBuiltin": "Mitgeliefert",
+  "themeInstalled": "Installiert",
+  "themeLightDark": "Hell + Dunkel",
+  "themeDarkOnly": "nur Dunkel",
+  "themeLightOnly": "nur Hell",
+  "themeRemove": "Theme entfernen",
+  "moreProfileHint": "Profil, Bild und Farbe",
+  "notifications": "Mitteilungen",
+  "unreadCount": "{unread} neu",
+  "@unreadCount": {
+    "placeholders": {
+      "unread": {}
+    }
+  },
+  "notificationsHistory": "Verlauf aller Mitteilungen",
+  "reminders": "Erinnerungen",
+  "documents": "Dokumente",
+  "documentsHint": "Paperless: suchen, Fristen",
+  "moviesShows": "Filme & Serien",
+  "moviesShowsHint": "Wünschen über Seerr",
+  "booksAudiobooks": "Bücher & Hörbücher",
+  "booksHint": "Wünschen, auf Deutsch",
+  "settings": "Einstellungen",
+  "nextcloudAccount": "Nextcloud-Konto",
+  "nextcloudAccountHint": "Für Aufgaben und eigene Termine",
+  "taskLists": "Aufgabenlisten",
+  "taskListsHint": "Welche Liste ist privat, welche für die Familie",
+  "assistantAccess": "Zugänge für Assistenten",
+  "assistantAccessHint": "z. B. für einen Sprachassistenten",
+  "notificationsDevices": "Benachrichtigungen & Geräte",
+  "appearanceHint": "Farbschema für dieses Gerät",
+  "administration": "Verwaltung",
+  "administrationHint": "Systemzustand, Familie, Haus, Plugins, Protokoll",
+  "sendFeedback": "Feedback senden",
+  "sendFeedbackHint": "Fehler, Wünsche – an die Familie oder die Entwickler",
+  "server": "Server",
+  "logout": "Abmelden",
+  "logoutQuestion": "Abmelden?",
+  "logoutPendingWarning": "{count} Änderungen ohne Netz sind noch nicht gesendet und gehen beim Abmelden verloren.",
+  "@logoutPendingWarning": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "loading": "Lädt",
+  "patternDayMonthTime": "dd.MM. HH:mm",
+  "asOf": ", Stand {at}",
+  "@asOf": {
+    "placeholders": {
+      "at": {}
+    }
+  },
+  "offlineStatus": "Offline{stand}",
+  "@offlineStatus": {
+    "placeholders": {
+      "stand": {}
+    }
+  },
+  "refreshFailed": "Aktualisierung fehlgeschlagen{stand} – {error}",
+  "@refreshFailed": {
+    "placeholders": {
+      "stand": {},
+      "error": {}
+    }
+  },
+  "refreshing": "Wird aktualisiert{stand}",
+  "@refreshing": {
+    "placeholders": {
+      "stand": {}
+    }
+  },
+  "upToDate": "Aktuell{stand}",
+  "@upToDate": {
+    "placeholders": {
+      "stand": {}
+    }
+  },
+  "sourceNotConfigured": "{source} ist noch nicht eingerichtet",
+  "@sourceNotConfigured": {
+    "placeholders": {
+      "source": {}
+    }
+  },
+  "sourceUnavailable": "{source} gerade nicht erreichbar",
+  "@sourceUnavailable": {
+    "placeholders": {
+      "source": {}
+    }
+  },
+  "retry": "Erneut versuchen",
+  "unexpectedError": "Unerwarteter Fehler: {error}",
+  "@unexpectedError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "savedOffline": "Ohne Netz gemerkt – wird gesendet, sobald der Hub erreichbar ist",
+  "today": "Heute",
+  "tomorrow": "Morgen",
+  "yesterday": "Gestern",
+  "allSent": "Alles gesendet",
+  "notSentYet": "Noch nicht gesendet",
+  "pendingExplain": "Wird automatisch gesendet, sobald der Hub erreichbar ist. Beim Abmelden gehen diese Änderungen verloren.",
+  "rejectedReason": "Abgelehnt: {conflict}",
+  "@rejectedReason": {
+    "placeholders": {
+      "conflict": {}
+    }
+  },
+  "savedAt": "gemerkt {time}",
+  "@savedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "hide": "Ausblenden",
+  "discard": "Verwerfen",
+  "sendNow": "Jetzt senden",
+  "pleaseSignInAgain": "Bitte erneut anmelden",
+  "listNotShared": "Die Liste „{listName}“ ist nicht für dich freigegeben",
+  "@listNotShared": {
+    "placeholders": {
+      "listName": {}
+    }
+  },
+  "nextcloudFirst": "Bitte zuerst unter Mehr → Nextcloud-Konto dein Konto eintragen",
+  "noConnectionNotSaved": "Keine Verbindung zum Server – Änderung nicht gespeichert",
+  "nativeStateStale": "Änderung bestätigt, aber der native Zustand konnte nicht aktualisiert werden. Bitte neu laden; nicht wiederholen.",
+  "catTaskAssigned": "Neue Aufgabe für mich",
+  "catTaskDue": "Aufgabe fällig",
+  "catHouse": "Haus (Waschmaschine, Müll …)",
+  "catMedia": "Bücher & Medien",
+  "catSystem": "System",
+  "recurNone": "Einmalig",
+  "recurDaily": "Täglich",
+  "recurWeekdays": "Werktags (Mo–Fr)",
+  "recurWeekly": "Wöchentlich",
+  "recurMonthly": "Monatlich",
+  "roleAdmin": "Admin",
+  "rolePartner": "Partner",
+  "roleChild": "Kind",
+  "roleGuest": "Gast",
+  "stateOn": "An",
+  "stateOff": "Aus",
+  "stateUnavailable": "Nicht verfügbar",
+  "languageSystem": "Wie Gerät",
+  "someoneDat": "jemandem",
+  "someoneAcc": "jemanden",
+  "habiticaDaily": "Täglich",
+  "habiticaHabit": "Gewohnheit",
+  "habiticaReward": "Belohnung",
+  "habiticaTodo": "To-do",
+  "overdue": "überfällig",
+  "setUpTaskAccountFirst": "Zuerst ein eigenes Aufgabenkonto einrichten",
+  "chooseProviderAccount": "Anbieter und eigenes Konto wählen",
+  "hideDone": "Erledigte ausblenden",
+  "showDone": "Erledigte zeigen",
+  "habiticaAccountSelection": "Habitica-Konto und Aufgabenauswahl",
+  "task": "Aufgabe",
+  "tapTaskForDetails": "Aufgabe antippen für Details",
+  "createdWhenOnline": "Wird erst angelegt, sobald der Hub erreichbar ist",
+  "taskProvider": "Aufgabenanbieter",
+  "addNextcloudAccount": "Nextcloud-Konto eintragen",
+  "done": "Erledigt",
+  "delete": "Löschen",
+  "doneCount": "Erledigt ({count})",
+  "@doneCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "completeTitle": "„{title}“ erledigen",
+  "@completeTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "waitingForNetwork": "Wartet auf Netz",
+  "noOpenTasks": "Keine offenen Aufgaben",
+  "nothingAssignedToYou": "Niemand hat dir etwas zugewiesen",
+  "youAssignedNothing": "Du hast niemandem etwas zugewiesen",
+  "noFamilyTasks": "Keine Familienaufgaben",
+  "fromName": "von {name}",
+  "@fromName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "forName": "für {name}",
+  "@forName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteTaskQuestion": "Aufgabe löschen?",
+  "deletedPermanently": "„{title}“ wird endgültig gelöscht.",
+  "@deletedPermanently": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "close": "Schließen",
+  "editTask": "Aufgabe bearbeiten",
+  "dueLabel": "Fällig: {due}",
+  "@dueLabel": {
+    "placeholders": {
+      "due": {}
+    }
+  },
+  "forLabel": "Für: {name}",
+  "@forLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "fromLabel": "Von: {name}",
+  "@fromLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "listLabel": "Liste: {listName}",
+  "@listLabel": {
+    "placeholders": {
+      "listName": {}
+    }
+  },
+  "rotationLabel": "Rotation: {people}",
+  "@rotationLabel": {
+    "placeholders": {
+      "people": {}
+    }
+  },
+  "rotationExplain": "Nach Erledigung wechselt der nächste Termin zur nächsten Person.",
+  "rotationNeedsPerson": "Bitte mindestens eine Person für die Rotation auswählen",
+  "me": "Ich",
+  "family": "Familie",
+  "whatToDo": "Was ist zu tun?",
+  "householdRotation": "Haushaltsrotation",
+  "householdRotationHint": "Gemeinsam sichtbar, reihum nach jeder Erledigung",
+  "repeat": "Wiederholung",
+  "rotationTapHint": "Personen in gewünschter Reihenfolge antippen. Erneut antippen entfernt die Person.",
+  "forWhom": "Für wen?",
+  "dueDate": "Fälligkeit",
+  "removeDueDate": "Fälligkeit entfernen",
+  "create": "Anlegen",
+  "title": "Titel",
+  "notes": "Notizen",
+  "caldavPriority": "CalDAV-Priorität",
+  "save": "Speichern",
+  "habiticaTasksUnreadable": "Habitica-Aufgaben nicht lesbar",
+  "habiticaOwnAccount": "Habitica · eigenes Konto",
+  "refreshRemoteTasks": "Remote-Aufgaben aktualisieren",
+  "habiticaExplain": "Der Hub bündelt Aufgaben dieses Kontos. Keine Spiegelung nach Nextcloud, kein Export anderer Aufgaben.",
+  "habiticaUserId": "Habitica-Nutzer-ID (UUID)",
+  "apiKeyChangeOnly": "API-Schlüssel (nur zum Ändern eingeben)",
+  "checkSaveAccount": "Eigenes Konto prüfen und speichern",
+  "serverLabel": "Server: {url}",
+  "@serverLabel": {
+    "placeholders": {
+      "url": {}
+    }
+  },
+  "accountLabel": "Konto: {account}",
+  "@accountLabel": {
+    "placeholders": {
+      "account": {}
+    }
+  },
+  "nativeWritesEnabled": "Native Schreibaktionen freigegeben",
+  "readModeHint": "Lesemodus: Betreiber muss den geprüften Single-Writer-Übergang freigeben.",
+  "unclearResult": "Unklares Operationsergebnis: im Fachsystem prüfen. Keine automatische Wiederholung oder Rückbuchung.",
+  "createNativeHabitica": "Native Habitica-Aufgabe erstellen",
+  "selectRemoteTasks": "Remote-Aufgaben ausdrücklich für die Hub-Ansichten auswählen (kein Kopieren):",
+  "habitMinus": "Habit minus",
+  "habitPlus": "Habit plus",
+  "redeemReward": "Belohnung einlösen",
+  "reopen": "Wieder öffnen",
+  "complete": "Erledigen",
+  "reopenTitle": "„{title}“ wieder öffnen",
+  "@reopenTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "nativeTasksUnreadable": "Native Aufgaben nicht lesbar",
+  "nativeTaskNotFound": "Native Aufgabe in der Aktualisierung nicht gefunden.",
+  "deleteNativeQuestion": "Native Aufgabe endgültig löschen?",
+  "removeDate": "Datum entfernen",
+  "noDate": "Kein Datum",
+  "habiticaDailyTask": "Tägliche Aufgabe",
+  "attrStrength": "Stärke",
+  "attrIntelligence": "Intelligenz",
+  "attrPerception": "Wahrnehmung",
+  "attrConstitution": "Ausdauer",
+  "diffTrivial": "Trivial",
+  "diffEasy": "Leicht",
+  "diffMedium": "Mittel",
+  "diffHard": "Schwer",
+  "recurYearly": "Jährlich",
+  "titleMissing": "Titel fehlt",
+  "apply": "Übernehmen",
+  "nativeFieldsChanged": "Native Aktion bestätigt, aber bearbeitete Felder wurden extern geändert. Neu laden, nichts überschreiben.",
+  "habiticaViewOnly": "Nur Ansicht – Änderungen an Habitica sind für dieses Konto nicht freigegeben.",
+  "type": "Art",
+  "typeFixed": "Art (nach dem Anlegen nicht änderbar)",
+  "difficulty": "Schwierigkeit",
+  "attribute": "Attribut",
+  "dueOn": "Fällig am",
+  "costGold": "Kosten (Gold)",
+  "allowPlus": "Plus zulassen",
+  "allowMinus": "Minus zulassen",
+  "resetCounter": "Zähler zurücksetzen",
+  "frequency": "Rhythmus",
+  "everyXDays": "Alle … Tage",
+  "everyXMonths": "Alle … Monate",
+  "everyXYears": "Alle … Jahre",
+  "everyXWeeks": "Alle … Wochen",
+  "wdMon": "Mo",
+  "wdTue": "Di",
+  "wdWed": "Mi",
+  "wdThu": "Do",
+  "wdFri": "Fr",
+  "wdSat": "Sa",
+  "wdSun": "So",
+  "daysOfMonth": "Tage im Monat (z. B. 1, 15)",
+  "weeksOfMonth": "Wochen im Monat (1–5)",
+  "startsOn": "Beginnt am",
+  "streak": "Serie (Tage in Folge)",
+  "tags": "Tags",
+  "checklist": "Unterpunkte",
+  "checklistLater": "Unterpunkte kannst du nach dem Anlegen hinzufügen.",
+  "editChecklistItem": "Unterpunkt bearbeiten",
+  "moveChecklistItemUp": "Unterpunkt nach oben",
+  "deleteChecklistItem": "Unterpunkt löschen",
+  "addChecklistItem": "Unterpunkt hinzufügen",
+  "collapseChecklist": "Unterpunkte eingeklappt zeigen",
+  "removeReminder": "Erinnerung entfernen",
+  "addReminder": "Erinnerung hinzufügen",
+  "confirmedRefreshFailed": "Änderung bestätigt, Aktualisierung fehlgeschlagen. Bitte ausdrücklich neu laden; nicht wiederholen.",
+  "newHabiticaTask": "Neue Habitica-Aufgabe",
+  "habiticaTask": "Habitica-Aufgabe",
+  "reloadFromHabitica": "Aus Habitica neu laden",
+  "deleteInHabitica": "Aufgabe in Habitica löschen",
+  "shoppingOpenCount": "{count, plural, =0{Einkaufsliste ist leer} =1{1 Artikel offen} other{{count} Artikel offen}}",
+  "@shoppingOpenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventsCountLabel": "{count, plural, =1{Termin} other{Termine}}",
+  "@eventsCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goodMorning": "Guten Morgen",
+  "hello": "Hallo",
+  "goodEvening": "Guten Abend",
+  "nothingTodayTomorrow": "Heute und morgen nichts im Kalender",
+  "allDayLower": "ganztägig",
+  "tasksUnavailable": "Aufgaben gerade nicht verfügbar",
+  "nothingDue": "Nichts fällig 🎉",
+  "mealPlan": "Essensplan",
+  "nothingPlannedToday": "Heute noch nichts geplant",
+  "shoppingList": "Einkaufsliste",
+  "unreadNotifications": "{unread} neue Mitteilungen",
+  "@unreadNotifications": {
+    "placeholders": {
+      "unread": {}
+    }
+  },
+  "mine": "Meine",
+  "forMe": "Für mich",
+  "moreCount": "+ {count} weitere",
+  "@moreCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "addEllipsis": "Hinzufügen…",
+  "houseControlsUnavailable": "Haussteuerung nicht verfügbar. Bitte aktualisieren.",
+  "house": "Haus",
+  "refreshHouse": "Haus aktualisieren",
+  "houseActionUnconfirmed": "Aktion nicht bestätigt. Zustand aktualisieren; nicht automatisch erneut ausführen.",
+  "houseStatesUnavailable": "Haus-Zustände gerade nicht verfügbar",
+  "scene": "Szene",
+  "script": "Skript",
+  "brightness": "Helligkeit",
+  "brightnessOf": "{name}: Helligkeit {value} von 255",
+  "@brightnessOf": {
+    "placeholders": {
+      "name": {},
+      "value": {}
+    }
+  },
+  "item": "Artikel",
+  "noPlanIngredients": "Keine Zutaten aus dem Wochenplan",
+  "nothingOnList": "Nichts auf der Liste",
+  "removedTitle": "„{title}“ entfernt",
+  "@removedTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "add": "Hinzufügen",
+  "ownDish": "Eigenes Gericht",
+  "recipeFromCookidoo": "Rezept aus Cookidoo",
+  "mealOn": "Essen am {day}",
+  "@mealOn": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "dish": "Gericht",
+  "deleteEntryQuestion": "Eintrag löschen?",
+  "removeFromPlanHint": "„{title}“ aus dem Plan entfernen.",
+  "@removeFromPlanHint": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "ingredientsOnCookidooList": "{n} Zutaten auf der Cookidoo-Einkaufsliste",
+  "@ingredientsOnCookidooList": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "ingredientsNext7Days": "Zutaten der nächsten 7 Tage auf die Einkaufsliste",
+  "previousWeek": "Vorige Woche",
+  "thisWeekRange": "Diese Woche · {range}",
+  "@thisWeekRange": {
+    "placeholders": {
+      "range": {}
+    }
+  },
+  "weekNumberRange": "KW {week} · {range}",
+  "@weekNumberRange": {
+    "placeholders": {
+      "week": {},
+      "range": {}
+    }
+  },
+  "nextWeek": "Nächste Woche",
+  "minutesShort": "{minutes} Min.",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "openInCookidoo": "In Cookidoo öffnen",
+  "recipeActions": "Rezept-Aktionen",
+  "ingredientsToList": "Zutaten auf die Einkaufsliste",
+  "removeFromPlan": "Aus dem Plan nehmen",
+  "addMeal": "Essen eintragen",
+  "recipeFor": "Rezept für {day}",
+  "@recipeFor": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "searchCookidoo": "Rezept in Cookidoo suchen",
+  "min3Letters": "Mindestens 3 Buchstaben eingeben",
+  "nothingFound": "Nichts gefunden",
+  "event": "Termin",
+  "noEvents30": "Keine Termine in den nächsten 30 Tagen",
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "newEvent": "Neuer Termin",
+  "allDay": "Ganztägig",
+  "testSentCount": "{count, plural, =1{Test an 1 Gerät gesendet} other{Test an {count} Geräte gesendet}}",
+  "@testSentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "firebaseNotSetUp": "Firebase nicht eingerichtet",
+  "seerrUnavailable": "Seerr gerade nicht erreichbar",
+  "paperlessUser": "Paperless-Nutzer",
+  "voiceAssistant": "Sprachassistent",
+  "newAccess": "Neuer Zugang",
+  "whatFor": "Wofür?",
+  "egVoiceAssistant": "z. B. Sprachassistent",
+  "keyFor": "Schlüssel für „{name}“",
+  "@keyFor": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tokenShownOnce": "Wird nur jetzt angezeigt. Im Assistenten bei der Familienhub-Anbindung eintragen.",
+  "copy": "Kopieren",
+  "copied": "Kopiert",
+  "finished": "Fertig",
+  "assistantAccessExplain": "Mit einem Zugang kann z. B. ein Sprachassistent deine Aufgaben, Einkäufe und Termine lesen und anlegen – immer nur als du. Widerrufen geht jederzeit.",
+  "noAccessYet": "Noch kein Zugang angelegt",
+  "lastUsed": "zuletzt {time}",
+  "@lastUsed": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "neverUsed": "noch nie benutzt",
+  "revoke": "Widerrufen",
+  "imageUnreadable": "Bild nicht lesbar",
+  "cropImage": "Bild zuschneiden",
+  "rotate": "Drehen",
+  "cropHint": "Mit zwei Fingern zoomen, mit einem verschieben",
+  "requestedKindTitle": "{kind} „{title}“ gewünscht",
+  "@requestedKindTitle": {
+    "placeholders": {
+      "kind": {},
+      "title": {}
+    }
+  },
+  "titleOrAuthor": "Titel oder Autor",
+  "min3Chars": "Mindestens 3 Zeichen",
+  "searchWithEnter": "Suchen mit Enter",
+  "clear": "Leeren",
+  "search": "Suchen",
+  "nothingFoundAs": "Nichts als {kind} gefunden",
+  "@nothingFoundAs": {
+    "placeholders": {
+      "kind": {}
+    }
+  },
+  "alreadyRequested": "Schon gewünscht",
+  "request": "Wünschen",
+  "myRequests": "Meine Wünsche",
+  "noRequestsYet": "Noch nichts gewünscht. Oben suchen.",
+  "withdrawRequest": "Wunsch zurückziehen",
+  "caldavFillAll": "Bitte Adresse, Benutzer und App-Passwort eintragen",
+  "saved": "Gespeichert",
+  "caldavExplain": "Aufgaben und eigene Termine laufen über dein Nextcloud-Konto. So bleiben sie mit den Erinnerungen auf dem iPhone abgeglichen. Lege in Nextcloud unter Einstellungen → Sicherheit ein App-Passwort an und trage es hier ein.",
+  "caldavUrl": "CalDAV-Adresse",
+  "username": "Benutzername",
+  "appPassword": "App-Passwort",
+  "savedReenterToChange": "Gespeichert. Zum Ändern neu eingeben.",
+  "reminderCreatedOn": "Erinnerung am {date} angelegt",
+  "@reminderCreatedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "reminderExists": "Erinnerung gibt es schon",
+  "disconnectPaperless": "Paperless-Zugang trennen",
+  "paperlessNotSetUp": "Paperless ist nicht eingerichtet",
+  "searchDocuments": "In Dokumenten suchen",
+  "clearSearch": "Suche leeren",
+  "newest": "Neueste",
+  "hitsCount": "{count} Treffer",
+  "@hitsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "noDocuments": "Keine Dokumente",
+  "deadlines": "Fristen",
+  "remind": "Erinnern",
+  "connectedAs": "Verbunden als {name}",
+  "@connectedAs": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "paperlessTokenInvalid": "Dein Paperless-Zugang gilt nicht mehr",
+  "connectPaperless": "Paperless verbinden",
+  "paperlessExplain": "Der Hub zeigt nur, was du auch selbst in Paperless siehst. Dafür brauchst du dein eigenes API-Token:\n1. Paperless im Browser öffnen\n2. Oben rechts auf deinen Namen → „Mein Profil“\n3. Bei „API-Token“ erzeugen bzw. kopieren und hier einfügen",
+  "paperlessToken": "Paperless-API-Token",
+  "connect": "Verbinden",
+  "books": "Bücher",
+  "signIn": "Anmeldung",
+  "other": "Anderes",
+  "feedbackThanks": "Danke! Die Verwaltung hat deine Rückmeldung bekommen.",
+  "browserFailed": "Browser konnte nicht geöffnet werden",
+  "feedbackPrompt": "Was ist dir aufgefallen? Fehler, Wunsch oder Lob – je genauer, desto besser.",
+  "area": "Bereich",
+  "yourFeedback": "Deine Rückmeldung",
+  "feedbackIncludes": "Mitgeschickt werden App-Version ({appVersion}) und Plattform ({appPlatform}).",
+  "@feedbackIncludes": {
+    "placeholders": {
+      "appVersion": {},
+      "appPlatform": {}
+    }
+  },
+  "toFamilyAdmins": "An die Verwaltung der Familie",
+  "toDevelopers": "An die Entwickler (GitHub)",
+  "githubIssueHint": "Öffnet ein vorausgefülltes GitHub-Issue; abschicken mit deinem eigenen GitHub-Konto.",
+  "requestedKindTitleStatus": "{kind} „{title}“ gewünscht · {status}",
+  "@requestedKindTitleStatus": {
+    "placeholders": {
+      "kind": {},
+      "title": {},
+      "status": {}
+    }
+  },
+  "all": "Alles",
+  "movies": "Filme",
+  "shows": "Serien",
+  "movieOrShow": "Film oder Serie",
+  "present": "Vorhanden",
+  "available": "Verfügbar",
+  "seerrNotSetUp": "Seerr ist noch nicht eingerichtet",
+  "seerrNoUser": "Für dich gibt es noch keinen Seerr-Zugang.\nEinmal bei Seerr mit deinem Jellyfin-Konto anmelden, dann klappt es hier.",
+  "pushEnabledHere": "Mitteilungen auf diesem Gerät aktiviert",
+  "notEnabled": "Nicht aktiviert",
+  "notificationSettings": "Benachrichtigungen",
+  "enablePushHere": "Mitteilungen auf diesem Gerät aktivieren",
+  "pushOffHere": "Push auf diesem Gerät ist aus: {reason}.",
+  "@pushOffHere": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "quietHours": "Ruhezeit",
+  "quietHoursOff": "Ruhezeit aus",
+  "fromTime": "Von {time}",
+  "@fromTime": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "untilTime": "Bis {time}",
+  "@untilTime": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "devices": "Geräte",
+  "noDevices": "Noch kein Gerät registriert",
+  "lastSeen": "zuletzt {time}",
+  "@lastSeen": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "sendTestNotification": "Test-Benachrichtigung senden",
+  "noDeviceReached": "Kein Gerät erreicht. Ist Push eingerichtet und nicht stummgeschaltet?",
+  "noNotifications": "Noch keine Mitteilungen",
+  "withoutPush": "ohne Push",
+  "pluginDisabled": "Abgeschaltet",
+  "pluginActive": "Aktiv",
+  "pluginNotConfigured": "Nicht eingerichtet",
+  "pluginsAccess": "Plugins & Zugänge",
+  "savedKeepEmpty": "Gespeichert – leer lassen, um es zu behalten",
+  "testConnection": "Verbindung testen",
+  "takePhoto": "Foto aufnehmen",
+  "fromGallery": "Aus der Galerie",
+  "imageTooLarge": "Das Bild ist zu groß (höchstens 512 KB).",
+  "avatarSaved": "Profilbild gespeichert",
+  "myProfile": "Mein Profil",
+  "changeAvatar": "Profilbild ändern",
+  "avatarRemoved": "Profilbild entfernt",
+  "removeImage": "Bild entfernen",
+  "displayName": "Anzeigename",
+  "displayNameHint": "So sieht dich die Familie im Hub",
+  "colour": "Farbe",
+  "profileSaved": "Profil gespeichert",
+  "managedByAuthentik": "{username} · über Authentik verwaltet",
+  "@managedByAuthentik": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "createReminder": "Erinnerung anlegen",
+  "noOpenReminders": "Keine offenen Erinnerungen",
+  "firstHome": "Wer zuerst heimkommt",
+  "whenYouGetHome": "Wenn du heimkommst",
+  "noTime": "ohne Zeitpunkt",
+  "forWholeFamily": "Für die ganze Familie",
+  "remindLater": "Später erinnern",
+  "in1Hour": "In 1 Stunde",
+  "in3Hours": "In 3 Stunden",
+  "tomorrow8": "Morgen 8 Uhr",
+  "remindWhat": "Woran erinnern?",
+  "atATime": "Zu einer Zeit",
+  "onArrival": "Beim Heimkommen",
+  "firstHomeGets": "Bekommt, wer zuerst heimkommt",
+  "otherwiseOnlyYou": "Sonst siehst nur du sie",
+  "repeatVerb": "Wiederholen",
+  "time": "Zeitpunkt",
+  "newServiceKey": "Neuer Dienst-Schlüssel",
+  "service": "Dienst",
+  "serviceSenderHint": "Erscheint als Absender im Verlauf",
+  "serviceKeyShownOnce": "Wird nur jetzt angezeigt. Er darf nur Mitteilungen einliefern.",
+  "haExample": "Beispiel für Home Assistant:",
+  "exampleCopied": "Beispiel kopiert",
+  "copyExample": "Beispiel kopieren",
+  "keyCopied": "Schlüssel kopiert",
+  "copyKey": "Schlüssel kopieren",
+  "serviceKeys": "Dienst-Schlüssel",
+  "newKey": "Neuer Schlüssel",
+  "serviceKeysExplain": "Home Assistant, Shelfarr, Paperless & Co. schicken damit Mitteilungen an die Familie (POST /api/notify). Ruhezeiten und Einstellungen jeder Person gelten.",
+  "noServiceKeys": "Noch keine Dienst-Schlüssel",
+  "listPrivate": "Privat",
+  "taskListsExplain": "Private Listen siehst nur du. In Familienlisten dürfen alle schreiben.",
+  "problemsCount": "{count, plural, =0{Alles läuft} =1{1 Problem} other{{count} Probleme}}",
+  "@problemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feedback": "Feedback",
+  "noFeedback": "Noch kein Feedback",
+  "reportOnGithub": "Auf GitHub melden",
+  "maxDevices": "Höchstens {max} – erst ein anderes Gerät abwählen",
+  "@maxDevices": {
+    "placeholders": {
+      "max": {}
+    }
+  },
+  "houseCardSaved": "Haus-Karte gespeichert",
+  "haNotSetUp": "Home Assistant ist noch nicht eingerichtet (Plugins & Zugänge)",
+  "haUnavailable": "Home Assistant gerade nicht erreichbar",
+  "nothingSelected": "Noch nichts ausgewählt",
+  "notInHa": "Nicht mehr in Home Assistant",
+  "houseAdminExplain": "„Schalten“ zeigt das Gerät als Kachel zum Antippen. „Anzeigen“ zeigt nur den Zustand. Reihenfolge per Ziehen.",
+  "control": "Schalten",
+  "show": "Anzeigen",
+  "searchDevice": "Gerät oder Sensor suchen",
+  "notOnCard": "Nicht auf der Karte",
+  "moreHits": "Weitere Treffer: Suche genauer eingeben",
+  "log": "Protokoll",
+  "noWarnings": "Keine Warnungen seit dem letzten Start",
+  "setupWizard": "Einrichtungs-Assistent",
+  "setupWizardHint": "Name, Zeitzone, Dienste und Familie Schritt für Schritt",
+  "familyRoles": "Familie & Rollen",
+  "familyRolesHint": "Personen, Rollen, Verbindungen",
+  "activeCount": "{count} aktiv",
+  "@activeCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "houseAdminHint": "Geräte für die Haus-Karte auswählen",
+  "pluginsHint": "Anschalten, abschalten, Zugangsdaten",
+  "serviceKeysHint": "Home Assistant & Co. benachrichtigen über den Hub",
+  "themes": "Themes",
+  "themesHint": "Designsprachen installieren und entfernen",
+  "feedbackAdminHint": "Rückmeldungen der Familie, weitergeben an GitHub",
+  "logHint": "Letzte Warnungen und Fehler",
+  "healthLine": "{message} · {ms} ms",
+  "@healthLine": {
+    "placeholders": {
+      "message": {},
+      "ms": {}
+    }
+  },
+  "serverVersion": "Server {version}",
+  "@serverVersion": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "pushAndroidDevices": "Push Android: {count} Geräte",
+  "@pushAndroidDevices": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "pushAndroidOff": "Push Android: nicht eingerichtet",
+  "webPushDevices": "Web-Push: {count}",
+  "@webPushDevices": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "createWithoutInvite": "Ohne Einladung anlegen (mit Start-Passwort)",
+  "invitePerson": "Person einladen",
+  "familyRolesExplain": "Anmeldung und Passwörter laufen über die Anmeldung (z. B. Authentik). Hier legst du fest, was jemand im Hub darf.",
+  "neverSignedIn": "noch nie angemeldet",
+  "lastSignIn": "zuletzt {date}",
+  "@lastSignIn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "nameYou": "{name} (du)",
+  "@nameYou": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "userLine": "{username} · {last} · {count} Geräte",
+  "@userLine": {
+    "placeholders": {
+      "username": {},
+      "last": {},
+      "count": {}
+    }
+  },
+  "createPerson": "Person anlegen",
+  "usernameHint": "klein, ohne Leerzeichen",
+  "name": "Name",
+  "email": "E-Mail",
+  "initialPassword": "Start-Passwort",
+  "min10Chars": "mindestens 10 Zeichen",
+  "role": "Rolle",
+  "openInvites": "Offene Einladungen",
+  "newCode": "Neuen Code erzeugen",
+  "withdrawInvite": "Einladung zurückziehen",
+  "enterUserPassword": "Benutzername und Passwort eingeben",
+  "wrongCredentials": "Benutzername oder Passwort falsch",
+  "tooManyAttempts": "Zu viele Versuche, bitte kurz warten",
+  "signInVerb": "Anmelden",
+  "setUp": "Einrichten",
+  "signInAuthentik": "Mit Authentik anmelden",
+  "password": "Passwort",
+  "showPassword": "Passwort zeigen",
+  "hidePassword": "Passwort verbergen",
+  "redeemInvite": "Einladung einlösen",
+  "otherServer": "Anderen Server wählen",
+  "enterServerAddress": "Bitte die Adresse des Servers eingeben",
+  "serverNotRunning": "Server meldet keinen Betrieb",
+  "noHubAt": "Kein Familienhub unter {url} erreichbar ({error})",
+  "@noHubAt": {
+    "placeholders": {
+      "url": {},
+      "error": {}
+    }
+  },
+  "whichServer": "Mit welchem Server soll sich die App verbinden?",
+  "serverAddress": "Server-Adresse",
+  "enterSetupCode": "Einrichtungscode aus dem Server-Log eingeben",
+  "usernameRule": "Benutzername: klein, ohne Leerzeichen (a–z, 0–9, . _ -)",
+  "enterEmail": "E-Mail-Adresse eingeben",
+  "passwordRule": "Passwort: mindestens 10 Zeichen",
+  "passwordsMismatch": "Die Passwörter stimmen nicht überein",
+  "welcomeNewHub": "Willkommen! Dieser Hub ist neu.",
+  "firstAdminExplain": "Lege das erste Konto an – es verwaltet den Hub. Den Einrichtungscode findest du im Server-Log, z. B. mit „docker compose logs familienhub“.",
+  "setupCode": "Einrichtungscode",
+  "yourName": "Dein Name",
+  "repeatPassword": "Passwort wiederholen",
+  "createAccountSetUp": "Konto anlegen und einrichten",
+  "stepBasics": "Grundlagen",
+  "stepServices": "Dienste",
+  "setup": "Einrichtung",
+  "later": "Später",
+  "back": "Zurück",
+  "letsGo": "Los geht’s",
+  "next": "Weiter",
+  "hubNameQuestion": "Wie soll dein Hub heißen?",
+  "hubNameHint": "z. B. „Familie Beispiel“",
+  "timeZone": "Zeitzone",
+  "timeZoneHint": "Für Erinnerungen, Fälligkeiten und „Heute“.",
+  "servicesQuestion": "Welche Dienste nutzt ihr? Richte ein, was ihr habt – alles andere bleibt aus und lässt sich später unter Verwaltung → Plugins nachholen.",
+  "configured": "Eingerichtet",
+  "familyQuestion": "Wer gehört dazu? Lade jede Person ein: Sie bekommt einen Text mit App, Server-Adresse und einem Code, mit dem sie ihr eigenes Passwort festlegt. Mit einem Anmeldedienst wie Authentik meldet sie sich einfach mit derselben E-Mail-Adresse an.",
+  "setupComplete": "Fertig eingerichtet",
+  "noServicesYet": "Noch keine Dienste verbunden – Termine, Erinnerungen und Essensplan funktionieren trotzdem.",
+  "connectedList": "Verbunden: {services}.",
+  "@connectedList": {
+    "placeholders": {
+      "services": {}
+    }
+  },
+  "setupDoneHint": "Alles lässt sich später unter Mehr → Verwaltung ändern. Push-Mitteilungen brauchen ein Firebase-Projekt (siehe Betriebsanleitung).",
+  "validUntil": " (gültig bis {date})",
+  "@validUntil": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "inviteHello": "Hallo {name}, du bist zu unserem Familienhub eingeladen!",
+  "@inviteHello": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "inviteStep1": "1. App holen: Android unter {server}/downloads/ – iPhone: {server} in Safari öffnen und „Zum Home-Bildschirm“ wählen.",
+  "@inviteStep1": {
+    "placeholders": {
+      "server": {}
+    }
+  },
+  "inviteStep2": "2. Server-Adresse in der App: {server}",
+  "@inviteStep2": {
+    "placeholders": {
+      "server": {}
+    }
+  },
+  "inviteStep3Oidc": "3. „Mit Authentik anmelden“ und mit {email} anmelden.",
+  "@inviteStep3Oidc": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "inviteStep3OidcCode": "   Ohne Authentik-Konto: „Einladung einlösen“ mit dem Code {code}{until}.",
+  "@inviteStep3OidcCode": {
+    "placeholders": {
+      "code": {},
+      "until": {}
+    }
+  },
+  "inviteStep3Code": "3. „Einladung einlösen“ tippen, Code {code}{until} eingeben und ein eigenes Passwort festlegen.",
+  "@inviteStep3Code": {
+    "placeholders": {
+      "code": {},
+      "until": {}
+    }
+  },
+  "inviteEmailHint": "Bei Authentik: dieselbe Adresse wie dort",
+  "invite": "Einladen",
+  "inviteFor": "Einladung für {name}",
+  "@inviteFor": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "inviteCopied": "Einladung kopiert – jetzt z. B. per Messenger schicken",
+  "copyText": "Text kopieren",
+  "inviteCodeOnce": "Der Code wird nur jetzt angezeigt. Verloren? In der Familienliste einen neuen erzeugen.",
+  "enterInviteCode": "Den Code aus der Einladung eingeben (12 Zeichen)",
+  "redeemExplain": "Gib den Code aus deiner Einladung ein und lege dein eigenes Passwort fest.",
+  "inviteCode": "Einladungscode",
+  "newPassword": "Neues Passwort",
+  "redeemAndSignIn": "Einlösen und anmelden",
+  "fromMe": "Von mir",
+  "ebook": "E-Book",
+  "audiobook": "Hörbuch",
+  "movie": "Film",
+  "tvShow": "Serie",
+  "goneElsewhere": "Gibt es nicht mehr – wurde woanders gelöscht",
+  "noServer": "Kein Server eingerichtet",
+  "sessionRenewed": "Sitzung erneuert; Aktion nicht wiederholt. Zustand aktualisieren.",
+  "serverError": "Serverfehler ({status})",
+  "@serverError": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "houseActionRunning": "Diese Hausaktion läuft bereits.",
+  "createdTitle": "„{title}“ angelegt",
+  "@createdTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "completedTitle": "„{title}“ erledigt",
+  "@completedTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "noTaskAccount": "Kein eigenes Aufgabenkonto gewählt",
+  "actionRunningUnclear": "Aktion läuft oder Ergebnis unklar. Fachsystem prüfen; nicht wiederholen.",
+  "actionRunning": "Aktion läuft. Fachsystem prüfen; nicht wiederholen.",
+  "addedToList": "„{item}“ auf die Einkaufsliste",
+  "@addedToList": {
+    "placeholders": {
+      "item": {}
+    }
+  },
+  "deletedTitle": "„{title}“ gelöscht",
+  "@deletedTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "ingredientsAdded": "{count} Zutaten hinzugefügt",
+  "@ingredientsAdded": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "requested": "Gewünscht",
+  "creatingInBackground": "Wird im Hintergrund angelegt",
+  "noEvents": "Keine Termine",
+  "nothingDueShort": "Nichts fällig",
+  "widgetListEmpty": "🛒 Liste leer",
+  "widgetOpenCount": "🛒 {count} offen",
+  "@widgetOpenCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "asOfTime": "Stand {time}",
+  "@asOfTime": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "shoppingCount": "Einkauf · {count}",
+  "@shoppingCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "andMore": "\n… und {count} weitere",
+  "@andMore": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "in1HourShort": "In 1 Std.",
+  "iosPushHint": "Auf dem iPhone kommen Mitteilungen über die Web-App: Hub in Safari öffnen, „Zum Home-Bildschirm“ und dort Mitteilungen erlauben.",
+  "firebaseMissing": "Firebase ist in dieser App-Version nicht eingerichtet",
+  "androidNotificationsOff": "Mitteilungen sind in den Android-Einstellungen aus",
+  "pushSetupFailed": "Push konnte nicht eingerichtet werden: {error}",
+  "@pushSetupFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "browserNoNotifications": "Dieser Browser unterstützt keine Mitteilungen",
+  "iosAddToHomeFirst": "Auf dem iPhone zuerst „Zum Home-Bildschirm“ hinzufügen und von dort öffnen",
+  "notificationsBlocked": "Mitteilungen sind für diese Seite blockiert",
+  "webPushNotOnServer": "Web Push ist auf dem Server nicht eingerichtet",
+  "notificationsNotAllowed": "Mitteilungen nicht erlaubt",
+  "webPushFailed": "Web Push fehlgeschlagen: {error}",
+  "@webPushFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "webAppHome": "Web-App (Home-Bildschirm)",
+  "familienhubApp": "Familienhub-App ({platform})",
+  "@familienhubApp": {
+    "placeholders": {
+      "platform": {}
+    }
+  },
+  "widgetAndroid": "Widget (Android-Gerät)",
+  "fromRecipes": "Aus Rezepten",
+  "freeItems": "Freie Artikel",
+  "list": "Liste",
+  "sessionExpired": "Sitzung abgelaufen, bitte neu anmelden"
+}

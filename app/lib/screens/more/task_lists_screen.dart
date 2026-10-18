@@ -5,6 +5,7 @@ import '../../models/common.dart';
 import '../../models/task.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Zuordnung der Nextcloud-Listen: privat, Familie oder ausgeblendet.
 class TaskListsScreen extends ConsumerStatefulWidget {
@@ -20,7 +21,7 @@ class _TaskListsScreenState extends ConsumerState<TaskListsScreen> {
   Object? _error;
   bool _saving = false;
 
-  static const _labels = {'personal': 'Privat', 'family': 'Familie', 'hidden': 'Ausblenden'};
+  static Map<String, String> get _labels => {'personal': l10n.listPrivate, 'family': l10n.family, 'hidden': l10n.hide};
 
   @override
   void initState() {
@@ -60,7 +61,7 @@ class _TaskListsScreenState extends ConsumerState<TaskListsScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
-      showInfo(context, 'Gespeichert');
+      showInfo(context, l10n.saved);
       Navigator.pop(context);
     }
   }
@@ -69,7 +70,7 @@ class _TaskListsScreenState extends ConsumerState<TaskListsScreen> {
   Widget build(BuildContext context) {
     final lists = _lists;
     return Scaffold(
-      appBar: AppBar(title: const Text('Aufgabenlisten')),
+      appBar: AppBar(title: Text(l10n.taskLists)),
       body: _error != null
           ? ErrorView(error: _error!, onRetry: _load)
           : lists == null
@@ -77,9 +78,9 @@ class _TaskListsScreenState extends ConsumerState<TaskListsScreen> {
               : ListView(
                   children: [
                     SourceBanner(source: 'Nextcloud', status: lists.status, error: lists.error),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(16),
-                      child: Text('Private Listen siehst nur du. In Familienlisten dürfen alle schreiben.'),
+                      child: Text(l10n.taskListsExplain),
                     ),
                     for (final l in lists.items)
                       ListTile(
@@ -98,7 +99,7 @@ class _TaskListsScreenState extends ConsumerState<TaskListsScreen> {
                       padding: const EdgeInsets.all(16),
                       child: FilledButton(
                         onPressed: _saving || !lists.isOk ? null : _save,
-                        child: const Text('Speichern'),
+                        child: Text(l10n.save),
                       ),
                     ),
                   ],

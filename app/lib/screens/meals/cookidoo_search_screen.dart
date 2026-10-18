@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/common.dart';
 import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Cookidoo-Rezept suchen und auf [day] legen. Gibt beim Schließen `true` zurück, wenn eingeplant wurde.
 class CookidooSearchScreen extends ConsumerStatefulWidget {
@@ -66,7 +66,7 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
   Widget build(BuildContext context) {
     final result = _result;
     return Scaffold(
-      appBar: AppBar(title: Text('Rezept für ${DateFormat('EEEE', 'de_DE').format(widget.day)}')),
+      appBar: AppBar(title: Text(l10n.recipeFor(localDate('EEEE').format(widget.day)))),
       body: Column(
         children: [
           Padding(
@@ -75,9 +75,9 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
               controller: _query,
               autofocus: true,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Rezept in Cookidoo suchen',
+                hintText: l10n.searchCookidoo,
               ),
               onChanged: _onQuery,
               onSubmitted: (_) => _search(),
@@ -86,12 +86,12 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
           if (_loading) const LinearProgressIndicator(),
           Expanded(
             child: result == null
-                ? const EmptyHint(icon: Icons.restaurant_menu, text: 'Mindestens 3 Buchstaben eingeben')
+                ? EmptyHint(icon: Icons.restaurant_menu, text: l10n.min3Letters)
                 : ListView(
                     children: [
                       SourceBanner(source: 'Cookidoo', status: result.status, error: result.error),
                       if (result.status == SourceStatus.ok && result.items.isEmpty)
-                        const EmptyHint(icon: Icons.search_off, text: 'Nichts gefunden'),
+                        EmptyHint(icon: Icons.search_off, text: l10n.nothingFound),
                       for (final r in result.items)
                         ListTile(
                           leading: RecipeThumb(url: r.thumbnail),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final serviceKeysProvider = FutureProvider.autoDispose<List<ServiceKeyInfo>>(
     (ref) => ref.watch(apiClientProvider).serviceKeys());
@@ -31,15 +31,15 @@ class ServiceKeysScreen extends ConsumerWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Neuer Dienst-Schlüssel'),
+        title: Text(l10n.newServiceKey),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Dienst', helperText: 'Erscheint als Absender im Verlauf'),
+          decoration: InputDecoration(labelText: l10n.service, helperText: l10n.serviceSenderHint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Abbrechen')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Anlegen')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: Text(l10n.create)),
         ],
       ),
     );
@@ -55,18 +55,18 @@ class ServiceKeysScreen extends ConsumerWidget {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: Text('Schlüssel für „${created.name}“'),
+          title: Text(l10n.keyFor(created.name)),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Wird nur jetzt angezeigt. Er darf nur Mitteilungen einliefern.'),
+                Text(l10n.serviceKeyShownOnce),
                 const SizedBox(height: 8),
                 SelectableText(created.key ?? '', key: const Key('new-service-key'),
                     style: const TextStyle(fontFamily: 'monospace')),
                 const SizedBox(height: 16),
-                const Text('Beispiel für Home Assistant:'),
+                Text(l10n.haExample),
                 const SizedBox(height: 4),
                 SelectableText(example, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
               ],
@@ -76,18 +76,18 @@ class ServiceKeysScreen extends ConsumerWidget {
             TextButton(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: example));
-                showInfo(ctx, 'Beispiel kopiert');
+                showInfo(ctx, l10n.exampleCopied);
               },
-              child: const Text('Beispiel kopieren'),
+              child: Text(l10n.copyExample),
             ),
             TextButton(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: created.key ?? ''));
-                showInfo(ctx, 'Schlüssel kopiert');
+                showInfo(ctx, l10n.keyCopied);
               },
-              child: const Text('Schlüssel kopieren'),
+              child: Text(l10n.copyKey),
             ),
-            FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fertig')),
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.finished)),
           ],
         ),
       );
@@ -99,32 +99,31 @@ class ServiceKeysScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(serviceKeysProvider);
-    final fmt = DateFormat('d.M.yyyy HH:mm', 'de_DE');
+    final fmt = localDate('d.M.yyyy HH:mm');
     return Scaffold(
-      appBar: AppBar(title: const Text('Dienst-Schlüssel')),
+      appBar: AppBar(title: Text(l10n.serviceKeys)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _create(context, ref),
         icon: const Icon(Icons.vpn_key_outlined),
-        label: const Text('Neuer Schlüssel'),
+        label: Text(l10n.newKey),
       ),
       body: async.when(
         loading: () => const Center(child: HubLoader()),
         error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(serviceKeysProvider)),
         data: (keys) => ListView(
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
-              child: Text('Home Assistant, Shelfarr, Paperless & Co. schicken damit Mitteilungen an die Familie '
-                  '(POST /api/notify). Ruhezeiten und Einstellungen jeder Person gelten.'),
+              child: Text(l10n.serviceKeysExplain),
             ),
-            if (keys.isEmpty) const EmptyHint(icon: Icons.vpn_key_off_outlined, text: 'Noch keine Dienst-Schlüssel'),
+            if (keys.isEmpty) EmptyHint(icon: Icons.vpn_key_off_outlined, text: l10n.noServiceKeys),
             for (final k in keys)
               ListTile(
                 leading: const Icon(Icons.vpn_key_outlined),
                 title: Text(k.name),
                 subtitle: Text('${k.hint}… · ${k.lastUsedAt != null ? 'zuletzt ${fmt.format(k.lastUsedAt!)}' : 'noch nie benutzt'}'),
                 trailing: IconButton(
-                  tooltip: 'Widerrufen',
+                  tooltip: l10n.revoke,
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () async {
                     if (await runAction(context, () => ref.read(apiClientProvider).revokeServiceKey(k.id))) {

@@ -6,12 +6,13 @@ import '../../models/themes.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 String _status(AdminPlugin p) => p.disabled
-    ? 'Abgeschaltet'
+    ? l10n.pluginDisabled
     : p.configured
-        ? 'Aktiv'
-        : 'Nicht eingerichtet';
+        ? l10n.pluginActive
+        : l10n.pluginNotConfigured;
 
 /// Nur Admins: Plugins an-/abschalten und ihre Zugänge pflegen (`/api/admin/settings`).
 class PluginsAdminScreen extends ConsumerWidget {
@@ -28,7 +29,7 @@ class PluginsAdminScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminPluginsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Plugins & Zugänge')),
+      appBar: AppBar(title: Text(l10n.pluginsAccess)),
       body: HubRefresh(
         onRefresh: () => ref.refresh(adminPluginsProvider.future),
         child: async.when(
@@ -122,7 +123,7 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
-      showInfo(context, 'Gespeichert');
+      showInfo(context, l10n.saved);
       Navigator.pop(context, true);
     }
   }
@@ -149,7 +150,7 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
                 decoration: InputDecoration(
                   labelText: f.required ? '${f.label} *' : f.label,
                   helperText: f.secret && f.isSet
-                      ? 'Gespeichert – leer lassen, um es zu behalten'
+                      ? l10n.savedKeepEmpty
                       : (f.help.isEmpty ? null : f.help),
                   helperMaxLines: 3,
                 ),
@@ -164,7 +165,7 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
               key: const Key('plugin-test'),
               onPressed: _testing ? null : _test,
               icon: _testing ? const HubLoader(size: 18) : const Icon(Icons.network_check),
-              label: const Text('Verbindung testen'),
+              label: Text(l10n.testConnection),
             ),
           ),
           if (_result != null) ConnectionResultCard(result: _result!),
@@ -173,7 +174,7 @@ class _PluginSettingsScreenState extends ConsumerState<PluginSettingsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : _save,
         icon: const Icon(Icons.save_outlined),
-        label: const Text('Speichern'),
+        label: Text(l10n.save),
       ),
     );
   }

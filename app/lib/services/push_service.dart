@@ -9,6 +9,7 @@ import '../models/account.dart';
 import 'api_client.dart';
 import 'notification_actions.dart';
 import 'web_platform.dart' as webp;
+import '../l10n/l10n.dart';
 
 /// Push: Android über Firebase Cloud Messaging, Web (Safari/iOS, Browser) über Web Push.
 ///
@@ -40,14 +41,13 @@ class PushService {
     }
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       // Selbst installierte iPhone-App (Sideload, kostenlose Apple-ID): Apple erlaubt dort keine Push-Mitteilungen.
-      lastError = 'Auf dem iPhone kommen Mitteilungen über die Web-App: Hub in Safari öffnen, „Zum Home-Bildschirm“ '
-          'und dort Mitteilungen erlauben.';
+      lastError = l10n.iosPushHint;
       return;
     }
     try {
       await Firebase.initializeApp();
     } catch (e) {
-      lastError = 'Firebase ist in dieser App-Version nicht eingerichtet';
+      lastError = l10n.firebaseMissing;
       debugPrint('[push] Firebase nicht verfügbar: $e');
       return;
     }
@@ -57,7 +57,7 @@ class PushService {
       // Android 13+: fragt POST_NOTIFICATIONS ab
       final settings = await messaging.requestPermission();
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        lastError = 'Mitteilungen sind in den Android-Einstellungen aus';
+        lastError = l10n.androidNotificationsOff;
         return;
       }
       final token = await messaging.getToken();
@@ -71,7 +71,7 @@ class PushService {
       if (initial != null) _openFromMessage(initial);
       available = true;
     } catch (e) {
-      lastError = 'Push konnte nicht eingerichtet werden: $e';
+      lastError = l10n.pushSetupFailed(e);
       debugPrint('[push] $e');
     }
   }
@@ -81,10 +81,10 @@ class PushService {
     if (!kIsWeb) return null;
     if (!webp.webPushSupported) {
       return webp.isStandalone()
-          ? 'Dieser Browser unterstützt keine Mitteilungen'
-          : 'Auf dem iPhone zuerst „Zum Home-Bildschirm“ hinzufügen und von dort öffnen';
+          ? l10n.browserNoNotifications
+          : l10n.iosAddToHomeFirst;
     }
-    if (webp.webPushPermission() == 'denied') return 'Mitteilungen sind für diese Seite blockiert';
+    if (webp.webPushPermission() == 'denied') return l10n.notificationsBlocked;
     return null;
   }
 
@@ -96,12 +96,12 @@ class PushService {
     try {
       final key = vapidKey ?? await api.vapidPublicKey();
       if (key == null) {
-        lastError = 'Web Push ist auf dem Server nicht eingerichtet';
+        lastError = l10n.webPushNotOnServer;
         return false;
       }
       final sub = await webp.subscribeWebPush(key, prompt: prompt);
       if (sub == null) {
-        lastError = webPushHint() ?? 'Mitteilungen nicht erlaubt';
+        lastError = webPushHint() ?? l10n.notificationsNotAllowed;
         return false;
       }
       await api.registerWebPush(subscription: sub, deviceName: _deviceName());
@@ -109,7 +109,7 @@ class PushService {
       lastError = null;
       return true;
     } catch (e) {
-      lastError = 'Web Push fehlgeschlagen: $e';
+      lastError = l10n.webPushFailed(e);
       debugPrint('[push] $e');
       return false;
     }
@@ -124,8 +124,8 @@ class PushService {
   }
 
   String _deviceName() {
-    if (kIsWeb) return webp.isStandalone() ? 'Web-App (Home-Bildschirm)' : 'Browser';
-    return 'Familienhub-App (${defaultTargetPlatform.name})';
+    if (kIsWeb) return webp.isStandalone() ? l10n.webAppHome : 'Browser';
+    return l10n.familienhubApp(defaultTargetPlatform.name);
   }
 
   Future<void> _setupLocalNotifications() async {

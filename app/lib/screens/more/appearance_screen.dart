@@ -5,6 +5,7 @@ import '../../models/themes.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Farbschema wählen (pro Gerät). Admins können Themes aus GitHub installieren und wieder entfernen.
 class AppearanceScreen extends ConsumerWidget {
@@ -16,21 +17,21 @@ class AppearanceScreen extends ConsumerWidget {
       builder: (ctx) {
         final c = TextEditingController();
         return AlertDialog(
-          title: const Text('Theme aus GitHub'),
+          title: Text(l10n.themeFromGithub),
           content: TextField(
             controller: c,
             autofocus: true,
             keyboardType: TextInputType.url,
-            decoration: const InputDecoration(
-              labelText: 'GitHub-Adresse',
+            decoration: InputDecoration(
+              labelText: l10n.githubAddress,
               hintText: 'https://github.com/name/repo',
-              helperText: 'Das Repository braucht eine theme.json.',
+              helperText: l10n.themeRepoNeedsJson,
             ),
             onSubmitted: (v) => Navigator.pop(ctx, v),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Abbrechen')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: const Text('Installieren')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(l10n.install)),
           ],
         );
       },
@@ -45,11 +46,11 @@ class AppearanceScreen extends ConsumerWidget {
     final sure = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Theme entfernen?'),
-        content: Text('„${spec.name}“ steht danach niemandem mehr zur Auswahl.'),
+        title: Text(l10n.themeRemoveQuestion),
+        content: Text(l10n.themeRemoveHint(spec.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Entfernen')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.remove)),
         ],
       ),
     );
@@ -68,12 +69,12 @@ class AppearanceScreen extends ConsumerWidget {
     final choice = ref.read(themeChoiceProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Darstellung')),
+      appBar: AppBar(title: Text(l10n.appearance)),
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               onPressed: () => _install(context, ref),
               icon: const Icon(Icons.download_outlined),
-              label: const Text('Aus GitHub'),
+              label: Text(l10n.fromGithub),
             )
           : null,
       body: HubRefresh(
@@ -81,27 +82,39 @@ class AppearanceScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 96),
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Text('Gilt nur für dieses Gerät.'),
+              child: Text(l10n.onlyThisDevice),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: SegmentedButton<ThemeMode>(
                 key: const Key('theme-mode'),
-                segments: const [
-                  ButtonSegment(value: ThemeMode.system, label: Text('Automatisch'), icon: Icon(Icons.brightness_auto_outlined)),
-                  ButtonSegment(value: ThemeMode.light, label: Text('Hell'), icon: Icon(Icons.light_mode_outlined)),
-                  ButtonSegment(value: ThemeMode.dark, label: Text('Dunkel'), icon: Icon(Icons.dark_mode_outlined)),
+                segments: [
+                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.modeAuto), icon: Icon(Icons.brightness_auto_outlined)),
+                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.modeLight), icon: Icon(Icons.light_mode_outlined)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.modeDark), icon: Icon(Icons.dark_mode_outlined)),
                 ],
                 selected: {ref.watch(themeModeProvider)},
                 onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).select(s.first),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: SegmentedButton<String>(
+                key: const Key('app-language'),
+                segments: [
+                  ButtonSegment(value: 'system', label: Text(l10n.languageSystem), icon: const Icon(Icons.translate)),
+                  for (final e in appLanguages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
+                ],
+                selected: {ref.watch(languageChoiceProvider)},
+                onSelectionChanged: (s) => ref.read(languageChoiceProvider.notifier).select(s.first),
+              ),
+            ),
             _ThemeTile(
               key: const Key('theme-standard'),
-              name: 'Standard',
-              subtitle: 'Dunkel, violett',
+              name: l10n.themeDefault,
+              subtitle: l10n.themeDefaultHint,
               swatches: const [Color(0xFF0B0C16), Color(0xFF151726), Color(0xFFA78BFA), Color(0xFF00B4D8)],
               selected: chosen == null,
               onTap: () => choice.select(null),
@@ -115,8 +128,8 @@ class AppearanceScreen extends ConsumerWidget {
                     key: Key('theme-${t.id}'),
                     name: t.name,
                     subtitle: [
-                      t.builtin ? 'Mitgeliefert' : 'Installiert',
-                      if (t.hasBothModes) 'Hell + Dunkel' else (t.brightness == Brightness.dark ? 'nur Dunkel' : 'nur Hell'),
+                      t.builtin ? l10n.themeBuiltin : l10n.themeInstalled,
+                      if (t.hasBothModes) l10n.themeLightDark else (t.brightness == Brightness.dark ? l10n.themeDarkOnly : l10n.themeLightOnly),
                     ].join(' · '),
                     // Vorschau in der Fassung, die gerade gilt
                     swatches: [
@@ -178,7 +191,7 @@ class _ThemeTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (onDelete != null)
-            IconButton(tooltip: 'Theme entfernen', onPressed: onDelete, icon: const Icon(Icons.delete_outline)),
+            IconButton(tooltip: l10n.themeRemove, onPressed: onDelete, icon: const Icon(Icons.delete_outline)),
           Icon(selected ? Icons.check_circle : Icons.circle_outlined,
               color: selected ? scheme.primary : scheme.onSurfaceVariant),
         ],

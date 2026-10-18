@@ -2,13 +2,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/common.dart';
 import '../../models/documents.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 final _deadlinesProvider = FutureProvider.autoDispose((ref) => ref.watch(apiClientProvider).paperlessDeadlines());
 final _recentProvider = FutureProvider.autoDispose((ref) => ref.watch(apiClientProvider).paperlessRecent());
@@ -58,7 +58,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   Future<void> _remind(PaperlessDoc d) async {
     try {
       final created = await ref.read(apiClientProvider).paperlessRemind(d.id);
-      if (mounted) showInfo(context, created ? 'Erinnerung am ${DateFormat('d.M.', 'de_DE').format(d.deadline!)} angelegt' : 'Erinnerung gibt es schon');
+      if (mounted) showInfo(context, created ? l10n.reminderCreatedOn(localDate('d.M.').format(d.deadline!)) : l10n.reminderExists);
     } catch (e) {
       if (mounted) showError(context, e);
     }
@@ -70,7 +70,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final needsAccount = recent.valueOrNull?.needsAccount ?? false;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dokumente'),
+        title: Text(l10n.documents),
         actions: [
           if (!needsAccount && recent.hasValue)
             PopupMenuButton<String>(
@@ -78,7 +78,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 await ref.read(apiClientProvider).disconnectPaperless();
                 await _refresh();
               },
-              itemBuilder: (_) => const [PopupMenuItem(value: 'disconnect', child: Text('Paperless-Zugang trennen'))],
+              itemBuilder: (_) => [PopupMenuItem(value: 'disconnect', child: Text(l10n.disconnectPaperless))],
             ),
         ],
       ),
@@ -89,7 +89,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           error: (e, _) => ErrorView(error: e, onRetry: _refresh),
           data: (list) {
             if (list.status == 'not_configured') {
-              return ListView(children: const [EmptyHint(icon: Icons.description_outlined, text: 'Paperless ist nicht eingerichtet')]);
+              return ListView(children: [EmptyHint(icon: Icons.description_outlined, text: l10n.paperlessNotSetUp)]);
             }
             if (list.needsAccount) return _ConnectView(failed: list.status == 'auth_failed', onConnected: _refresh);
             final shown = _results ?? list;
@@ -106,10 +106,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     onSubmitted: (_) => _search(), // Suche nur per Enter, nicht bei jedem Buchstaben
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search),
-                      hintText: 'In Dokumenten suchen',
+                      hintText: l10n.searchDocuments,
                       suffixIcon: _results == null
                           ? null
-                          : IconButton(tooltip: 'Suche leeren', icon: const Icon(Icons.close),
+                          : IconButton(tooltip: l10n.clearSearch, icon: const Icon(Icons.close),
                               onPressed: () => setState(() { _query.clear(); _results = null; })),
                     ),
                   ),
@@ -117,8 +117,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 if (_searching) const Center(child: HubLoader(size: 32)),
                 if (list.status == 'unavailable') SourceBanner(source: 'Paperless', status: SourceStatus.unavailable, error: list.error),
                 if (_results == null) _Deadlines(onRemind: _remind),
-                _SectionTitle(_results == null ? 'Neueste' : '${shown.items.length} Treffer'),
-                if (shown.items.isEmpty) const EmptyHint(icon: Icons.search_off, text: 'Keine Dokumente'),
+                _SectionTitle(_results == null ? l10n.newest : l10n.hitsCount(shown.items.length)),
+                if (shown.items.isEmpty) EmptyHint(icon: Icons.search_off, text: l10n.noDocuments),
                 for (final d in shown.items) _DocTile(doc: d),
               ],
             );
@@ -149,7 +149,7 @@ class _Deadlines extends ConsumerWidget {
     if (list == null || list.items.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const _SectionTitle('Fristen'),
+      _SectionTitle(l10n.deadlines),
       for (final d in list.items)
         ListTile(
           key: ValueKey('deadline-${d.id}'),
@@ -161,14 +161,14 @@ class _Deadlines extends ConsumerWidget {
             // FittedBox: auch bei großer Systemschrift kein Überlauf in der 48-px-Kachel
             child: FittedBox(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(DateFormat('d.', 'de_DE').format(d.deadline!), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, height: 1.1)),
-                Text(DateFormat('MMM', 'de_DE').format(d.deadline!), style: theme.textTheme.labelSmall?.copyWith(height: 1.1)),
+                Text(localDate('d.').format(d.deadline!), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, height: 1.1)),
+                Text(localDate('MMM').format(d.deadline!), style: theme.textTheme.labelSmall?.copyWith(height: 1.1)),
               ]),
             ),
           ),
           title: Text(d.task ?? d.title),
           subtitle: Text([d.correspondent, d.title].whereType<String>().join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: IconButton(tooltip: 'Erinnern', icon: const Icon(Icons.alarm_add), onPressed: () => onRemind(d)),
+          trailing: IconButton(tooltip: l10n.remind, icon: const Icon(Icons.alarm_add), onPressed: () => onRemind(d)),
           onTap: () => _open(d.url),
         ),
     ]);
@@ -187,7 +187,7 @@ class _DocTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final meta = [doc.correspondent, if (doc.created != null) DateFormat('d.M.yyyy', 'de_DE').format(doc.created!)]
+    final meta = [doc.correspondent, if (doc.created != null) localDate('d.M.yyyy').format(doc.created!)]
         .whereType<String>()
         .join(' · ');
     return ListTile(
@@ -238,7 +238,7 @@ class _ConnectViewState extends ConsumerState<_ConnectView> {
     setState(() => _busy = true);
     try {
       final r = await ref.read(apiClientProvider).connectPaperless(_token.text.trim());
-      if (mounted) showInfo(context, 'Verbunden als ${r['username'] ?? 'Paperless-Nutzer'}');
+      if (mounted) showInfo(context, l10n.connectedAs(r['username'] ?? l10n.paperlessUser));
       await widget.onConnected();
     } catch (e) {
       if (mounted) showError(context, e);
@@ -253,11 +253,9 @@ class _ConnectViewState extends ConsumerState<_ConnectView> {
     return ListView(padding: const EdgeInsets.all(20), children: [
       Icon(Icons.description_outlined, size: 48, color: theme.colorScheme.primary),
       const SizedBox(height: 12),
-      Text(widget.failed ? 'Dein Paperless-Zugang gilt nicht mehr' : 'Paperless verbinden', style: theme.textTheme.titleLarge),
+      Text(widget.failed ? l10n.paperlessTokenInvalid : l10n.connectPaperless, style: theme.textTheme.titleLarge),
       const SizedBox(height: 8),
-      const Text('Der Hub zeigt nur, was du auch selbst in Paperless siehst. Dafür brauchst du dein eigenes API-Token:\n'
-          '1. Paperless im Browser öffnen\n2. Oben rechts auf deinen Namen → „Mein Profil“\n'
-          '3. Bei „API-Token“ erzeugen bzw. kopieren und hier einfügen'),
+      Text(l10n.paperlessExplain),
       const SizedBox(height: 16),
       TextField(
         key: const Key('paperless-token'),
@@ -265,14 +263,14 @@ class _ConnectViewState extends ConsumerState<_ConnectView> {
         obscureText: true,
         autocorrect: false,
         enableSuggestions: false,
-        decoration: const InputDecoration(labelText: 'Paperless-API-Token'),
+        decoration: InputDecoration(labelText: l10n.paperlessToken),
         onSubmitted: (_) => _connect(),
       ),
       const SizedBox(height: 16),
       FilledButton(
         key: const Key('paperless-connect'),
         onPressed: _busy ? null : _connect,
-        child: _busy ? const HubLoader(size: 20) : const Text('Verbinden'),
+        child: _busy ? const HubLoader(size: 20) : Text(l10n.connect),
       ),
     ]);
   }

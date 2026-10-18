@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:familienhub/l10n/l10n.dart';
 import 'package:familienhub/providers/providers.dart';
 import 'package:familienhub/services/api_client.dart';
 import 'package:familienhub/services/session_store.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 typedef Handler = http.Response Function(http.Request request);
@@ -54,8 +54,10 @@ Map<String, dynamic> bodyOf(http.Request r) => jsonDecode(r.body) as Map<String,
 
 Future<void> setUpTestEnv() async {
   SharedPreferences.setMockInitialValues({});
-  Intl.defaultLocale = 'de_DE';
-  await initializeDateFormatting('de_DE');
+  // Tests laufen auf Deutsch (Gerätesprache und App-Sprache), englische Tests setzen es selbst um
+  TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher.localeTestValue = const Locale('de', 'DE');
+  await initializeDateFormatting();
+  setAppLanguage('de');
 }
 
 const meJson = {'id': 1, 'username': 'alex', 'full_name': 'Alex', 'is_admin': true};
