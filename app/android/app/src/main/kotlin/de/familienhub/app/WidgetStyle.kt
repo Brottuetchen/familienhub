@@ -95,7 +95,7 @@ object WidgetStyle {
         views.setViewPadding(
             R.id.widget_content,
             pad + border + (if (s.shadow == "soft") extra else 0),
-            pad / 2 + border + (if (s.shadow == "soft") extra / 2 else 0),
+            border + (if (s.shadow == "soft") extra / 2 else 0),
             pad + border + extra,
             pad + border + extra,
         )

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_today_label">Familienhub – Today</string>
+    <string name="widget_events_label">Familienhub – Events</string>
+    <string name="widget_tasks_label">Familienhub – Tasks</string>
+    <string name="widget_shopping_label">Familienhub – Shopping</string>
+    <string name="widget_today_description">Events, tasks and shopping at a glance – customisable</string>
+    <string name="widget_events_description">The family\'s upcoming events</string>
+    <string name="widget_tasks_description">Open tasks</string>
+    <string name="widget_shopping_description">The shopping list</string>
+
+    <string name="section_events">Events</string>
+    <string name="section_tasks">Tasks</string>
+    <string name="section_shopping">Shopping</string>
+    <string name="widget_title_today">Today</string>
+    <string name="widget_more">+%d more</string>
+    <string name="widget_login">Sign in via the app</string>
+
+    <string name="config_title">Customise widget</string>
+    <string name="config_hint">Which sections should the widget show?</string>
+    <string name="config_save">Save</string>
+    <string name="config_cancel">Cancel</string>
+    <string name="config_min_one">At least one section must be enabled.</string>
+
+    <string name="preview_today_title">Sunday, 18 October</string>
+    <string name="preview_event_1">09:30  Dentist</string>
+    <string name="preview_event_2">15:00  Birthday party</string>
+    <string name="preview_event_3">tomorrow 18:30  Parents\' evening</string>
+    <string name="preview_task_1">○  Take out the bins</string>
+    <string name="preview_task_2">○  Collect parcel</string>
+    <string name="preview_task_3">○  Water the plants</string>
+    <string name="preview_item_1">•  Milk</string>
+    <string name="preview_item_2">•  Bread</string>
+    <string name="preview_item_3">•  Apples</string>
+</resources>

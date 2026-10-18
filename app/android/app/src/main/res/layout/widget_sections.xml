@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared layout of all Familienhub widgets (Today, Events, Tasks, Shopping); filled by SectionsRenderer.kt -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Background in the style of the app theme, drawn at runtime (WidgetStyle.kt) -->
+    <ImageView android:id="@+id/widget_bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="fitXY" android:src="@drawable/widget_background" android:importantForAccessibility="no" />
+
+    <LinearLayout android:id="@+id/widget_content" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp"
+        android:paddingTop="0dp" android:paddingBottom="12dp">
+
+        <!-- Header: 44 dp, matches the coloured band of band themes -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <ImageView android:id="@+id/header_icon" android:layout_width="20dp" android:layout_height="20dp"
+                android:layout_marginEnd="8dp" android:visibility="gone" android:importantForAccessibility="no"
+                android:src="@drawable/ic_widget_events" />
+            <TextView android:id="@+id/widget_title" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:textSize="16sp" android:textStyle="bold"
+                android:maxLines="1" android:ellipsize="end" android:textColor="#FFA78BFA" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/widget_meal" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:textSize="12sp" android:maxLines="1" android:ellipsize="end"
+            android:visibility="gone" android:textColor="#99FFFFFF" />
+
+        <LinearLayout android:id="@+id/widget_body" android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" android:orientation="vertical">
+
+            <LinearLayout android:id="@+id/sec_events" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <LinearLayout android:id="@+id/sec_events_head" android:layout_width="match_parent" android:layout_height="22dp"
+                    android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+                    <ImageView android:id="@+id/sec_events_icon" android:layout_width="14dp" android:layout_height="14dp"
+                        android:layout_marginEnd="6dp" android:src="@drawable/ic_widget_events" android:importantForAccessibility="no" />
+                    <TextView android:id="@+id/sec_events_label" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.06" android:maxLines="1"
+                        android:textColor="#99FFFFFF" />
+                </LinearLayout>
+                <TextView android:id="@+id/sec_events_empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:textStyle="italic" android:textColor="#99FFFFFF" />
+                <TextView android:id="@+id/events_row_0" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_3" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_4" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_5" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_6" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_7" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_8" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_9" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_10" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_11" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_12" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/events_row_13" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/sec_tasks" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <LinearLayout android:id="@+id/sec_tasks_head" android:layout_width="match_parent" android:layout_height="22dp"
+                    android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+                    <ImageView android:id="@+id/sec_tasks_icon" android:layout_width="14dp" android:layout_height="14dp"
+                        android:layout_marginEnd="6dp" android:src="@drawable/ic_widget_tasks" android:importantForAccessibility="no" />
+                    <TextView android:id="@+id/sec_tasks_label" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.06" android:maxLines="1"
+                        android:textColor="#99FFFFFF" />
+                </LinearLayout>
+                <TextView android:id="@+id/sec_tasks_empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:textStyle="italic" android:textColor="#99FFFFFF" />
+                <TextView android:id="@+id/tasks_row_0" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_3" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_4" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_5" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_6" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_7" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_8" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_9" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_10" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_11" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_12" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/tasks_row_13" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/sec_shopping" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <LinearLayout android:id="@+id/sec_shopping_head" android:layout_width="match_parent" android:layout_height="22dp"
+                    android:layout_marginTop="6dp" android:orientation="horizontal" android:gravity="center_vertical">
+                    <ImageView android:id="@+id/sec_shopping_icon" android:layout_width="14dp" android:layout_height="14dp"
+                        android:layout_marginEnd="6dp" android:src="@drawable/ic_widget_shopping" android:importantForAccessibility="no" />
+                    <TextView android:id="@+id/sec_shopping_label" android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.06" android:maxLines="1"
+                        android:textColor="#99FFFFFF" />
+                </LinearLayout>
+                <TextView android:id="@+id/sec_shopping_empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:textStyle="italic" android:textColor="#99FFFFFF" />
+                <TextView android:id="@+id/shopping_row_0" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_3" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_4" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_5" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_6" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_7" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_8" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_9" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_10" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_11" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_12" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+                <TextView android:id="@+id/shopping_row_13" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textSize="13sp" android:maxLines="1"
+                    android:ellipsize="end" android:textColor="#FFFFFFFF" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:id="@+id/widget_updated" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:gravity="end" android:textSize="10sp" android:maxLines="1"
+            android:textColor="#80FFFFFF" />
+    </LinearLayout>
+</FrameLayout>

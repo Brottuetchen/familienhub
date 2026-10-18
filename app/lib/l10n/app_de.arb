@@ -1037,6 +1037,7 @@
       "count": {}
     }
   },
+  "widgetTomorrow": "morgen",
   "asOfTime": "Stand {time}",
   "@asOfTime": {
     "placeholders": {

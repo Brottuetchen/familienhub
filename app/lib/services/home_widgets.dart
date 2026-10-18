@@ -10,18 +10,23 @@ import '../models/shopping.dart';
 import '../models/today.dart';
 import '../l10n/l10n.dart';
 
-/// Android-Startbildschirm-Widgets „Heute“ und „Einkauf“.
+/// Android home-screen widgets "Today" (configurable), "Events", "Tasks" and "Shopping".
 ///
-/// Die App schreibt fertige Texte in den Widget-Speicher; die Kotlin-Provider
-/// (TodayWidgetProvider, ShoppingWidgetProvider) zeigen sie nur an.
+/// The app writes ready-made texts into the widget storage; the Kotlin providers only render them.
+/// List sections are stored as newline separated rows (events: `when<TAB>title`), see [todayTexts] and
+/// [shoppingTexts]. All providers share the same keys, so every update refreshes all of them.
 class HomeWidgets {
   static const todayProvider = 'de.familienhub.app.TodayWidgetProvider';
   static const shoppingProvider = 'de.familienhub.app.ShoppingWidgetProvider';
   static const sessionKey = 'widget_session';
-  static const _all = [todayProvider, shoppingProvider];
+  static const eventsProvider = 'de.familienhub.app.EventsWidgetProvider';
+  static const tasksProvider = 'de.familienhub.app.TasksWidgetProvider';
+  static const _all = [todayProvider, eventsProvider, tasksProvider, shoppingProvider];
   static const contentKeys = [
-    'today_title', 'today_events', 'today_tasks', 'today_meal', 'today_shopping', 'today_updated',
-    'shopping_count', 'shopping_items', 'shopping_updated',
+    'today_title', 'today_meal', 'today_updated',
+    'events_items', 'events_empty', 'events_label',
+    'tasks_items', 'tasks_empty', 'tasks_label',
+    'shopping_items', 'shopping_empty', 'shopping_label', 'shopping_updated',
   ];
 
   static bool get supported => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -97,18 +102,18 @@ class HomeWidgets {
   }
 
   /// Fehler (z. B. kein Widget-Plugin in Tests) brechen nie das Laden der Daten ab.
-  static Future<void> updateToday(TodayData d, {DateTime? now}) => _write(todayTexts(d, now: now), [todayProvider]);
+  static Future<void> updateToday(TodayData d, {DateTime? now}) => _write(todayTexts(d, now: now));
 
   static Future<void> updateShopping(ShoppingData d, {DateTime? now}) =>
-      _write(shoppingTexts(d, now: now), [shoppingProvider]);
+      _write(shoppingTexts(d, now: now));
 
-  static Future<void> _write(Map<String, String> texts, List<String> providers) async {
+  static Future<void> _write(Map<String, String> texts) async {
     if (!supported) return;
     try {
       for (final e in texts.entries) {
         await HomeWidget.saveWidgetData<String>(e.key, e.value);
       }
-      for (final p in providers) {
+      for (final p in _all) {
         await HomeWidget.updateWidget(qualifiedAndroidName: p);
       }
     } catch (e) {
@@ -119,38 +124,47 @@ class HomeWidgets {
 
 String _time(DateTime t) => localDate('HH:mm').format(t.toLocal());
 
-/// Texte für das Widget „Heute“ (rein, testbar).
+/// Maximum rows stored per list section (the widgets show as many as fit and add "+N more").
+const widgetMaxRows = 20;
+
+String _oneLine(String s) => s.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// Texts for the "Today" and "Events"/"Tasks" widgets (pure, testable).
 Map<String, String> todayTexts(TodayData d, {DateTime? now}) {
   final n = now ?? DateTime.now();
   final today = DateTime(n.year, n.month, n.day);
-  final events = d.events.take(3).map((e) {
-    if (e.start == null || e.allDay) return '• ${e.title}';
+  final events = d.events.take(widgetMaxRows).map((e) {
+    final title = _oneLine(e.title);
+    if (e.start == null || e.allDay) return '\t$title';
     final s = e.start!.toLocal();
     final tomorrow = DateTime(s.year, s.month, s.day).isAfter(today);
-    return '• ${tomorrow ? 'morgen ' : ''}${_time(s)} ${e.title}';
+    return '${tomorrow ? '${l10n.widgetTomorrow} ' : ''}${_time(s)}\t$title';
   }).toList();
-  final tasks = d.tasks.items.where((t) => !t.done).take(3).map((t) => '☐ ${t.title}').toList();
+  final tasks = d.tasks.items.where((t) => !t.done).take(widgetMaxRows).map((t) => _oneLine(t.title)).toList();
   final meal = d.meals.isEmpty ? '' : '🍽 ${d.meals.map((m) => m.title).join(', ')}';
   return {
     'today_title': localDate('EEEE, d. MMMM').format(n),
-    'today_events': events.isEmpty ? l10n.noEvents : events.join('\n'),
-    'today_tasks': tasks.isEmpty ? l10n.nothingDueShort : tasks.join('\n'),
     'today_meal': meal,
-    'today_shopping': d.shoppingOpen == 0 ? l10n.widgetListEmpty : l10n.widgetOpenCount(d.shoppingOpen),
     'today_updated': l10n.asOfTime(_time(n)),
+    'events_items': events.join('\n'),
+    'events_empty': l10n.noEvents,
+    'events_label': l10n.tabCalendar,
+    'tasks_items': tasks.join('\n'),
+    'tasks_empty': l10n.nothingDueShort,
+    'tasks_label': l10n.tabTasks,
   };
 }
 
-/// Texte für das Widget „Einkauf“ (rein, testbar).
+/// Texts for the shopping section (pure, testable).
 Map<String, String> shoppingTexts(ShoppingData d, {DateTime? now}) {
   final open = [
     for (final g in d.groups)
-      for (final i in g.items.where((i) => !i.done)) i.summary,
+      for (final i in g.items.where((i) => !i.done)) _oneLine(i.summary),
   ];
   return {
-    'shopping_count': open.isEmpty ? l10n.tabShopping : l10n.shoppingCount(open.length),
-    'shopping_items': open.isEmpty ? l10n.nothingOnList : open.take(8).map((s) => '• $s').join('\n') +
-        (open.length > 8 ? l10n.andMore(open.length - 8) : ''),
+    'shopping_items': open.take(widgetMaxRows).join('\n'),
+    'shopping_empty': l10n.nothingOnList,
+    'shopping_label': open.isEmpty ? l10n.tabShopping : l10n.shoppingCount(open.length),
     'shopping_updated': l10n.asOfTime(_time(now ?? DateTime.now())),
   };
 }

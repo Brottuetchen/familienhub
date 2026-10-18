@@ -98,8 +98,8 @@ void main() {
     }));
     expect(requests.map((r) => r.url.path), ['/api/today', '/api/shopping']);
     expect(requests.every((r) => r.headers['Authorization'] == 'Bearer fhp_widget'), isTrue);
-    expect(widgetData['today_tasks'], '☐ Müll');
-    expect(widgetData['shopping_items'], '• Milch');
+    expect(widgetData['tasks_items'], 'Müll');
+    expect(widgetData['shopping_items'], 'Milch');
     expect(secureWrites, isEmpty);
     expect(secure['refresh_token'], 'login-refresh');
   });
@@ -114,15 +114,15 @@ void main() {
     await HomeWidgets.endSession(); // Vordergrund meldet ab
     hold.complete(ok(today));
     await task;
-    expect(widgetData['today_tasks'], isNull);
+    expect(widgetData['tasks_items'], isNull);
     expect(widgetData['shopping_items'], isNull);
   });
 
   test('widerrufener Zugang (401) leert die Widgets und löscht den Zugang', () async {
-    widgetData['today_tasks'] = '☐ Alt';
+    widgetData['tasks_items'] = 'Alt';
     await backgroundWidgetRefresh(client: MockClient((r) async => http.Response('{}', 401)));
     expect(widgetData['widget_session'], '');
-    expect(widgetData['today_tasks'], isNull);
+    expect(widgetData['tasks_items'], isNull);
     expect(secure.containsKey('widget_api_token'), isFalse);
     expect(secure['access_token'], 'login-access'); // Anmeldung bleibt unberührt
   });
@@ -151,7 +151,7 @@ void main() {
   });
 
   test('Abmelden widerruft den Zugang beim Hub und leert die Widgets', () async {
-    widgetData['today_events'] = '• Kita-Fest';
+    widgetData['events_items'] = '\tKita-Fest';
     final deleted = <String>[];
     final api = ApiClient(
       store: MemorySessionStore(url: 'https://hub.test', access: 'login-access'),
@@ -163,7 +163,7 @@ void main() {
     await WidgetAccess.revoke(api);
     expect(deleted, ['/api/auth/api-tokens/7']);
     expect(widgetData['widget_session'], '');
-    expect(widgetData['today_events'], isNull);
+    expect(widgetData['events_items'], isNull);
     expect(secure.containsKey('widget_api_token'), isFalse);
   });
 
