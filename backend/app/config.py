@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     secure_cookies: bool = False
-    cors_origins: str = "*"
+    cors_origins: str = ""  # leer = nur gleiche Herkunft; "*" erlaubt alle, dann aber ohne Anmelde-Cookies
 
     # --- OIDC (z. B. Authentik) ---
     oidc_issuer: Optional[str] = None
@@ -112,7 +112,9 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> List[str]:
         """CORS Origins als Liste (kommasepariert in der ENV)."""
         raw = (self.cors_origins or "").strip()
-        if raw in ("", "*"):
+        if raw == "":
+            return []
+        if raw == "*":
             return ["*"]
         return [o.strip() for o in raw.split(",") if o.strip()]
 

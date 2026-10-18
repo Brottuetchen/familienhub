@@ -68,8 +68,11 @@ async def lifespan(app: FastAPI):
         setup_service.prepare(_setup_db)
     finally:
         _setup_db.close()
-    if settings.secret_key == "CHANGE_ME_dev_only_secret_key":
-        logger.warning("SECRET_KEY is default – set a strong SECRET_KEY in production!")
+    if settings.secret_key == "CHANGE_ME_dev_only_secret_key" or len(settings.secret_key.encode()) < 32:
+        if settings.is_production:
+            # Mit bekanntem oder kurzem Schlüssel ließen sich Anmelde-Tokens fälschen: im Betrieb nicht starten
+            raise RuntimeError("SECRET_KEY fehlt oder ist zu kurz (mindestens 32 Zeichen) – siehe .env.example")
+        logger.warning("SECRET_KEY is default or short – set a strong SECRET_KEY in production!")
     logger.info("=" * 60)
 
     # Hintergrund-Scheduler (fällige Erinnerungen -> Push)
@@ -92,15 +95,52 @@ app = FastAPI(
     ),
     version=__version__,
     lifespan=lifespan,
+    # API-Doku nur außerhalb des Betriebs (sie verrät alle Endpunkte)
+    docs_url=None if settings.is_production and not settings.debug else "/docs",
+    redoc_url=None if settings.is_production and not settings.debug else "/redoc",
+    openapi_url=None if settings.is_production and not settings.debug else "/openapi.json",
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.cors_origin_list:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origin_list,
+        # "*" nie zusammen mit Anmelde-Cookies: Starlette würde sonst jede fremde Herkunft zurückspiegeln
+        allow_credentials=settings.cors_origin_list != ["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+    "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+}
+
+
+MAX_BODY_BYTES = 2 * 1024 * 1024  # größte erlaubte Nutzlast: Profilbild 512 KB (Base64 ≈ 700 KB)
+
+
+@app.middleware("http")
+async def limit_body_size(request, call_next):
+    """Übergroße Anfragen früh ablehnen, bevor sie eingelesen werden (auch an öffentlichen Endpunkten)."""
+    length = request.headers.get("content-length")
+    if length and length.isdigit() and int(length) > MAX_BODY_BYTES:
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse({"detail": "Anfrage zu groß"}, status_code=413)
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    """Schutz gegen Einbetten (Clickjacking), MIME-Raten und Referrer-Lecks. Eigene Header einer Antwort bleiben."""
+    response = await call_next(request)
+    for key, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(key, value)
+    return response
+
 
 @app.middleware("http")
 async def refresh_after_changes(request, call_next):
