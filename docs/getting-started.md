@@ -68,7 +68,7 @@ Firebase (Android app), Web Push (browser and home-screen web app) and ntfy (any
   chown 10001:10001 fcm-service-account.json && chmod 600 fcm-service-account.json
   ```
 
-- **Web Push:** works out of the box. The hub creates its keys on first start and keeps them in the data volume (`/app/data/vapid.json`). To use your own, set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` (`docker compose exec familienhub python -m scripts.generate_vapid`). Set `VAPID_EMAIL` to a real contact address; some push services (Apple) reject placeholder addresses.
+- **Web Push:** works out of the box. The hub creates its keys on first start and keeps them in the data volume (`/app/data/vapid.json`). To use your own, set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` (`docker compose exec familienhub python -m scripts.generate_vapid`). Set `VAPID_EMAIL` to a real contact address (`mailto:you@example.org`); push services use it to reach you, and stricter ones may reject invalid values.
 
 ## 6. Plugins
 
