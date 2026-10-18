@@ -311,6 +311,7 @@
   "egVoiceAssistant": "e.g. voice assistant",
   "keyFor": "Key for “{name}”",
   "tokenShownOnce": "Shown only now. Enter it in the assistant’s Familienhub connection.",
+  "tokenNotReturned": "The access was created but the key did not arrive. Please revoke it and create a new one.",
   "copy": "Copy",
   "copied": "Copied",
   "finished": "Done",
