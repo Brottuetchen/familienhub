@@ -7,6 +7,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - Plugins: Nextcloud, Habitica, Home Assistant (shopping, house tiles with control), Cookidoo, Paperless-ngx, Shelfarr, Seerr, weather, ntfy
 - Android app with widgets and quick actions, web app (PWA), iOS app for sideloading
 - Push through Firebase, Web Push and ntfy, with quiet hours, categories, history and action buttons
+- Server texts in German and English: error messages in the app's language, push texts in the recipient's language, plugin names and settings
 - Offline mode with a queue for changes
 - Roles (admin, partner, child, guest), invites, OIDC (e.g. Authentik) with optional auto-create
 - Setup wizard, admin panel (health, family, house, plugins, themes, log, feedback)
@@ -18,7 +19,6 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **Works out of the box:** tasks, shopping list and family calendar stored in the hub; sources chosen per area *(done 18.10.)*
 - **More sources:** calendar subscriptions (ICS: school holidays, waste collection, clubs), Mealie (recipes, meal plan, shopping), then Grocy, Vikunja/Todoist, Google and Microsoft
 - **Repository and docs:** English README with screenshots, guides for plugins, themes and notifications, contribution guide
-- **Server texts in both languages:** push texts in the recipient's language, error messages via `Accept-Language`
 - **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
 - **Books:** "Discover" with German-language sources *(done 18.10.: Open Library shelves, German titles)*
 - **iOS widgets** (WidgetKit extension)
