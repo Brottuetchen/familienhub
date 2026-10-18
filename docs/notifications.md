@@ -22,7 +22,7 @@ flowchart LR
 | Channel | For whom | Admin sets up | Person does |
 |---|---|---|---|
 | **Firebase (FCM)** | Android app | Firebase project and service account (`FCM_PROJECT_ID`, `FCM_SERVICE_ACCOUNT_FILE`), plus `google-services.json` in your own app build | Allow notifications on first start |
-| **Web Push** | Browser and the web app on the home screen, including iPhone from iOS 16.4 | VAPID keys (`python -m scripts.generate_vapid` → `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`) | *More → Notifications & devices → Enable notifications on this device* |
+| **Web Push** | Browser and the web app on the home screen, including iPhone from iOS 16.4 | nothing: keys are generated on first start (own keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`); contact address = first admin's email or `VAPID_EMAIL` | *More → Notifications & devices → Enable notifications on this device* |
 | **ntfy** | Anyone with the ntfy app, especially iPhones with the sideloaded app | `ntfy` plugin: server and optional publish token, see [ntfy](ntfy.md) | Turn on *Notifications via ntfy*, subscribe to the shown topic in the ntfy app |
 
 - **Categories:** `task_assigned`, `task_due`, `reminder`, `shopping`, `house`, `media`, `documents`, `system`. Each person switches them on or off and sets quiet hours.

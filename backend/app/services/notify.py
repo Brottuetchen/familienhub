@@ -111,7 +111,7 @@ class NotifyService:
                 subscription_info=sub_info,
                 data=payload,
                 vapid_private_key=settings.vapid_private_key,
-                vapid_claims={"sub": settings.vapid_email},
+                vapid_claims={"sub": vapid_contact(db)},
                 ttl=86400
             )
             return True
@@ -160,6 +160,23 @@ class NotifyService:
         except Exception as e:
             logger.warning("fcm send error: %s", e, exc_info=True)
             return False
+
+
+def vapid_contact(db: Session) -> str:
+    """Contact for push services: VAPID_EMAIL if set to a real address, else the first admin's email.
+
+    The admin enters the email during setup, so a zero-config hub still sends a real contact.
+    """
+    configured = (settings.vapid_email or "").strip()
+    if configured and "example." not in configured:
+        return configured if configured.startswith(("mailto:", "https:")) else f"mailto:{configured}"
+    from app.models.user import ROLE_ADMIN, User
+
+    admin = (db.query(User).filter(User.role == ROLE_ADMIN, User.is_active == True)  # noqa: E712
+             .order_by(User.id).first())
+    if admin and admin.email and "@" in admin.email:
+        return f"mailto:{admin.email}"
+    return configured or "mailto:admin@example.org"
 
 
 def fcm_message(token: str, title: str, body: str, data: dict, category: str) -> dict:

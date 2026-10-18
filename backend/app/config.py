@@ -53,6 +53,39 @@ def load_or_create_secret_key(data_dir: str) -> Optional[str]:
         return None
 
 
+VAPID_FILENAME = "vapid.json"
+
+
+def load_or_create_vapid_keys(data_dir: str) -> Optional[tuple[str, str]]:
+    """Read ``<data_dir>/vapid.json`` (private, public; base64url); create it (0600) if missing.
+
+    Lets Web Push work without configuration. Returns None if the directory is not usable.
+    """
+    import json
+
+    path = Path(data_dir) / VAPID_FILENAME
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            fd = None
+        if fd is not None:
+            from scripts.generate_vapid import generate_keys
+
+            private, public = generate_keys()
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                json.dump({"private": private, "public": public}, fh)
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("private") and data.get("public"):
+            return data["private"], data["public"]
+        return None
+    except (OSError, ValueError, ImportError) as exc:
+        _log.error("Web Push keys could not be created in %s (%s). Set VAPID_PRIVATE_KEY and "
+                   "VAPID_PUBLIC_KEY, or mount a writable volume at DATA_DIR.", path, exc.__class__.__name__)
+        return None
+
+
 class Settings(BaseSettings):
     """Applikationsweite Einstellungen (env-driven).
 
@@ -110,7 +143,9 @@ class Settings(BaseSettings):
     # --- Push: Web Push (VAPID) und Firebase (FCM) ---
     vapid_private_key: Optional[str] = None
     vapid_public_key: Optional[str] = None
-    vapid_email: str = "mailto:admin@example.com"
+    vapid_email: str = ""  # empty: the first admin's email (see services/notify.vapid_contact)
+    # Without VAPID_PRIVATE_KEY/VAPID_PUBLIC_KEY: generate them once into <DATA_DIR>/vapid.json
+    vapid_auto: bool = True
     fcm_service_account_file: Optional[str] = None
     fcm_project_id: Optional[str] = None
 
@@ -154,6 +189,10 @@ class Settings(BaseSettings):
                 self.secret_key = loaded
             elif not self.secret_key.strip():
                 self.secret_key = PLACEHOLDER_SECRET_KEY
+        if self.vapid_auto and not (self.vapid_private_key or self.vapid_public_key):
+            keys = load_or_create_vapid_keys(self.data_dir)
+            if keys:
+                self.vapid_private_key, self.vapid_public_key = keys
         return self
 
     @property
