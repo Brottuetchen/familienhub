@@ -54,8 +54,13 @@ def _parse(value: str) -> datetime:
 def _hub_active() -> bool:
     from app.plugins.registry import plugin_registry
 
-    plugin = plugin_registry.get("hub_calendar")
-    return bool(plugin and plugin.active)
+    return plugin_registry.serves("calendar", "hub_calendar")
+
+
+def _caldav_active() -> bool:
+    from app.plugins.registry import plugin_registry
+
+    return plugin_registry.serves("calendar", "nextcloud")
 
 
 def _hub_event(e) -> Dict[str, Any]:
@@ -71,11 +76,12 @@ async def collect_events(db: Session, user: User, days: int, start: Optional[dat
     start = start or datetime.now()
     end = start + timedelta(days=days)
     events: List[Dict[str, Any]] = []
-    try:
-        caldav_events = await connector_for_user(db, user).get_events(days_ahead=days, start=start)
-        events.extend({**e, "source": e.get("source", "caldav")} for e in (caldav_events or []))
-    except HTTPException:
-        pass  # CalDAV plugin switched off: the other sources still count
+    if _caldav_active():
+        try:
+            caldav_events = await connector_for_user(db, user).get_events(days_ahead=days, start=start)
+            events.extend({**e, "source": e.get("source", "caldav")} for e in (caldav_events or []))
+        except HTTPException:
+            pass  # CalDAV connector switched off: the other sources still count
     if _hub_active():
         rows = db.query(HubEvent).filter(HubEvent.end >= start.replace(hour=0, minute=0, second=0, microsecond=0),
                                          HubEvent.start < end).all()
@@ -137,7 +143,7 @@ async def create_event(
     Ohne CalDAV-Konto geht der Termin in den Hub-Kalender (wenn aktiv), sonst 409 no_caldav_account.
     Der globale Kalenderzugang wird bewusst nicht verwendet, damit Termine dem richtigen Nutzer gehören.
     """
-    has_account = _user_account(db, current_user) is not None
+    has_account = _caldav_active() and _user_account(db, current_user) is not None
     if event.source == "hub" or (event.source is None and not has_account and _hub_active()):
         if not _hub_active():
             raise HTTPException(status_code=409, detail="Der Familienkalender im Hub ist abgeschaltet")

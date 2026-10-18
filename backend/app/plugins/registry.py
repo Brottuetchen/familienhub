@@ -66,14 +66,21 @@ class PluginRegistry:
         return None
 
     def providers(self, capability: str) -> List[Plugin]:
-        """Alle aktiven Anbieter; Aufgaben wählen niemals implizit den ersten."""
-        return [p for p in self.all() if capability in p.capabilities and p.active]
+        """All active sources of an area; ``<CAPABILITY>_SOURCES`` (comma list) limits them to the admin's choice."""
+        from app.plugins.base import get_setting
+
+        chosen = {v.strip() for v in str(get_setting(f"{capability.upper()}_SOURCES") or "").split(",") if v.strip()}
+        return [p for p in self.all() if capability in p.capabilities and p.active and (not chosen or p.id in chosen)]
+
+    def serves(self, capability: str, plugin_id: str) -> bool:
+        """Is this plugin an active, chosen source of the area?"""
+        return any(p.id == plugin_id for p in self.providers(capability))
 
     def task_connector(self, provider: str, user_id: int, db, account: str | None = None, *, implicit: bool = False):
         from fastapi import HTTPException
 
         plugin = self.get(provider)
-        if not plugin or "tasks" not in plugin.capabilities or not plugin.active:
+        if not plugin or not self.serves("tasks", provider):
             raise HTTPException(409, "Aufgabenanbieter ist nicht aktiv")
         if account is None and provider != "nextcloud" and not implicit:
             raise HTTPException(422, "Bitte Anbieter und eigenes Aufgabenkonto ausdrücklich wählen")

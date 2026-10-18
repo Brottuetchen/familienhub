@@ -16,7 +16,12 @@ docker compose logs familienhub | grep -i code
 
 Open the app or `https://hub.example.org` in a browser. A new hub shows **Set up**:
 1. Create the first admin account with the setup code from the log. The code is valid only while no admin exists; it changes on every restart and after ten wrong attempts. Alternative: `docker compose exec familienhub python -m scripts.create_admin`.
-2. The **setup wizard** then guides you through name, time zone, services (with *Test connection*) and family. You can rerun it under *More → Administration*.
+2. The **setup wizard** then guides you through:
+   - name and time zone
+   - services (with *Test connection*) and **where each area's data lives**: in the hub, or from a connected service
+   - family
+
+   Without any service, tasks, shopping list and family calendar are stored in the hub. You can rerun the wizard under *More → Administration*.
 
 Database migrations run automatically on start (Alembic).
 

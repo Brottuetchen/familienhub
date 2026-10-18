@@ -1,10 +1,17 @@
 # Plugins
 
-Everything beyond the core (Today, reminders, own meal plan, notifications, accounts) is a **plugin**. The shipped ones live in `backend/app/plugins/builtin/`:
+Familienhub is organised in **areas** (tasks, shopping, calendar, meal planning, documents …). Every area takes its data from **sources**, and every source is a plugin:
+
+- **The hub's own sources** (`hub_tasks`, `hub_shopping`, `hub_calendar`) store data in the hub database. They work without any external service and serve an area whenever nothing else does.
+- **Connected services** replace or add to them: several task sources run side by side, calendar sources are merged, and the shopping list has one source.
+- **Admins choose** under *Administration → Sources per area* (or in the setup wizard). This is stored as `TASKS_SOURCES`, `CALENDAR_SOURCES` and `SHOPPING_SOURCE`. Without a choice, all active sources are used, or the first active one for single-source areas.
+
+The shipped plugins live in `backend/app/plugins/builtin/`:
 
 | Plugin | Capability | Per-person access |
 |---|---|---|
-| Nextcloud (CalDAV) | tasks, calendar | own Nextcloud account and app password |
+| Tasks / shopping list / family calendar in the hub | tasks, shopping, calendar | – (stored in the hub) |
+| CalDAV (Nextcloud, iCloud, Radicale …) | tasks, calendar | own CalDAV account and app password |
 | Habitica | tasks (dailies, habits, rewards) | own Habitica user ID and API key |
 | Home Assistant | shopping list, house tiles, Cookidoo meal plan (read) | – (shared, admin chooses entities) |
 | Cookidoo | search recipes, plan them, ingredients to the list | – |

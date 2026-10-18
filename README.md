@@ -14,7 +14,27 @@ Today at a glance, tasks for yourself and each other, shopping, meal plan, event
 
 ## Why
 
-Families already run Nextcloud, Home Assistant, Paperless or a media server, but nobody wants five apps on the fridge. Familienhub is one app for everyone in the family. It **does not copy your data**: tasks stay in Nextcloud, the shopping list in Home Assistant, documents in Paperless. The hub shows them, lets you act on them and notifies the right person.
+One app for everyone in the family, which **works on its own and connects to what you already run**.
+
+- **Out of the box:** tasks, shopping list, family calendar, meal plan and reminders are stored in the hub itself. No other service is needed.
+- **Connect anything:** each area can take its data from a service instead of, or in addition to, the hub. Examples:
+  - tasks from any CalDAV server (Nextcloud, iCloud, Radicale …) or Habitica
+  - the shopping list from Home Assistant
+  - documents from Paperless
+  - and whatever a [plugin](docs/plugins.md) provides
+
+  Connected data stays where it is. The hub shows it, lets you act on it and notifies the right person.
+
+| Area | In the hub | Or from (plugins) |
+|---|:-:|---|
+| Tasks | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica – several side by side |
+| Shopping list | ✓ | Home Assistant to-do lists |
+| Calendar | ✓ family calendar | CalDAV, merged with the hub calendar |
+| Meal plan & recipes | ✓ | Cookidoo (recipes), Home Assistant (Cookidoo plan) |
+| Reminders, notifications | ✓ | Home Assistant, Shelfarr, Paperless … as notification sources |
+| Documents · books · movies & shows | – | Paperless-ngx · Shelfarr · Seerr |
+
+Admins choose the source of each area in the setup wizard or under *Administration → Sources per area*.
 
 ## Features
 
@@ -50,7 +70,7 @@ flowchart LR
 ```
 
 - **Server:** one Docker container (FastAPI, serves the web app too) plus PostgreSQL.
-- **Plugins:** every integration is a plugin with its own settings. Admins switch plugins on and off in the app. Personal data is only read with each person's own access.
+- **Areas and sources:** every area (tasks, shopping, calendar …) has interchangeable sources: the hub's own storage and plugins. Admins choose per area. Personal data is only read with each person's own access.
 - **App:** Flutter, one codebase for Android, iOS and web. Reads are cache-first, and changes made offline are queued.
 
 ## Quick start

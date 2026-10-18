@@ -9,6 +9,7 @@ import '../../widgets/common.dart';
 import '../admin/admin_users_screen.dart' show adminUsersProvider, inviteFlow;
 import '../more/plugins_admin_screen.dart' show PluginSettingsScreen;
 import '../../l10n/l10n.dart';
+import '../admin/sources_screen.dart';
 
 /// Häufige Zeitzonen; andere lassen sich frei eintragen.
 const commonTimezones = [
@@ -199,9 +200,14 @@ class _ServicesStep extends ConsumerWidget {
             onTap: () async {
               final saved = await Navigator.of(context)
                   .push<bool>(MaterialPageRoute(builder: (_) => PluginSettingsScreen(plugin: p)));
-              if (saved == true) ref.invalidate(adminPluginsProvider);
+              if (saved == true) {
+                ref.invalidate(adminPluginsProvider);
+                ref.invalidate(adminSourcesProvider); // a newly set up service becomes selectable
+              }
             },
           ),
+        const Divider(height: 32),
+        const SourcesEditor(),
       ]),
     );
   }

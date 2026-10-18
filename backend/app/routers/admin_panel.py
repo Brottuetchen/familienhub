@@ -233,3 +233,50 @@ async def put_core(data: CoreSettings, db: Session = Depends(get_db), _: User = 
         raise HTTPException(422, "Unbekannte Zeitzone, z. B. Europe/Berlin") from exc
     config_store.save_overrides(db, {"APP_NAME": data.app_name.strip(), "TIMEZONE": data.timezone.strip()})
     return {"app_name": settings.app_name, "timezone": settings.timezone}
+
+
+# --- Sources per area ---
+
+AREAS = {"tasks": ("TASKS_SOURCES", True), "shopping": ("SHOPPING_SOURCE", False), "calendar": ("CALENDAR_SOURCES", True)}
+
+
+class SourceChoice(BaseModel):
+    area: str
+    selected: List[str] = Field(default_factory=list, max_length=20)  # empty = automatic (all active / first active)
+
+
+def _sources_view() -> Dict[str, Any]:
+    areas = []
+    for area, (key, multiple) in AREAS.items():
+        chosen = {p.id for p in plugin_registry.providers(area)} if multiple else {
+            getattr(plugin_registry.provider(area), "id", None)}
+        sources = [{"id": p.id, "name": p.name, "description": p.description, "fallback": p.fallback,
+                    "configured": p.is_configured(), "active": p.active, "selected": p.id in chosen}
+                   for p in plugin_registry.all() if area in p.capabilities]
+        sources.sort(key=lambda s: (not s["fallback"], s["name"]))  # the hub's own source first
+        areas.append({"area": area, "multiple": multiple, "sources": sources})
+    return {"areas": areas}
+
+
+@router.get("/sources")
+async def get_sources(_: User = Depends(admin_only)):
+    """Where tasks, shopping and events come from: the hub itself and/or connected services."""
+    return _sources_view()
+
+
+@router.put("/sources")
+async def put_sources(data: SourceChoice, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    from app.services import config_store
+
+    if data.area not in AREAS:
+        raise HTTPException(422, "Unbekannter Bereich")
+    key, multiple = AREAS[data.area]
+    ids = list(dict.fromkeys(data.selected))
+    for pid in ids:
+        plugin = plugin_registry.get(pid)
+        if plugin is None or data.area not in plugin.capabilities:
+            raise HTTPException(422, f"{pid} kann diesen Bereich nicht liefern")
+    if not multiple and len(ids) > 1:
+        raise HTTPException(422, "Für diesen Bereich gibt es genau eine Quelle")
+    config_store.save_overrides(db, {key: ",".join(ids)})
+    return _sources_view()

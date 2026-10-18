@@ -72,8 +72,8 @@
   "booksAudiobooks": "Bücher & Hörbücher",
   "booksHint": "Wünschen, auf Deutsch",
   "settings": "Einstellungen",
-  "nextcloudAccount": "Nextcloud-Konto",
-  "nextcloudAccountHint": "Für Aufgaben und eigene Termine",
+  "nextcloudAccount": "CalDAV-Konto",
+  "nextcloudAccountHint": "Nextcloud, iCloud, Radicale … für Aufgaben und eigene Termine",
   "taskLists": "Aufgabenlisten",
   "taskListsHint": "Welche Liste ist privat, welche für die Familie",
   "assistantAccess": "Zugänge für Assistenten",
@@ -174,7 +174,7 @@
       "listName": {}
     }
   },
-  "nextcloudFirst": "Bitte zuerst unter Mehr → Nextcloud-Konto dein Konto eintragen",
+  "nextcloudFirst": "Bitte zuerst unter Mehr → CalDAV-Konto dein Konto eintragen",
   "noConnectionNotSaved": "Keine Verbindung zum Server – Änderung nicht gespeichert",
   "nativeStateStale": "Änderung bestätigt, aber der native Zustand konnte nicht aktualisiert werden. Bitte neu laden; nicht wiederholen.",
   "catTaskAssigned": "Neue Aufgabe für mich",
@@ -211,7 +211,7 @@
   "tapTaskForDetails": "Aufgabe antippen für Details",
   "createdWhenOnline": "Wird erst angelegt, sobald der Hub erreichbar ist",
   "taskProvider": "Aufgabenanbieter",
-  "addNextcloudAccount": "Nextcloud-Konto eintragen",
+  "addNextcloudAccount": "CalDAV-Konto eintragen",
   "done": "Erledigt",
   "delete": "Löschen",
   "doneCount": "Erledigt ({count})",
@@ -591,7 +591,7 @@
   "withdrawRequest": "Wunsch zurückziehen",
   "caldavFillAll": "Bitte Adresse, Benutzer und App-Passwort eintragen",
   "saved": "Gespeichert",
-  "caldavExplain": "Aufgaben und eigene Termine laufen über dein Nextcloud-Konto. So bleiben sie mit den Erinnerungen auf dem iPhone abgeglichen. Lege in Nextcloud unter Einstellungen → Sicherheit ein App-Passwort an und trage es hier ein.",
+  "caldavExplain": "Aufgaben und eigene Termine können aus deinem CalDAV-Konto kommen, z. B. Nextcloud, iCloud, mailbox.org oder Radicale. So bleiben sie mit den Erinnerungen und dem Kalender auf dem Handy abgeglichen. Bei Nextcloud unter Einstellungen → Sicherheit ein App-Passwort anlegen und hier eintragen.",
   "caldavUrl": "CalDAV-Adresse",
   "username": "Benutzername",
   "appPassword": "App-Passwort",
@@ -1106,5 +1106,14 @@
     "placeholders": {
       "title": {}
     }
-  }
+  },
+  "sourcesTitle": "Woher kommen die Daten?",
+  "sourcesHint": "Der Hub speichert Aufgaben, Einkauf und Termine selbst. Angeschlossene Dienste ersetzen oder ergänzen das. Nicht eingerichtete Dienste erst einrichten.",
+  "sourcesAdmin": "Quellen je Bereich",
+  "sourcesAdminHint": "Aufgaben, Einkauf, Termine: im Hub oder aus Diensten",
+  "areaTasksMulti": "Aufgaben (mehrere möglich)",
+  "areaShoppingSingle": "Einkaufsliste (eine Quelle)",
+  "areaCalendarMulti": "Termine (mehrere möglich)",
+  "sourceNotSetUp": "Noch nicht eingerichtet",
+  "sourceKeepOne": "Mindestens eine Quelle muss bleiben"
 }
