@@ -114,8 +114,8 @@ class CalDAVConnector(BaseConnector):
 
         client = caldav.DAVClient(url=self.url, username=self.username, password=self.password,
                                   ssl_verify_cert=settings.verify_tls)
-        wanted = calendar_url.rstrip("/")
-        cal = next((c for c in client.principal().calendars() if str(c.url).rstrip("/") == wanted), None)
+        wanted = _normalize_url(calendar_url)
+        cal = next((c for c in client.principal().calendars() if _normalize_url(str(c.url)) == wanted), None)
         if cal is None:
             return None
         try:
@@ -212,6 +212,7 @@ class CalDAVConnector(BaseConnector):
         results: List[Dict[str, Any]] = []
 
         for calendar in principal.calendars():
+            cal_id = calendar_id(str(calendar.url))  # before search(), which rewrites calendar.url
             cal_name = _safe(lambda: str(calendar.name)) or "Kalender"
             cal_color = calendar_color(calendar)
             try:
@@ -220,7 +221,6 @@ class CalDAVConnector(BaseConnector):
                 # Nicht alle Server unterstützen expand/search identisch.
                 found = calendar.date_search(start=start, end=end)
 
-            cal_id = calendar_id(str(calendar.url))
             for ev in found:
                 comp = _safe(lambda: ev.icalendar_component)
                 if comp is None:
@@ -265,8 +265,8 @@ class CalDAVConnector(BaseConnector):
         # Exactly the chosen calendar; without a choice the first one (old behaviour)
         target_calendar = calendars[0]
         if calendar_url:
-            wanted = calendar_url.rstrip("/")
-            target_calendar = next((c for c in calendars if str(c.url).rstrip("/") == wanted), None)
+            wanted = _normalize_url(calendar_url)
+            target_calendar = next((c for c in calendars if _normalize_url(str(c.url)) == wanted), None)
             if target_calendar is None:
                 raise ValueError("Kalender nicht gefunden")
 
@@ -326,7 +326,18 @@ def calendar_id(url: str) -> str:
     """Stable, non-revealing id of a CalDAV calendar (the URL contains user names)."""
     from hashlib import sha256
 
-    return "caldav:" + sha256(url.rstrip("/").encode()).hexdigest()[:12]
+    return "caldav:" + sha256(_normalize_url(url).encode()).hexdigest()[:12]
+
+
+def _normalize_url(url: str) -> str:
+    """Same calendar, same string: drop default ports (the caldav library adds ":443" after a search)."""
+    from urllib.parse import urlsplit, urlunsplit
+
+    parts = urlsplit(url.rstrip("/"))
+    netloc = parts.netloc
+    if (parts.scheme == "https" and netloc.endswith(":443")) or (parts.scheme == "http" and netloc.endswith(":80")):
+        netloc = netloc.rsplit(":", 1)[0]
+    return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
 
 CALENDAR_COLOR_TAG = "{http://apple.com/ns/ical/}calendar-color"
 
