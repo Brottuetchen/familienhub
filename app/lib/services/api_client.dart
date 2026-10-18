@@ -1065,9 +1065,17 @@ class ApiClient {
   Future<int> recipeToShopping(int id) async =>
       parseInt((await _send('POST', '/api/recipes/$id/shopping') as Map<String, dynamic>)['added']) ?? 0;
 
-  /// Zutaten der geplanten Hub-Rezepte auf die Einkaufsliste. Liefert die Meldung des Servers.
-  Future<String> mealsToShoppingList() async {
-    final json = await _send('POST', '/api/meals/shopping-list') as Map<String, dynamic>;
+  /// Ingredients of all recipes planned in the range (hub, Cookidoo, Mealie) onto the shopping list.
+  /// Returns the summary: one line per source, or the server's message.
+  Future<String> mealsToShoppingList({DateTime? start, DateTime? end}) async {
+    final query = [if (start != null) 'start=${_dateOnly(start)}', if (end != null) 'end=${_dateOnly(end)}'];
+    final json = await _send('POST', '/api/meals/shopping-list${query.isEmpty ? '' : '?${query.join('&')}'}')
+        as Map<String, dynamic>;
+    final lines = [
+      for (final s in (json['sources'] as List? ?? const []))
+        if (s is Map && (s['message'] as String?)?.isNotEmpty == true) s['message'] as String,
+    ];
+    if (lines.isNotEmpty) return lines.join('\n');
     return (json['message'] as String?) ?? l10n.ingredientsAdded(json['added'] ?? 0);
   }
 

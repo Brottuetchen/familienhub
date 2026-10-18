@@ -281,7 +281,7 @@
   "deleteEntryQuestion": "Delete entry?",
   "removeFromPlanHint": "Remove “{title}” from the plan.",
   "ingredientsOnCookidooList": "{n} ingredients on the Cookidoo shopping list",
-  "ingredientsNext7Days": "Add ingredients for the next 7 days to the shopping list",
+  "ingredientsNext7Days": "Add the week’s ingredients to the shopping list",
   "previousWeek": "Previous week",
   "thisWeekRange": "This week · {range}",
   "weekNumberRange": "Week {week} · {range}",

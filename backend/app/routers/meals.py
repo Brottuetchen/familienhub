@@ -316,13 +316,12 @@ async def delete_meal(
     return {"message": "deleted"}
 
 
-def _collect_ingredients(db: Session, days: int) -> List[str]:
-    today = date.today()
-    end = today + timedelta(days=days)
+def _collect_ingredients(db: Session, days: int, start: Optional[date] = None, end: Optional[date] = None) -> List[str]:
+    start, end = _range(days, start, end)
     entries = (
         db.query(MealPlanEntry)
         .filter(
-            MealPlanEntry.date >= today.isoformat(),
+            MealPlanEntry.date >= start.isoformat(),
             MealPlanEntry.date <= end.isoformat(),
             MealPlanEntry.recipe_id != None,  # noqa: E711
         )
@@ -346,19 +345,97 @@ def _collect_ingredients(db: Session, days: int) -> List[str]:
     return out
 
 
+def _range(days: int, start: Optional[date], end: Optional[date]) -> tuple:
+    """Planned days that still matter: never before today."""
+    today = date.today()
+    start = max(start or today, today)
+    return start, max(end or (start + timedelta(days=days)), start)
+
+
+async def _external_recipes(source: str, start: date, end: date) -> List[str]:
+    """Recipe ids planned in Cookidoo / Mealie in the range (each once, order kept). Raises the source's error."""
+    if source == "cookidoo":
+        plan = await cookidoo_service.plan_between(start, end)
+        key = "cookidoo_id"
+    else:
+        from app.services.mealie import mealie_service
+
+        plan = await mealie_service.plan_between(start, end)
+        key = "recipe_id"
+    ids: List[str] = []
+    for day in sorted(plan):
+        for e in plan[day]:
+            rid = e.get(key)
+            if rid and str(rid) not in ids:
+                ids.append(str(rid))
+    return ids
+
+
 @router.post("/shopping-list")
-async def generate_shopping_list(days: int = 7, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
-    """Collects the ingredients of the planned hub recipes and puts them on the current shopping list."""
-    ingredients = _collect_ingredients(db, days)
-    if not ingredients:
-        return {"ingredients": [], "added": 0, "message": "Keine Rezepte im Zeitraum geplant."}
+async def generate_shopping_list(
+    days: int = 7,
+    start: Optional[date] = None,
+    end: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_min_role(ROLE_PARTNER)),
+):
+    """Ingredients of every recipe planned in the range (hub recipe book, Cookidoo, Mealie) onto the shopping list.
 
+    One source being down never blocks the others; ``sources`` tells per source what happened.
+    """
+    from app.plugins.registry import plugin_registry
     from app.routers.shopping import add_to_shopping
+    from app.services.mealie import MealieUnavailable
 
-    added = await add_to_shopping(ingredients, current_user.id)  # hub list, Mealie or Home Assistant
+    start_d, end_d = _range(days, start, end)
+    sources: List[dict] = []
+
+    def report(source: str, label: str, recipes: int, added: int, status: str, message: str) -> None:
+        sources.append({"source": source, "label": label, "recipes": recipes, "added": added,
+                        "status": status, "message": message})
+
+    # Hub recipe book: ingredient texts go through the shopping list the hub uses (own list, Mealie or HA)
+    ingredients = _collect_ingredients(db, days, start_d, end_d)
+    hub_added = 0
+    if ingredients:
+        try:
+            hub_added = await add_to_shopping(ingredients, current_user.id)
+        except Exception as exc:  # noqa: BLE001 – shopping backend down: report, go on
+            logger.warning("Hub ingredients not added: %s", exc)
+            report("hub", "Hub", len(ingredients), 0, "unavailable", "Hub: Einkaufsliste nicht erreichbar, übersprungen.")
+        else:
+            report("hub", "Hub", len(ingredients), hub_added, "ok",
+                   f"Hub: {len(ingredients)} Zutaten, {hub_added} zur Einkaufsliste hinzugefügt." if hub_added
+                   else f"Hub: {len(ingredients)} Zutaten gesammelt (keine Einkaufsliste eingerichtet).")
+
+    external = []
+    if cookidoo_plugin_active():
+        external.append(("cookidoo", "Cookidoo", cookidoo_service, CookidooUnavailable))
+    if plugin_registry.serves("meal_planning", "mealie"):
+        from app.services.mealie import mealie_service
+
+        external.append(("mealie", "Mealie", mealie_service, MealieUnavailable))
+    for source, label, service, unavailable in external:
+        try:
+            ids = await _external_recipes(source, start_d, end_d)
+            if not ids:
+                continue
+            added = await service.ingredients_to_shopping(ids)
+        except unavailable:
+            report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
+        except Exception as exc:  # noqa: BLE001 – library errors must not break the other sources
+            logger.warning("%s shopping failed: %s", label, exc)
+            report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
+        else:
+            report(source, label, len(ids), added, "ok", f"{label}: {len(ids)} Rezepte auf die Einkaufsliste übernommen.")
+
+    total = sum(x["added"] for x in sources)
+    if not sources:
+        return {"ingredients": [], "added": 0, "sources": [], "message": "Keine Rezepte im Zeitraum geplant."}
+    failed = any(x["status"] != "ok" for x in sources)
     return {
         "ingredients": ingredients,
-        "added": added,
-        "message": f"{len(ingredients)} Zutaten gesammelt"
-        + (f", {added} zur Einkaufsliste hinzugefügt." if added else " (keine Einkaufsliste eingerichtet)."),
+        "added": total,
+        "sources": sources,
+        "message": "Einkaufsliste teilweise aktualisiert." if failed else "Einkaufsliste aktualisiert.",
     }
