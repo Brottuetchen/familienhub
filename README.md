@@ -40,7 +40,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 - **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
 - **Calendar:** list, week and month views, colours and filter per calendar, new events land in exactly the chosen calendar (family first), edit and delete; the same CalDAV calendars and reminders on iPhone and Android, see [calendar & phone](docs/calendar.md)
-- **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side
+- **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side. A task for someone lands in the recipient's own place (set in the profile), not where the creator works
 - **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
 - **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin

@@ -12,6 +12,7 @@ class HubTasksPlugin(Plugin):
             capabilities=frozenset({"tasks"}),
             builtin=True,
             fallback=True,
+            family_tasks=True,
         )
 
     def is_configured(self) -> bool:

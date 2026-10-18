@@ -697,5 +697,15 @@
   "partOfSeries": "Part of a series",
   "seriesTimesHint": "Please change the times of a series in the calendar itself. Title, place and notes apply to the whole series.",
   "deleteSeriesQuestion": "Delete “{title}”? This deletes the whole series.",
-  "deleteEventPlain": "Delete “{title}”?"
+  "deleteEventPlain": "Delete “{title}”?",
+  "taskPlace": "Task place",
+  "taskPlaceHint": "Tasks that others give you land here. By default the place follows your connected accounts.",
+  "taskPlaceAuto": "Automatic ({place})",
+  "taskPlaceNextcloud": "Nextcloud",
+  "taskPlaceHabitica": "Habitica",
+  "taskPlaceHub": "Family hub",
+  "taskPlaceSaved": "Task place saved",
+  "taskLandsWhereTheyWork": "The task lands where {name} receives it.",
+  "taskAssignedVia": "stored in {place}",
+  "taskStatusUnknown": "Status unknown"
 }

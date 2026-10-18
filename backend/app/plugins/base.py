@@ -63,6 +63,8 @@ class Plugin:
     builtin: bool = False
     # Hub's own source of an area (tasks, shopping, calendar): used when no other plugin provides it
     fallback: bool = False
+    # Tasks only: this source can hold the shared family list and household rotation
+    family_tasks: bool = False
 
     def routers(self) -> List[APIRouter]:
         """FastAPI-Router des Plugins (werden beim Start eingebunden)."""

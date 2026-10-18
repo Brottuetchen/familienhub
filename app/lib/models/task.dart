@@ -46,6 +46,11 @@ class Task {
   final String recurrence;
   final List<int> rotation;
 
+  /// Task the person gave to someone else; it lives in the recipient's own place ([via]) and only shows its status.
+  final bool readOnly;
+  final String? via;
+  final bool stale;
+
   const Task({
     required this.uid,
     this.provider = 'nextcloud',
@@ -65,6 +70,9 @@ class Task {
     this.assignee,
     this.recurrence = 'none',
     this.rotation = const [],
+    this.readOnly = false,
+    this.via,
+    this.stale = false,
   });
 
   /// Offline angelegt (#32): gibt es auf dem Server noch nicht, also weder abhaken noch bearbeiten.
@@ -93,6 +101,9 @@ class Task {
       assignee: parseInt(json['assignee']),
       recurrence: (json['recurrence'] as String?) ?? 'none',
       rotation: ((json['rotation'] as List?) ?? const []).map(parseInt).whereType<int>().toList(),
+      readOnly: json['read_only'] == true,
+      via: json['via'] as String?,
+      stale: json['stale'] == true,
     );
   }
 
@@ -133,3 +144,36 @@ class TaskProviderInfo {
   factory TaskProviderInfo.fromJson(Map<String, dynamic> j) => TaskProviderInfo(
     j['id'] as String, j['name'] as String, j['account'] as String, j['configured'] == true);
 }
+
+
+/// Where tasks that others give a person land (#38): effective place, explicit choice, derived default.
+class TaskPlaceInfo {
+  final String place;
+  final String? explicit;
+  final String? auto;
+  final List<TaskPlaceOption> options;
+  const TaskPlaceInfo({required this.place, this.explicit, this.auto, this.options = const []});
+
+  factory TaskPlaceInfo.fromJson(Map<String, dynamic> j) => TaskPlaceInfo(
+        place: (j['place'] as String?) ?? '',
+        explicit: j['explicit'] as String?,
+        auto: j['auto'] as String?,
+        options: ((j['options'] as List?) ?? const [])
+            .map((o) => TaskPlaceOption(o['id'] as String, (o['name'] as String?) ?? '', o['available'] == true))
+            .toList(),
+      );
+}
+
+class TaskPlaceOption {
+  final String id, name;
+  final bool available;
+  const TaskPlaceOption(this.id, this.name, this.available);
+}
+
+/// Short, localised name of a task place (plugin id); unknown plugins show their id.
+String taskPlaceName(String id) => switch (id) {
+      'nextcloud' => l10n.taskPlaceNextcloud,
+      'habitica' => l10n.taskPlaceHabitica,
+      'hub_tasks' => l10n.taskPlaceHub,
+      _ => id,
+    };

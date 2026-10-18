@@ -711,9 +711,12 @@ class ApiClient {
       );
 
   /// Liefert die angelegte Aufgabe, oder null, wenn sie ohne Netz gemerkt wurde.
+  ///
+  /// `provider: 'auto'` (default): the hub routes by recipient: a task for someone else goes to her preferred
+  /// place, family tasks to the family list, own tasks to my preferred place.
   Future<Task?> createTask({
     required String title,
-    String provider = 'nextcloud',
+    String provider = 'auto',
     String? account,
     int? assigneeId,
     DateTime? due,
@@ -770,6 +773,19 @@ class ApiClient {
     }).query;
     return '/api/tasks$suffix?$query';
   }
+
+  /// Preferred task place of the signed-in person; null if the server is older or unreachable.
+  Future<TaskPlaceInfo?> taskPlace() async {
+    try {
+      return TaskPlaceInfo.fromJson(await _send('GET', '/api/tasks/me/place') as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// `place == null` resets to the place derived from the connected accounts.
+  Future<TaskPlaceInfo> setTaskPlace(String? place) async => TaskPlaceInfo.fromJson(
+      await _send('PUT', '/api/tasks/me/place', body: {'place': place}) as Map<String, dynamic>);
 
   Future<List<TaskProviderInfo>> taskProviders() async =>
     _maps((await _send('GET', '/api/tasks/providers'))['items']).map(TaskProviderInfo.fromJson).toList();

@@ -67,6 +67,11 @@ class HabiticaConnector:
         from app.routers.habitica import active, server_url
         return bool(self.account and active() and self.account.server_url == server_url())
 
+    @property
+    def accepts_assigned(self):
+        """Can this account take a task someone else assigned right now (account, server and write release)?"""
+        return bool(self.is_configured and writes_allowed(self.account) and not self.account.pending_operation)
+
     def require(self, write=False):
         # Re-read identity/key and config at every boundary, not a cached client.
         if self.account:

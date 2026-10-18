@@ -2,6 +2,7 @@
 
 from app.models.habitica import HabiticaAccount, HabiticaSelection, HabiticaOperation
 from app.models.task_completion import TaskCompletion
+from app.models.task_assignment import TaskAssignment
 from app.models.api_token import ApiToken
 from app.models.caldav import CalDAVAccount, TaskList
 from app.models.notification_log import NotificationLog
@@ -21,6 +22,7 @@ from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
     "SeerrNotice",
+    "TaskAssignment",
     "HubEvent",
     "HubShoppingItem",
     "HubTask",
