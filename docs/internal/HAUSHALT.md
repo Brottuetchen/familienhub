@@ -72,7 +72,7 @@ maßgeblich. `GET /api/tasks?view=family` und die üblichen Detailantworten enth
   Export/Score und wird bei neu angelegten Rotationsterminen auf `false` gesetzt. Historische
   VTODO-Felder sind kein Schreibrecht auf einen anderen Anbieter. Native Habitica-Aufgaben und
   ihre eigenen Score-/Undo-/Reward-Aktionen werden ausdrücklich dort ausgewählt und bedient
-  (`docs/AUFGABENPROVIDER.md`).
+  (`docs/internal/AUFGABENPROVIDER.md`).
 
 Migration `a7b8c9d0e1f2` ergänzt nur `task_completions(uid)` und hat einen Downgrade.
 Die Belege enthalten keine Titel, Notizen, Personen oder Zugangsdaten und bleiben für den

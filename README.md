@@ -1,59 +1,86 @@
+<div align="center">
+
 # Familienhub
 
-Eine selbst gehostete App für die Familienorganisation: **Heute-Übersicht, Aufgaben (eigene, gemeinsame,
-füreinander), Einkauf, Essensplan, Termine und Erinnerungen** – mit echten Push-Mitteilungen,
-Home-Widgets und Offline-Modus. Der Hub bündelt Dienste, die man oft schon betreibt; die eigentlichen
-Daten bleiben dort (Nextcloud, Home Assistant, Paperless, …).
+**A self-hosted family organiser that brings your existing services together.**
 
-- **Android-App** (Flutter), iOS aus derselben Codebasis (Sideload), Web-App als PWA
-- **Backend:** FastAPI + PostgreSQL, ein Docker-Container
-- **Anmeldung:** lokal oder per OIDC (z. B. Authentik, Keycloak)
-- **Vier Designsprachen** (Warm/Material You, Liquid Glass, Clean Cards, Neo-Brutalism), eigene Themes installierbar
+Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
 
-## Plugins
+[Getting started](docs/getting-started.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
-Alles außer dem Kern läuft als Plugin und lässt sich in der App unter **Mehr → Verwaltung → Plugins & Zugänge**
-an- und abschalten und einrichten (ohne Neustart).
+<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
 
-| Plugin | Fähigkeit |
-|---|---|
-| Nextcloud (CalDAV) | Aufgaben je Person, Familienliste, Kalender |
-| Habitica | Aufgaben, Gewohnheiten, Belohnungen |
-| Home Assistant | Einkaufsliste, Haus-Kacheln (Zustände, Licht/Schalter/Szenen), Cookidoo-Wochenplan |
-| Cookidoo | Rezepte suchen und einplanen |
-| Paperless-ngx | Dokumente suchen, Fristen als Erinnerung – mit dem eigenen Paperless-Zugang |
-| Shelfarr | E-Books und Hörbücher wünschen |
-| Seerr | Filme und Serien wünschen (als eigener Seerr-Nutzer) |
-| Wetter | Wetter auf „Heute“ |
+</div>
 
-## Schnellstart
+## Why
+
+Families already run Nextcloud, Home Assistant, Paperless or a media server, but nobody wants five apps on the fridge. Familienhub is one app for everyone in the family. It **does not copy your data**: tasks stay in Nextcloud, the shopping list in Home Assistant, documents in Paperless. The hub shows them, lets you act on them and notifies the right person.
+
+## Features
+
+- **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
+- **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side
+- **Shopping, meals, recipes:** shopping list, weekly meal plan, Cookidoo recipes onto the plan and ingredients onto the list
+- **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
+- **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
+- **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books
+- **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
+- **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
+- **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
+- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub; German and English
+
+<details>
+<summary>More screenshots</summary>
+
+<img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/shopping.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/calendar.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
+
+</details>
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph Apps
+    A[Android app] --- W[Web app / PWA] --- I[iOS app]
+  end
+  Apps <--> H[Familienhub server<br/>FastAPI + PostgreSQL]
+  H <--> P[Plugins]
+  P --- N[Nextcloud] & HA[Home Assistant] & PL[Paperless] & S[Seerr / Shelfarr] & C[Cookidoo] & HB[Habitica]
+  H --> PU[Push: Firebase · Web Push · ntfy]
+```
+
+- **Server:** one Docker container (FastAPI, serves the web app too) plus PostgreSQL.
+- **Plugins:** every integration is a plugin with its own settings. Admins switch plugins on and off in the app. Personal data is only read with each person's own access.
+- **App:** Flutter, one codebase for Android, iOS and web. Reads are cache-first, and changes made offline are queued.
+
+## Quick start
 
 ```bash
-cp .env.example .env          # SECRET_KEY, POSTGRES_PASSWORD und Adresse eintragen
+git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
+cp .env.example .env            # set SECRET_KEY, POSTGRES_PASSWORD, CORS_ORIGINS
 docker compose up -d --build
-docker compose logs familienhub | grep Einrichtungscode
+docker compose logs familienhub | grep -i code      # setup code for the first admin
 ```
 
-Danach die App (oder `https://hub.example.org` im Browser) öffnen: Ein neuer Hub zeigt **„Einrichten“**. Mit dem
-Einrichtungscode aus dem Log legt man das erste Konto an; der **Einrichtungs-Assistent** führt dann durch Name,
-Zeitzone, Dienste (mit „Verbindung testen“) und Familie. Später erneut unter **Mehr → Verwaltung**. Hinweise zu Push (Firebase/Web-Push), OIDC und Reverse-Proxy: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Open the hub in the app or a browser and choose **Set up**; the setup wizard does the rest. Details, reverse proxy, apps and backups: [getting started](docs/getting-started.md).
 
-## Dokumentation
+## Documentation
 
-- Entscheidungen und Zielbild: [`docs/ENTSCHEIDUNGEN.md`](docs/ENTSCHEIDUNGEN.md)
-- Plugins und ihre Schnittstellen: [`docs/PLUGINS.md`](docs/PLUGINS.md)
-- Mitteilungen aus anderen Systemen (Home Assistant & Co.): [`docs/QUELLEN.md`](docs/QUELLEN.md)
-- Sicherheit (Prüfbericht, Melden von Lücken): [`docs/SICHERHEIT.md`](docs/SICHERHEIT.md)
-- Arbeitsregeln für Beitragende und Agenten: [`CLAUDE.md`](CLAUDE.md), [`docs/BUILD_PROMPT.md`](docs/BUILD_PROMPT.md)
+| | |
+|---|---|
+| [Getting started](docs/getting-started.md) | install, reach it, apps, people and sign-in, backup |
+| [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
+| [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
+| [Plugins](docs/plugins.md) | what ships, how to write, install and share a plugin |
+| [Themes](docs/themes.md) | the `theme.json` format, how to share a theme |
+| [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
+| [Roadmap](docs/roadmap.md) | what's done, next and later |
+| [Contributing](CONTRIBUTING.md) | development setup, translations, pull requests |
 
-## Entwicklung
+## Status
 
-```bash
-cd backend && pip install -r requirements.txt && PYTHONPATH=. pytest -q
-cd app && flutter pub get && flutter analyze && flutter test
-```
+Familienhub is used daily by its first family since October 2026 and is approaching its first public release. Expect rough edges; issues and ideas are welcome.
 
-## Lizenz
+## License
 
-[GNU Affero General Public License v3.0](LICENSE). Wer Familienhub verändert und anderen als Dienst anbietet,
-muss den geänderten Quellcode ebenfalls zugänglich machen.
+[AGPL-3.0](LICENSE). If you run a modified version as a service for others, you must make your source code available too.

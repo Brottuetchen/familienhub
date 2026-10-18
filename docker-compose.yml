@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: familienhub:local   # base for images with extra plugins (docs/plugins.md)
     restart: unless-stopped
     env_file: .env
     environment:

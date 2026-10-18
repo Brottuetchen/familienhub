@@ -1,19 +1,15 @@
-# Arbeitsregeln für Agenten
+# Working rules (contributors and coding agents)
 
-- Sprache: UI-Texte, Commits und Doku auf **Deutsch**. Code-Bezeichner auf Englisch.
-- **Keine Geheimnisse ins Repo:** keine Tokens, Passwörter, `google-services.json`, Firebase-Service-Account-JSON, VAPID-Private-Keys oder `.env`.
-  - Beispiele gehören in `.env.example` mit Platzhaltern.
-  - `app/android/app/google-services.json` steht in `.gitignore`.
-- **Keine Hausdaten im Code:** keine echten IPs, Domains oder Personennamen als Default. Alles kommt aus der Konfiguration (Projekt soll veröffentlichbar bleiben).
-- Bestehende Tests müssen grün bleiben (`cd backend && PYTHONPATH=. pytest -q`). Für neue Backend-Funktionen gibt es Tests mit gemockten Fachsystemen.
-- Flutter: `flutter analyze` ohne Fehler, `flutter test` grün.
-- Konnektoren degradieren sanft: nicht konfiguriert oder nicht erreichbar → leere Daten und ein Status, keine Exceptions bis in die UI.
-- DB-Änderungen nur über Alembic-Migrationen.
-- Kleine, thematische Commits. Vor größeren Umbauten erst den bestehenden Code lesen: Hermes hat viele Module schon fertig.
-- Zielbild und Entscheidungen: `docs/ENTSCHEIDUNGEN.md`. Bei Widerspruch gilt dieses Dokument.
-
-## Qualitätsregeln (seit 2026-10-13, verbindlich)
-- Arbeitsweise, Verbote und Review-Kriterien stehen in `docs/BUILD_PROMPT.md`, Teil A und D. Bei Widerspruch gelten diese.
-- Erfolg nur mit kopierter Befehlsausgabe melden. Nie selbst mergen (`main` ist geschützt).
-- Tests zuerst. Bestehende Tests nur mit Begründung im PR ändern. Mocks dürfen das Ergebnis nicht vorgeben.
-- Testumgebung im Hermes-Container: `~/fh-venv` (`cd backend && PYTHONPATH=. ~/fh-venv/bin/python -m pytest -q`).
+- **Language:** code, comments, commits, pull requests and docs in **English** (since 2026-10-18). Older German comments are translated when a file is touched anyway, with no mass-translation PRs. UI texts are localised in `app/lib/l10n/app_<lang>.arb` (German is the template). The German design notes in `docs/internal/` stay as they are.
+- **No secrets in the repo:** no tokens, passwords, `google-services.json`, Firebase service account JSON, VAPID private keys or `.env`.
+  - Examples belong in `.env.example` with placeholders.
+- **No household data in code:** no real IPs, domains or names as defaults. Everything comes from configuration.
+- **Tests first.**
+  - Existing tests must stay green: `cd backend && PYTHONPATH=. pytest -q`; `cd app && flutter analyze && flutter test`.
+  - Change existing tests only with a reason in the PR.
+  - Mocks simulate the external system; they never decide the result under test.
+- **Fail softly:** a plugin that is not configured or not reachable returns empty data plus a status, never an exception into the UI.
+- **Database changes only via Alembic migrations.**
+- **Small, focused commits.** Read the existing code before larger changes.
+- **Report success only with the copied command output.** Never merge your own PR (`main` is protected).
+- Design decisions and history: `docs/internal/ENTSCHEIDUNGEN.md` and `docs/internal/BUILD_PROMPT.md` (German, binding for agents).
