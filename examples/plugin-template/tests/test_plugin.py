@@ -37,7 +37,7 @@ def client(monkeypatch):
 
 @pytest.fixture
 def notes():
-    with respx.mock(assert_all_called=False) as service:
+    with respx.mock(using="httpx", assert_all_called=False) as service:
         service.route(host="testserver").pass_through()  # the test client itself
         yield service
 

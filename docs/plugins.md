@@ -254,7 +254,7 @@ def client(monkeypatch):
 
 
 def test_stock_down(client):
-    with respx.mock(assert_all_called=False) as http:
+    with respx.mock(using="httpx", assert_all_called=False) as http:
         http.route(host="testserver").pass_through()                  # the test client itself
         http.get("https://grocy.example.org/api/stock").mock(return_value=httpx.Response(500))
         body = client.get("/api/plugins/grocy/stock").json()
