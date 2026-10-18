@@ -140,8 +140,8 @@ class CalDAVConnector(BaseConnector):
                 comp.add("dtstart", datetime.fromisoformat(changes["start"]).date())
                 comp.add("dtend", datetime.fromisoformat(changes["end"]).date())
             else:
-                comp.add("dtstart", datetime.fromisoformat(changes["start"]))
-                comp.add("dtend", datetime.fromisoformat(changes["end"]))
+                comp.add("dtstart", _local_time(changes["start"]))
+                comp.add("dtend", _local_time(changes["end"]))
         ev.save()
         return True
 
@@ -284,10 +284,8 @@ class CalDAVConnector(BaseConnector):
             event.add('dtend', end_date)
         else:
             # Mit Zeit: DATETIME
-            start_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
-            end_dt = datetime.fromisoformat(end.replace("Z", "+00:00"))
-            event.add('dtstart', start_dt)
-            event.add('dtend', end_dt)
+            event.add('dtstart', _local_time(start))
+            event.add('dtend', _local_time(end))
 
         if location:
             event.add('location', location)
@@ -310,6 +308,18 @@ class CalDAVConnector(BaseConnector):
 
 
 # --- Hilfsfunktionen ---
+
+def _local_time(value: str) -> datetime:
+    """ISO time in the hub's time zone (TZID=Europe/Berlin instead of a fixed +02:00 offset).
+
+    A fixed offset makes servers guess a zone (Nextcloud picks e.g. Africa/Blantyre), and
+    repeating events then shift by an hour after the daylight saving change.
+    """
+    from app.core.timeutil import local_tz
+
+    dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return dt.replace(tzinfo=local_tz()) if dt.tzinfo is None else dt.astimezone(local_tz())
+
 
 def calendar_id(url: str) -> str:
     """Stable, non-revealing id of a CalDAV calendar (the URL contains user names)."""
