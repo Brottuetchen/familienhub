@@ -322,6 +322,11 @@ async def seerr_webhook(payload: Dict[str, Any], key: ServiceKey = Depends(servi
     if event == "TEST_NOTIFICATION":
         recipients, head, body = admins, "🎬 Seerr ist verbunden", str(payload.get("message") or "")
     elif event == "MEDIA_AVAILABLE":
+        from app.services.seerr_watch import remember
+
+        rid = str(request.get("request_id") or "")
+        if rid.isdecimal() and not remember(db, int(rid)):
+            return {"ignored": "already reported"}
         recipients, head, body = ([requester] if requester else []), f"🎬 „{subject}“ ist da", "Jetzt in Jellyfin."
     elif event == "MEDIA_DECLINED":
         recipients, head, body = ([requester] if requester else []), f"🎬 „{subject}“ abgelehnt", str(payload.get("message") or "")

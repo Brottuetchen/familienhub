@@ -144,6 +144,20 @@ In Shelfarr under *Settings → Webhook*:
 
 If usernames in Shelfarr differ, map them with `SHELFARR_USER_MAP` (`hubname=shelfarrname,…`).
 
+## Seerr (movies and shows)
+
+Nothing to set up. While the Seerr plugin is active, the hub checks Seerr every 10 minutes for requests that became available and notifies the person who asked for them ("🎬 “Title” is here"). On the first run it remembers what is already available, so nobody gets old news.
+
+If Seerr's single webhook slot is free, you can additionally point it at the hub for instant messages (declined and failed requests too):
+
+| Setting (Seerr → Settings → Notifications → Webhook) | Value |
+|---|---|
+| Webhook URL | `https://hub.example/api/media/webhook` |
+| Authorization header | `Bearer fhs_…` (service key) |
+| Types | Media available, declined, failed (and test) |
+
+Poller and webhook share a list of reported requests, so a request is announced only once.
+
 ## Paperless-ngx (new document)
 
 Create a workflow:

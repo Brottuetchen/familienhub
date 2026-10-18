@@ -22,6 +22,7 @@ logger = get_logger("service.scheduler")
 
 # Prüfintervall in Sekunden.
 CHECK_INTERVAL = 60
+SEERR_EVERY = 10  # ticks: look for newly available Seerr requests every 10 minutes
 
 
 async def _tick() -> None:
@@ -87,9 +88,18 @@ async def run_scheduler() -> None:
     """Endlosschleife – wird beim Shutdown via CancelledError beendet."""
     logger.info("reminder scheduler started (interval=%ds)", CHECK_INTERVAL)
     try:
+        ticks = 0
         while True:
             await asyncio.sleep(CHECK_INTERVAL)
             await _tick()
+            ticks += 1
+            if ticks % SEERR_EVERY == 0:
+                try:
+                    from app.services.seerr_watch import check_available
+
+                    await check_available()
+                except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
+                    logger.warning("seerr check failed: %s", type(exc).__name__)
     except asyncio.CancelledError:  # pragma: no cover
         logger.info("reminder scheduler stopped")
         raise
