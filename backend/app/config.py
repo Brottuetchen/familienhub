@@ -116,6 +116,11 @@ class Settings(BaseSettings):
     # --- Plugins ---
     # Kommagetrennte Plugin-IDs, die trotz Konfiguration aus bleiben sollen (z. B. "weather")
     plugins_disabled: str = ""
+    # Install plugins from GitHub in the app (Administration → Plugins & access). Set false to turn the
+    # installer off; plugins that are already installed keep loading.
+    plugin_install_enabled: bool = True
+    # Extra arguments for pip when a plugin is installed, e.g. "--index-url https://pypi.example.org/simple"
+    plugin_pip_args: str = ""
 
     # --- Security / Auth ---
     # Empty or placeholder: loaded from / generated into <DATA_DIR>/secret_key (see _resolve_secret_key)

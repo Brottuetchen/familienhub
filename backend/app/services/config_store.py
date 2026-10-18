@@ -78,12 +78,15 @@ def apply_overrides(db: Session) -> None:
         _apply(row.key, decrypt(row.value) if row.secret else row.value)
 
 
-def save_overrides(db: Session, values: Dict[str, str]) -> None:
+def save_overrides(db: Session, values: Dict[str, str], extra_specs=None) -> None:
     """Speichert bekannte Plugin-Einstellungen und wendet sie sofort an.
 
     Unbekannte Schlüssel werden ignoriert; geheime Felder mit leerem Wert bleiben unverändert.
+    ``extra_specs`` (Setting-Objekte) gelten zusätzlich, z. B. die Einstellungen eines Plugins, das gerade
+    installiert wird und noch nicht registriert ist.
     """
     specs = _specs()
+    specs.update({s.key.upper(): s for s in extra_specs or ()})
     for key, raw in (values or {}).items():
         spec = specs.get(key.upper())
         if spec is None:
@@ -122,3 +125,14 @@ def disable_plugins(db: Session, plugin_ids: List[str]) -> None:
     db.add(row)
     db.commit()
     _apply("PLUGINS_DISABLED", value)
+
+
+def delete_overrides(db: Session, keys) -> None:
+    """Removes stored settings (e.g. of a removed plugin), also from the running process."""
+    for key in {k.upper() for k in keys}:
+        row = db.get(ConfigOverride, key)
+        if row is not None:
+            db.delete(row)
+        _extra.pop(key, None)
+        _saved.discard(key)
+    db.commit()
