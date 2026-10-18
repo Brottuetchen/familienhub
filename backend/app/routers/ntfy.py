@@ -13,7 +13,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.ntfy import NtfyTarget
 from app.models.user import User
-from app.services.ntfy import ntfy_server
+from app.services.ntfy import ntfy_public_server, ntfy_server
 
 router = APIRouter(prefix="/api/me/ntfy", tags=["push"])
 
@@ -31,7 +31,7 @@ class NtfyIn(BaseModel):
 
 
 def _out(target: Optional[NtfyTarget]) -> dict:
-    server = ntfy_server()
+    server = ntfy_public_server()
     topic = target.topic if target else None
     return {
         "available": server is not None,

@@ -5,6 +5,7 @@
 ## How it works
 - The **admin** enables the `ntfy` plugin under *Administration → Plugins & access*:
   - `NTFY_URL`: the ntfy server, e.g. `https://ntfy.sh` or your own server.
+  - `NTFY_PUBLIC_URL` (optional): the address people enter in the ntfy app, if it differs from the one the hub publishes to (e.g. hub → LAN `http://ntfy.lan:8093`, phones → `https://ntfy.example.org`).
   - `NTFY_TOKEN` (optional): token the hub uses to publish. Needed if the server denies anonymous publishing.
   - `HUB_PUBLIC_URL` (optional): address of the hub that phones can reach. It enables tap-to-open and the reminder buttons (*Done*, *In 1 hr*, *Tomorrow*).
 - **Each person** turns on *Notifications via ntfy* under *More → Notifications & devices*:

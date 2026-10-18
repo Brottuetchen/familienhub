@@ -63,6 +63,16 @@ def test_own_topic_is_validated(client, ntfy_on, topic):
     assert client.put("/api/me/ntfy", headers=h, json={"enabled": True, "topic": topic}).status_code == 422
 
 
+def test_phones_get_public_address_hub_publishes_internally(client, ntfy_on, monkeypatch):
+    from app.services import config_store
+
+    monkeypatch.setitem(config_store._extra, "NTFY_PUBLIC_URL", "https://ntfy.public.test/")
+    h = _auth(client, "ntfy_pub")
+    body = client.put("/api/me/ntfy", headers=h, json={"enabled": True}).json()
+    assert body["server"] == "https://ntfy.public.test"
+    assert body["subscribe_url"] == f"https://ntfy.public.test/{body['topic']}"
+
+
 def test_topics_are_unique_per_person(client, ntfy_on):
     a, b = _auth(client, "ntfy_u1"), _auth(client, "ntfy_u2")
     assert client.put("/api/me/ntfy", headers=a, json={"enabled": True, "topic": "fh_gemeinsam_123"}).status_code == 200

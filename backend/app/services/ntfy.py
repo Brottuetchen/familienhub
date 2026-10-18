@@ -29,6 +29,15 @@ def ntfy_server() -> Optional[str]:
     return str(get_setting("NTFY_URL")).rstrip("/")
 
 
+def ntfy_public_server() -> Optional[str]:
+    """Address people enter in the ntfy app (may differ from the one the hub publishes to, e.g. LAN vs. public)."""
+    server = ntfy_server()
+    if not server:
+        return None
+    public = get_setting("NTFY_PUBLIC_URL")
+    return str(public).rstrip("/") if public else server
+
+
 def _public_url() -> Optional[str]:
     url = get_setting("HUB_PUBLIC_URL")
     return str(url).rstrip("/") if url else None
