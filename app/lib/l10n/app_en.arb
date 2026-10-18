@@ -587,6 +587,7 @@
   "nothingDueShort": "Nothing due",
   "widgetListEmpty": "🛒 List empty",
   "widgetOpenCount": "🛒 {count} open",
+  "widgetTomorrow": "tomorrow",
   "asOfTime": "As of {time}",
   "shoppingCount": "Shopping · {count}",
   "andMore": "\n… and {count} more",
