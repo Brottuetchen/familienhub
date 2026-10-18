@@ -1251,5 +1251,20 @@
   "endLabel": "Ende",
   "untilDay": "Bis",
   "location": "Ort",
-  "familyCalendarHint": "Familienkalender"
+  "familyCalendarHint": "Familienkalender",
+  "editEvent": "Termin bearbeiten",
+  "partOfSeries": "Teil einer Serie",
+  "seriesTimesHint": "Zeiten einer Serie bitte im Kalender selbst ändern. Titel, Ort und Notiz gelten für die ganze Serie.",
+  "deleteSeriesQuestion": "„{title}“ löschen? Das löscht die ganze Serie.",
+  "@deleteSeriesQuestion": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "deleteEventPlain": "„{title}“ löschen?",
+  "@deleteEventPlain": {
+    "placeholders": {
+      "title": {}
+    }
+  }
 }

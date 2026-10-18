@@ -690,5 +690,10 @@
   "endLabel": "End",
   "untilDay": "Until",
   "location": "Location",
-  "familyCalendarHint": "Family calendar"
+  "familyCalendarHint": "Family calendar",
+  "editEvent": "Edit event",
+  "partOfSeries": "Part of a series",
+  "seriesTimesHint": "Please change the times of a series in the calendar itself. Title, place and notes apply to the whole series.",
+  "deleteSeriesQuestion": "Delete “{title}”? This deletes the whole series.",
+  "deleteEventPlain": "Delete “{title}”?"
 }

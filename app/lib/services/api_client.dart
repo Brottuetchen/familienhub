@@ -1462,6 +1462,30 @@ class ApiClient {
   Future<void> deleteDevice(int id) => _send('DELETE', '/api/push/devices/$id');
 
   /// Schickt eine Testnachricht an alle eigenen Geräte; liefert die Zahl erreichter Geräte.
+  Map<String, dynamic> _eventBody(String title, DateTime start, DateTime end, bool allDay, String? location, String? notes,
+          String recurrence) =>
+      {
+        'title': title,
+        'start': allDay ? _dateOnly(start) : _localIso(start),
+        'end': allDay ? _dateOnly(end) : _localIso(end),
+        'all_day': allDay,
+        'location': location ?? '',
+        'notes': notes ?? '',
+        'recurrence': recurrence,
+      };
+
+  /// Edits an event: hub family calendar by id, own CalDAV calendar by calendar id and uid.
+  Future<void> updateEvent(CalendarEvent e, {required String title, required DateTime start, required DateTime end,
+      required bool allDay, String? location, String? notes, String recurrence = 'none'}) {
+    final body = _eventBody(title, start, end, allDay, location, notes, recurrence);
+    if (e.source == 'hub' && e.id != null) return _send('PUT', '/api/calendar/events/${e.id}', body: body);
+    return _send('PUT', '/api/calendar/caldav/${e.calendarId!.replaceAll(RegExp(r'[^a-z0-9:-]'), '')}/${Uri.encodeComponent(e.uid!)}', body: body);
+  }
+
+  Future<void> deleteAnyEvent(CalendarEvent e) => e.source == 'hub' && e.id != null
+      ? _send('DELETE', '/api/calendar/events/${e.id}')
+      : _send('DELETE', '/api/calendar/caldav/${e.calendarId!.replaceAll(RegExp(r'[^a-z0-9:-]'), '')}/${Uri.encodeComponent(e.uid!)}');
+
   /// Only events of the hub's family calendar can be deleted here.
   Future<void> deleteEvent(int id) => _send('DELETE', '/api/calendar/events/$id');
 

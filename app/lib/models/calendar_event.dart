@@ -6,6 +6,10 @@ class CalendarEvent {
   final int? id;
   final String? source; // caldav | hub | ics …
   final String? calendarId; // hub | caldav:… | ics:…
+  final String? uid; // CalDAV: to edit or delete the event
+  final String? notes;
+  final String recurrence; // hub: none | daily | weekly | monthly | yearly
+  final bool recurring; // CalDAV: part of a series
   final String title;
   final DateTime? start;
   final DateTime? end;
@@ -18,6 +22,10 @@ class CalendarEvent {
     this.id,
     this.source,
     this.calendarId,
+    this.uid,
+    this.notes,
+    this.recurrence = 'none',
+    this.recurring = false,
     required this.title,
     this.start,
     this.end,
@@ -59,6 +67,10 @@ class CalendarEvent {
       id: json['id'] is int ? json['id'] as int : null,
       source: json['source'] as String?,
       calendarId: json['calendar_id'] as String?,
+      uid: json['uid'] as String?,
+      notes: json['notes'] as String?,
+      recurrence: (json['recurrence'] as String?) ?? 'none',
+      recurring: json['recurring'] == true || ((json['recurrence'] as String?) ?? 'none') != 'none',
       title: (json['title'] as String?) ?? l10n.event,
       start: parse(json['start']),
       end: parse(json['end']),
