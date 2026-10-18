@@ -74,7 +74,7 @@ void main() {
       expect(find.byType(FloatingActionButton), findsNothing);
       await pump(tester, b, const MealsScreen());
       expect(find.byTooltip('Essen eintragen'), findsNothing);
-      expect(find.byTooltip('Zutaten der nächsten 7 Tage auf die Einkaufsliste'), findsNothing);
+      expect(find.byTooltip('Zutaten der Woche auf die Einkaufsliste'), findsNothing);
     });
   }
 

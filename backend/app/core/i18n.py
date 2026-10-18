@@ -24,6 +24,15 @@ SUPPORTED = ("de", "en")
 DEFAULT = "de"
 
 EN: Dict[str, str] = {
+    # --- week shopping list ---
+    "Keine Rezepte im Zeitraum geplant.": "No recipes planned in this period.",
+    "Einkaufsliste aktualisiert.": "Shopping list updated.",
+    "Einkaufsliste teilweise aktualisiert.": "Shopping list partly updated.",
+    "Hub: Einkaufsliste nicht erreichbar, übersprungen.": "Hub: shopping list not reachable, skipped.",
+    "Hub: {count} Zutaten, {added} zur Einkaufsliste hinzugefügt.": "Hub: {count} ingredients, {added} added to the shopping list.",
+    "Hub: {count} Zutaten gesammelt (keine Einkaufsliste eingerichtet).": "Hub: {count} ingredients collected (no shopping list set up).",
+    "{label}: nicht erreichbar, übersprungen.": "{label}: not reachable, skipped.",
+    "{label}: {count} Rezepte auf die Einkaufsliste übernommen.": "{label}: {count} recipes added to the shopping list.",
     # --- push notifications ---
     "Neue Aufgabe zugewiesen": "New task for you",
     "⏰ Erinnerung": "⏰ Reminder",

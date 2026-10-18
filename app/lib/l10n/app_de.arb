@@ -481,7 +481,7 @@
       "n": {}
     }
   },
-  "ingredientsNext7Days": "Zutaten der nächsten 7 Tage auf die Einkaufsliste",
+  "ingredientsNext7Days": "Zutaten der Woche auf die Einkaufsliste",
   "previousWeek": "Vorige Woche",
   "thisWeekRange": "Diese Woche · {range}",
   "@thisWeekRange": {
