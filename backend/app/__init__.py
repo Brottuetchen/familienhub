@@ -1,10 +1,11 @@
-"""Hermes Family OS - Backend package.
+"""Familienhub backend package.
 
-Hermes ist eine intelligente Schicht ("Family OS") über bereits vorhandenen
-self-hosted Diensten (Nextcloud, Vikunja, KitchenOwl, Paperless, Home Assistant, ...).
-Das Backend bündelt diese Systeme über Connectors, aggregiert sie zu einem
-Familien-Dashboard und stellt einen werkzeugbasierten KI-Assistenten bereit.
+A layer over existing self-hosted services (Nextcloud, Home Assistant, Paperless, ...): connectors and
+plugins bundle them into one family dashboard and app.
 """
 
-__version__ = "0.1.0"
+import os
+
+# Release images set FH_VERSION at build time (see backend/Dockerfile and .github/workflows/docker.yml)
+__version__ = os.environ.get("FH_VERSION") or "0.1.0"
 __app_name__ = "Hermes Family OS"

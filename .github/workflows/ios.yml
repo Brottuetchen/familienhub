@@ -4,6 +4,7 @@
 name: iOS
 on:
   workflow_dispatch:
+  workflow_call:  # used by release.yml
   push:
     branches: [main, "ios-*"]
     paths: ["app/**", ".github/workflows/ios.yml"]
