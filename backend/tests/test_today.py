@@ -1,6 +1,6 @@
 """Tests für /api/today Endpunkt."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 
@@ -123,3 +123,28 @@ def test_today_includes_hub_meal_entries(client, auth):
     assert resp.status_code == 200
     meals = client.get("/api/today", headers=auth).json()["meals"]
     assert {"source": "hub", "title": "Linsensuppe heute"} in meals
+
+
+def test_today_events_exclude_tomorrow(client, auth):
+    """The card is "Today": an event tomorrow (inside the 2-day fetch window) must not be counted."""
+    now = _local_now()
+    today = now.date()
+    tomorrow = today + timedelta(days=1)
+    for title, day in (("Heute-Termin", today), ("Morgen-Termin", tomorrow)):
+        r = client.post("/api/calendar/events", headers=auth, json={
+            "title": title, "start": f"{day.isoformat()}T13:00:00", "end": f"{day.isoformat()}T14:00:00", "all_day": False})
+        assert r.status_code in (200, 201), r.text
+    titles = [e["title"] for e in client.get("/api/today", headers=auth).json()["events"]]
+    assert "Heute-Termin" in titles
+    assert "Morgen-Termin" not in titles
+
+
+def test_today_all_day_end_is_exclusive(client, auth):
+    """An all-day event ending (exclusive) today is over; one starting tomorrow is not today's."""
+    from app.routers.today import _occurs_on
+
+    day = _local_now().date()
+    y, t = (day - timedelta(days=1)).isoformat(), (day + timedelta(days=1)).isoformat()
+    assert not _occurs_on({"start": y, "end": day.isoformat(), "all_day": True}, day)
+    assert not _occurs_on({"start": t, "end": (day + timedelta(days=2)).isoformat(), "all_day": True}, day)
+    assert _occurs_on({"start": y, "end": t, "all_day": True}, day)

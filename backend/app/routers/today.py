@@ -19,6 +19,27 @@ router = APIRouter(prefix="/api", tags=["today"])
 logger = logging.getLogger("hermes.today")
 
 
+def _occurs_on(event: dict, day) -> bool:
+    """Does the event touch ``day``? All-day ends are exclusive; a timed end at 00:00 belongs to the day before."""
+    def parse(raw):
+        try:
+            return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            return None
+
+    start = parse(event.get("start"))
+    if start is None:
+        return False
+    end = parse(event.get("end")) or start
+    first = start.date()
+    if event.get("all_day"):
+        return first <= day and (day < end.date() or first == day)
+    last = end.date()
+    if end.time() == datetime.min.time() and last > first:
+        last -= timedelta(days=1)
+    return first <= day <= last
+
+
 @router.get("/today")
 async def get_today(
     current_user: User = Depends(get_current_user),
@@ -48,7 +69,8 @@ async def get_today(
 
         midnight = datetime.combine(today, datetime.min.time())
         cal_events = await collect_events(db, current_user, 2, start=midnight)
-        for e in (cal_events or [])[:10]:
+        # The window also reaches into tomorrow (so late events are never cut off); the card says "today".
+        for e in [e for e in (cal_events or []) if _occurs_on(e, today)][:10]:
             events.append({
                 "title": e.get("title", ""),
                 "start": e.get("start", ""),
