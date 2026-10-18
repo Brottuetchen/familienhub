@@ -185,3 +185,16 @@ def test_new_caldav_event_uses_named_time_zone(monkeypatch):
     ical = saved[0]
     assert "DTSTART;TZID=Europe/Berlin:20261019T190000" in ical
     assert "UTC+02" not in ical and "+0200" not in ical.split("BEGIN:VEVENT")[1]
+
+
+def test_caldav_events_have_no_invented_colour_and_stable_ids():
+    """A calendar without colour must not give its events a made-up one (it hid the chip colour in the app),
+    and the id is the same with or without a trailing slash (events and /calendars must agree)."""
+    from app.connectors.caldav_connector import _component_to_event, calendar_id
+    from icalendar import Event
+
+    comp = Event()
+    comp.add("summary", "X")
+    assert _component_to_event(comp, "Persönlich", None)["color"] is None
+    assert _component_to_event(comp, "Familie", "#81B29A")["color"] == "#81B29A"
+    assert calendar_id("https://dav.example.test/c/a/") == calendar_id("https://dav.example.test/c/a")
