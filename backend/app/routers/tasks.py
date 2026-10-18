@@ -264,7 +264,8 @@ async def _create_task(task: TaskCreateRequest, provider: str, account: str | No
     if task.rotation:
         if not connector.is_configured:
             raise HTTPException(status_code=409, detail={"error": "no_caldav_account"})
-        if not db.query(TaskList).filter(TaskList.user_id == current_user.id, TaskList.kind == "family").first():
+        if provider == "nextcloud" and not db.query(TaskList).filter(
+                TaskList.user_id == current_user.id, TaskList.kind == "family").first():
             raise HTTPException(status_code=409, detail="Bitte zuerst eine Nextcloud-Familienliste zuordnen")
 
     try:

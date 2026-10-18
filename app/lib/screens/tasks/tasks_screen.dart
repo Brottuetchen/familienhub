@@ -68,7 +68,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     final provider = available.length == 1 ? available.single : await showModalBottomSheet<TaskProviderInfo>(context: context,
       builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
         ListTile(title: Text(l10n.chooseProviderAccount)),
-        for (final p in available) ListTile(title: Text(p.name), subtitle: Text(p.account), onTap: () => Navigator.pop(ctx, p)),
+        for (final p in available) ListTile(title: Text(p.name), onTap: () => Navigator.pop(ctx, p)),
       ])));
     if (provider == null || !mounted) return;
     if (provider.id == 'habitica') { await showNativeEditor(context, ref, provider.account); return; }

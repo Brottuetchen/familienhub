@@ -17,7 +17,8 @@ def test_modules_follow_plugin_configuration(client, auth, monkeypatch):
     m = client.get("/api/modules", headers=auth).json()["modules"]
     assert m["today"] == {"enabled": True, "core": True, "plugin": None}
     assert m["tasks"]["enabled"] is True and m["tasks"]["plugin"] == "nextcloud"
-    assert m["shopping"]["enabled"] is False
+    # Without Home Assistant the hub's own list serves shopping (built-in sources, 18.10.)
+    assert m["shopping"] == {"enabled": True, "core": False, "plugin": "hub_shopping"}
     assert m["books"]["enabled"] is False
 
     monkeypatch.setattr(settings, "homeassistant_url", "http://ha.test")
@@ -32,7 +33,7 @@ def test_plugins_disabled_switches_module_and_connector_off(client, auth, monkey
 
     monkeypatch.setattr(settings, "homeassistant_url", "http://ha.test")
     monkeypatch.setattr(settings, "homeassistant_token", "t")
-    monkeypatch.setattr(settings, "plugins_disabled", "homeassistant, weather")
+    monkeypatch.setattr(settings, "plugins_disabled", "homeassistant, weather, hub_shopping")  # hub list off too
     body = client.get("/api/modules", headers=auth).json()
     assert body["modules"]["shopping"]["enabled"] is False
     ha = next(p for p in body["plugins"] if p["id"] == "homeassistant")

@@ -614,5 +614,7 @@
   "ntfyOpen": "Open in ntfy",
   "ntfyNewTopic": "New topic",
   "ntfyNewTopicQuestion": "Generate a new topic?",
-  "ntfyNewTopicHint": "The old topic will no longer receive anything. You need to subscribe to the new one in the ntfy app."
+  "ntfyNewTopicHint": "The old topic will no longer receive anything. You need to subscribe to the new one in the ntfy app.",
+  "deleteEvent": "Delete event",
+  "deleteEventQuestion": "Delete “{title}” from the family calendar?"
 }

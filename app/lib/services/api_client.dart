@@ -1379,6 +1379,9 @@ class ApiClient {
   Future<void> deleteDevice(int id) => _send('DELETE', '/api/push/devices/$id');
 
   /// Schickt eine Testnachricht an alle eigenen Geräte; liefert die Zahl erreichter Geräte.
+  /// Only events of the hub's family calendar can be deleted here.
+  Future<void> deleteEvent(int id) => _send('DELETE', '/api/calendar/events/$id');
+
   Future<NtfySettings> ntfySettings() async =>
       NtfySettings.fromJson(await _send('GET', '/api/me/ntfy') as Map<String, dynamic>);
 

@@ -1,4 +1,4 @@
-"""Einkaufslisten-Endpunkte (HA Todo)."""
+"""Shopping list endpoints. Source: Home Assistant to-do lists or the hub's own list (``hub_shopping``)."""
 
 import logging
 
@@ -32,9 +32,31 @@ def _ha():
     return c
 
 
+def _hub():
+    """The hub's own list, if the ``hub_shopping`` plugin is active."""
+    from app.plugins.registry import plugin_registry
+    from app.services.hub_shopping import HubShopping
+
+    plugin = plugin_registry.get("hub_shopping")
+    return HubShopping() if plugin and plugin.active else None
+
+
+def _hub_source():
+    """Hub list instead of Home Assistant: chosen explicitly (SHOPPING_SOURCE) or because HA is not set up."""
+    from app.plugins.base import get_setting
+
+    choice = str(get_setting("SHOPPING_SOURCE") or "").strip()
+    if choice == "hub_shopping" or (choice != "homeassistant" and _ha() is None):
+        return _hub()
+    return None  # Home Assistant
+
+
 @router.get("")
 async def list_items(_: User = Depends(get_current_user)):
     """Liefert manuelle + Rezeptzutaten getrennt."""
+    hub = _hub_source()
+    if hub:
+        return await hub.groups()
     ha = _ha()
     if not ha:
         return {
@@ -76,6 +98,14 @@ async def list_items(_: User = Depends(get_current_user)):
 async def add_item(data: AddItemRequest, user: User = Depends(get_current_user),
                    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")):
     """Fügt ein manuelles Item hinzu. Mit Idempotency-Key (Offline-Warteschlange) höchstens einmal."""
+    hub = _hub_source()
+    if hub:
+        async def add_hub():
+            if not await hub.add(data.item, user.id):
+                raise HTTPException(422, "Artikel fehlt")
+            return {"status": "ok"}
+
+        return await idempotency.run(user.id, "shopping:add", idempotency_key, add_hub)
     ha = _ha()
     if not ha:
         raise HTTPException(503, "Home Assistant nicht konfiguriert")
@@ -91,6 +121,11 @@ async def add_item(data: AddItemRequest, user: User = Depends(get_current_user),
 @router.patch("/{uid}")
 async def update_item(uid: str, data: UpdateItemRequest, _: User = Depends(get_current_user)):
     """Markiert done (completed) oder wieder offen (needs_action)."""
+    hub = _hub_source()
+    if hub:
+        if not await hub.set_done(uid, data.done):
+            raise HTTPException(404, "Eintrag nicht gefunden")
+        return {"status": "ok"}
     ha = _ha()
     if not ha:
         raise HTTPException(503, "Home Assistant nicht konfiguriert")
@@ -106,6 +141,11 @@ async def update_item(uid: str, data: UpdateItemRequest, _: User = Depends(get_c
 @router.delete("/{uid}")
 async def delete_item(uid: str, _: User = Depends(require_min_role(ROLE_CHILD))):
     """Entfernt Item aus manueller Liste (Rezeptzutaten nicht löschbar)."""
+    hub = _hub_source()
+    if hub:
+        if not await hub.delete(uid):
+            raise HTTPException(404, "Eintrag nicht gefunden")
+        return {"status": "ok"}
     ha = _ha()
     if not ha:
         raise HTTPException(503, "Home Assistant nicht konfiguriert")
@@ -130,6 +170,9 @@ async def delete_item(uid: str, _: User = Depends(require_min_role(ROLE_CHILD)))
 @router.get("/recent")
 async def recent_completions(_: User = Depends(get_current_user)):
     """Vorschläge: zuletzt abgehakte freie Artikel (ohne Doppelte), höchstens 30."""
+    hub = _hub_source()
+    if hub:
+        return await hub.recent()
     ha = _ha()
     if not ha:
         return []

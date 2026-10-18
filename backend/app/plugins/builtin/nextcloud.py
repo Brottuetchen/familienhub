@@ -25,8 +25,3 @@ class NextcloudPlugin(Plugin):
     def task_connector(self, user_id, db):
         from app.connectors.nextcloud_tasks_connector import NextcloudTasksConnector
         return NextcloudTasksConnector(user_id=user_id)
-
-    def routers(self):
-        from app.routers import calendar
-
-        return [calendar.router]
