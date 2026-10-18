@@ -6,7 +6,7 @@
 
 Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
 
-[Getting started](docs/getting-started.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
+[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
 
@@ -39,6 +39,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 ## Features
 
 - **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
+- **Calendar:** list, week and month views, colours and filter per calendar, new events land in exactly the chosen calendar (family first), edit and delete; the same CalDAV calendars and reminders on iPhone and Android, see [calendar & phone](docs/calendar.md)
 - **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side
 - **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification

@@ -6,7 +6,7 @@
 
 Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan, Termine und Erinnerungen, mit echten Push-Mitteilungen, Widgets und Offline-Modus.
 
-[English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
+[English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
 <img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
 
@@ -38,6 +38,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 ## Was es kann
 
 - **Heute:** Begrüßung, Aufgaben (meine / für mich / Familie), Einkauf, Termine, Essensplan, Erinnerungen und Haus-Kacheln auf einem Bildschirm
+- **Kalender:** Liste, Woche und Monat, Farben und Filter je Kalender; neue Termine landen genau im gewählten Kalender (Familie zuerst), bearbeiten und löschen; dieselben CalDAV-Kalender und Erinnerungen auf iPhone und Android, siehe [Kalender & Handy](docs/calendar.md)
 - **Aufgaben:** eigene, gemeinsame und zugewiesene Aufgaben, Haushaltsrotation; Nextcloud und Habitica nebeneinander
 - **Einkauf, Essen, Rezepte:** Einkaufsliste, Wochenplan, Rezeptbuch im Hub (Zutaten, Zubereitung, Link); Rezepte auf Tage legen und Zutaten auf die Liste, auch von Cookidoo
 - **Erinnerungen:** zu einer Zeit, wiederkehrend oder *wenn ich heimkomme* (über Home Assistant), mit Knöpfen direkt in der Mitteilung
