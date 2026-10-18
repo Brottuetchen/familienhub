@@ -301,3 +301,55 @@ def test_caldav_color_element_is_importable_without_caldav_elements_ical_attribu
     from caldav.elements.ical import CalendarColor
 
     assert CalendarColor().tag == COLOR_TAG
+
+
+def test_event_calendar_id_matches_calendar_list_even_if_search_rewrites_url(monkeypatch):
+    """The caldav library rewrites calendar.url to ...:443/... during search(); ids must not change."""
+    import caldav
+
+    from app.connectors.caldav_connector import CalDAVConnector, calendar_id
+
+    class FakeEvent:
+        def __init__(self):
+            from datetime import datetime as dt
+            from icalendar import Event
+
+            e = Event()
+            e.add("uid", "e1")
+            e.add("summary", "Termin")
+            e.add("dtstart", dt(2026, 10, 20, 10, 0))
+            e.add("dtend", dt(2026, 10, 20, 11, 0))
+            self.icalendar_component = e
+
+    class FakeCalendar:
+        def __init__(self):
+            self.url = "https://cloud.example.org/remote.php/dav/calendars/anna/privat/"
+            self.name = "Privat"
+
+        def get_properties(self, props):
+            return {}
+
+        def search(self, **kw):
+            self.url = "https://cloud.example.org:443/remote.php/dav/calendars/anna/privat/"
+            return [FakeEvent()]
+
+    cal = FakeCalendar()
+
+    class FakeClient:
+        def __init__(self, *a, **kw):
+            pass
+
+        def principal(self):
+            return type("P", (), {"calendars": lambda self: [cal]})()
+
+    monkeypatch.setattr(caldav, "DAVClient", FakeClient)
+    from datetime import datetime as dt
+
+    expected = calendar_id("https://cloud.example.org/remote.php/dav/calendars/anna/privat/")
+    conn = CalDAVConnector(url="https://cloud.example.org/remote.php/dav", username="anna", password="pw")
+    events = conn._fetch_events_sync(dt(2026, 10, 19), dt(2026, 10, 25))
+    assert events and {e["calendar_id"] for e in events} == {expected}
+    # explicit default ports never change the id
+    assert calendar_id("https://cloud.example.org:443/remote.php/dav/calendars/anna/privat") == expected
+    assert calendar_id("http://h.example.org:80/c/") == calendar_id("http://h.example.org/c")
+    assert calendar_id("https://h.example.org:8443/c/") != calendar_id("https://h.example.org/c/")
