@@ -33,6 +33,13 @@ logger = get_logger("connector.nextcloud_tasks")
 LEGACY_HABITICA_PREFIX = "habitica-"
 
 
+
+def _url_key(url) -> str:
+    """Comparable calendar URL: the caldav library rewrites ``calendar.url`` to ``host:443`` after a request."""
+    from app.connectors.caldav_connector import _normalize_url
+
+    return _normalize_url(str(url))
+
 class HouseholdUnavailable(RuntimeError):
     """Haushaltsabschluss bleibt nach einem Fachsystemfehler wiederholbar."""
 
@@ -294,7 +301,7 @@ class NextcloudTasksConnector(BaseConnector):
             except Exception as exc:
                 logger.debug("Failed to check calendar components: %s", exc)
                 if failed_urls is not None:
-                    failed_urls.add(str(cal.url))
+                    failed_urls.add(_url_key(cal.url))
                 continue
 
         return vtodo_calendars
@@ -334,13 +341,13 @@ class NextcloudTasksConnector(BaseConnector):
                 return []
 
             # Map: caldav_url -> TaskList
-            list_map = {tl.caldav_url: tl for tl in task_lists}
+            list_map = {_url_key(tl.caldav_url): tl for tl in task_lists}
 
             calendars = self._get_vtodo_calendars()
             results = []
 
             for cal in calendars:
-                cal_url = str(cal.url)
+                cal_url = _url_key(cal.url)
                 if cal_url not in list_map:
                     continue
 
@@ -446,7 +453,7 @@ class NextcloudTasksConnector(BaseConnector):
             calendars = self._get_vtodo_calendars()
             target_cal = None
             for cal in calendars:
-                if str(cal.url) == target_list.caldav_url:
+                if _url_key(cal.url) == _url_key(target_list.caldav_url):
                     target_cal = cal
                     break
 
@@ -520,12 +527,12 @@ class NextcloudTasksConnector(BaseConnector):
             if not task_lists:
                 return None
 
-            list_map = {tl.caldav_url: tl for tl in task_lists}
+            list_map = {_url_key(tl.caldav_url): tl for tl in task_lists}
             calendars = self._get_vtodo_calendars()
 
             # Finde Todo
             for cal in calendars:
-                if str(cal.url) not in list_map:
+                if _url_key(cal.url) not in list_map:
                     continue
 
                 try:
@@ -533,8 +540,8 @@ class NextcloudTasksConnector(BaseConnector):
                     if todo:
                         comp = todo.icalendar_component
 
-                        task = self._vtodo_to_dict(comp, list_map[str(cal.url)])
-                        self._check_household_access(db, list_map[str(cal.url)], task, manage=True)
+                        task = self._vtodo_to_dict(comp, list_map[_url_key(cal.url)])
+                        self._check_household_access(db, list_map[_url_key(cal.url)], task, manage=True)
                         if task["rotation"]:
                             title = kwargs.get("title", task["title"])
                             due = kwargs.get("due", task["due"])
@@ -585,7 +592,7 @@ class NextcloudTasksConnector(BaseConnector):
                         saved_todo = cal.todo_by_uid(uid)
                         if saved_todo:
                             saved_comp = saved_todo.icalendar_component
-                            task_list = list_map[str(cal.url)]
+                            task_list = list_map[_url_key(cal.url)]
                             return self._vtodo_to_dict(saved_comp, task_list)
 
                 except (PermissionError, ValueError):
@@ -606,18 +613,18 @@ class NextcloudTasksConnector(BaseConnector):
             if not task_lists:
                 return None
 
-            list_map = {tl.caldav_url: tl for tl in task_lists}
+            list_map = {_url_key(tl.caldav_url): tl for tl in task_lists}
             calendars = self._get_vtodo_calendars()
 
             for cal in calendars:
-                if str(cal.url) not in list_map:
+                if _url_key(cal.url) not in list_map:
                     continue
 
                 try:
                     todo = cal.todo_by_uid(uid)
                     if todo:
                         comp = todo.icalendar_component
-                        task_list = list_map[str(cal.url)]
+                        task_list = list_map[_url_key(cal.url)]
                         task = self._vtodo_to_dict(comp, task_list)
                         if task["rotation"]:
                             try:
@@ -634,7 +641,7 @@ class NextcloudTasksConnector(BaseConnector):
                         completed_todo = cal.todo_by_uid(uid)
                         if completed_todo:
                             comp = completed_todo.icalendar_component
-                            task_list = list_map[str(cal.url)]
+                            task_list = list_map[_url_key(cal.url)]
                             return self._vtodo_to_dict(comp, task_list)
                 except (PermissionError, HouseholdUnavailable):
                     raise
@@ -724,12 +731,12 @@ class NextcloudTasksConnector(BaseConnector):
             if not task_lists:
                 return False
 
-            list_map = {tl.caldav_url: tl for tl in task_lists}
+            list_map = {_url_key(tl.caldav_url): tl for tl in task_lists}
             failed_urls: set[str] = set()
             calendars = self._get_vtodo_calendars(failed_urls)
 
             for cal in calendars:
-                if str(cal.url) not in list_map:
+                if _url_key(cal.url) not in list_map:
                     continue
 
                 try:
@@ -737,8 +744,8 @@ class NextcloudTasksConnector(BaseConnector):
                 except NotFoundError:
                     continue
                 if todo:
-                    self._check_household_access(db, list_map[str(cal.url)],
-                        self._vtodo_to_dict(todo.icalendar_component, list_map[str(cal.url)]), manage=True)
+                    self._check_household_access(db, list_map[_url_key(cal.url)],
+                        self._vtodo_to_dict(todo.icalendar_component, list_map[_url_key(cal.url)]), manage=True)
                     try:
                         todo.delete()
                     except PermissionError as exc:
