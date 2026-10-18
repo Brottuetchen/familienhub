@@ -19,9 +19,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.service_key import ServiceKey
-from app.models.user import User
+from app.models.user import User, ROLE_CHILD
 from app.routers.notifications import service_key
 from app.services.notify import notify
 
@@ -203,7 +203,7 @@ async def my_requests(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/requests", status_code=201)
-async def create_request(data: BookRequestCreate, current_user: User = Depends(get_current_user)):
+async def create_request(data: BookRequestCreate, current_user: User = Depends(require_min_role(ROLE_CHILD))):
     if not _configured():
         raise HTTPException(503, "Shelfarr ist nicht eingerichtet")
     payload = {
@@ -231,7 +231,7 @@ async def create_request(data: BookRequestCreate, current_user: User = Depends(g
 
 
 @router.delete("/requests/{request_id}")
-async def cancel_request(request_id: int, current_user: User = Depends(get_current_user)):
+async def cancel_request(request_id: int, current_user: User = Depends(require_min_role(ROLE_CHILD))):
     """Eigenen Wunsch abbrechen. Fremde Wünsche → 404."""
     if not _configured():
         raise HTTPException(503, "Shelfarr ist nicht eingerichtet")

@@ -10,9 +10,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.recipe import Recipe
-from app.models.user import User
+from app.models.user import User, ROLE_PARTNER
 
 router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
@@ -60,7 +60,7 @@ async def get_recipe(recipe_id: int, db: Session = Depends(get_db), current_user
 
 
 @router.post("")
-async def create_recipe(data: RecipeRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def create_recipe(data: RecipeRequest, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     recipe = Recipe(
         title=data.title,
         description=data.description,
@@ -78,7 +78,7 @@ async def create_recipe(data: RecipeRequest, db: Session = Depends(get_db), curr
 
 
 @router.delete("/{recipe_id}")
-async def delete_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def delete_recipe(recipe_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     r = db.query(Recipe).filter(Recipe.id == recipe_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="Recipe not found")

@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 
 from app.connectors.registry import registry
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.recipe import MealPlanEntry, Recipe
-from app.models.user import User
+from app.models.user import User, ROLE_PARTNER
 from app.services.cookidoo import CookidooUnavailable, cookidoo_service
 from app.services.cookidoo import plugin_active as cookidoo_plugin_active
 
@@ -216,7 +216,7 @@ async def get_plan(
 
 
 @router.post("/plan")
-async def add_plan_entry(data: MealEntryRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def add_plan_entry(data: MealEntryRequest, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     if not data.recipe_id and not data.custom_title:
         raise HTTPException(status_code=400, detail="recipe_id oder custom_title erforderlich")
     entry = MealPlanEntry(
@@ -229,7 +229,7 @@ async def add_plan_entry(data: MealEntryRequest, db: Session = Depends(get_db), 
 
 
 @router.delete("/plan/{entry_id}")
-async def delete_plan_entry(entry_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def delete_plan_entry(entry_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     entry = db.query(MealPlanEntry).filter(MealPlanEntry.id == entry_id).first()
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -249,7 +249,7 @@ async def update_meal(
     meal_id: str,
     data: MealUpdateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_min_role(ROLE_PARTNER))
 ):
     """Aktualisiert Hub-Eintrag. Cookidoo-Einträge (Präfix cookidoo:) → 403."""
     if meal_id.startswith("cookidoo:"):
@@ -280,7 +280,7 @@ async def update_meal(
 async def delete_meal(
     meal_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_min_role(ROLE_PARTNER))
 ):
     """Löscht Hub-Eintrag. Cookidoo-Einträge (Präfix cookidoo:) → 403."""
     if meal_id.startswith("cookidoo:"):
@@ -331,7 +331,7 @@ def _collect_ingredients(db: Session, days: int) -> List[str]:
 
 
 @router.post("/shopping-list")
-async def generate_shopping_list(days: int = 7, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def generate_shopping_list(days: int = 7, db: Session = Depends(get_db), current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     """Sammelt Zutaten aus dem Wochenplan und legt sie in HA shopping todo."""
     from app.config import settings
     

@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 
 from app.core.crypto import encrypt
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_min_role
 from app.models.caldav import CalDAVAccount, TaskList
-from app.models.user import User
+from app.models.user import User, ROLE_CHILD, ROLE_PARTNER
 from app.schemas import CanonicalUUID
 from app.plugins.registry import plugin_registry
 
@@ -229,7 +229,7 @@ async def create_task(
     task: TaskCreateRequest,
     provider: str = "nextcloud",
     account: str | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_PARTNER)),
     db: Session = Depends(get_db),
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
@@ -338,7 +338,7 @@ class NativeActionRequest(BaseModel):
 
 @router.put("/{uid}/selection")
 async def select_task(uid: str, data: SelectionRequest, provider: str, account: str,
-                      current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+                      current_user: User = Depends(require_min_role(ROLE_CHILD)), db: Session = Depends(get_db)):
     connector = plugin_registry.task_connector(provider, current_user.id, db, account)
     if not hasattr(connector, "select_task"):
         raise HTTPException(422, "Dieser Anbieter verwendet Listenauswahl")
@@ -347,7 +347,7 @@ async def select_task(uid: str, data: SelectionRequest, provider: str, account: 
 
 @router.post("/{uid}/actions")
 async def native_action(uid: str, data: NativeActionRequest, provider: str, account: str,
-                        current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+                        current_user: User = Depends(require_min_role(ROLE_CHILD)), db: Session = Depends(get_db)):
     connector = plugin_registry.task_connector(provider, current_user.id, db, account)
     if not hasattr(connector, "action"):
         raise HTTPException(422, "Keine native Aktion für diesen Anbieter")
@@ -360,7 +360,7 @@ async def update_task(
     task: TaskUpdateRequest,
     provider: str = "nextcloud",
     account: str | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_PARTNER)),
     db: Session = Depends(get_db),
 ):
     """Aktualisiert eine Aufgabe."""
@@ -401,7 +401,7 @@ async def complete_task(
     provider: str = "nextcloud",
     account: str | None = None,
     operation_id: CanonicalUUID | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_CHILD)),
     db: Session = Depends(get_db),
 ):
     """Markiert Aufgabe als erledigt."""
@@ -433,7 +433,7 @@ async def delete_task(
     provider: str = "nextcloud",
     account: str | None = None,
     operation_id: CanonicalUUID | None = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_PARTNER)),
     db: Session = Depends(get_db),
 ):
     """Löscht eine Aufgabe."""
@@ -482,7 +482,7 @@ async def get_caldav_account(
 @router.put("/me/caldav")
 async def set_caldav_account(
     data: CalDAVAccountRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_CHILD)),
     db: Session = Depends(get_db),
 ):
     """Setzt oder aktualisiert CalDAV-Account des Nutzers."""
@@ -543,7 +543,7 @@ async def get_task_lists_config(
 @router.put("/me/task-lists")
 async def set_task_lists_config(
     lists: List[TaskListConfigRequest],
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_min_role(ROLE_CHILD)),
     db: Session = Depends(get_db),
 ):
     """Setzt Task-Listen-Konfiguration des Nutzers."""
