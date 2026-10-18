@@ -173,3 +173,10 @@ schreibt durch dieselben Endpunkte; sein Name erfordert keine Kernrouteränderun
 Ein Vikunja-Plugin wird mit #47 weder behauptet noch spekulativ gebaut.
 
 Details/Bedienung/API und Betreiberfreigabe: `AUFGABENPROVIDER.md`.
+
+## Installation per GitHub-Link (seit 18.10.)
+
+Statt eigenem Docker-Image installieren Admins Plugins in der App per Link (Verwaltung → Plugins & Zugänge → Plugin
+installieren). Manifest `familienhub-plugin.json`, Installer `backend/app/plugins/installer.py`, Endpunkte
+`backend/app/routers/plugins.py`. Regeln, Grenzen und Betrieb: `docs/plugins.md` und der Abschnitt „Plugins per
+GitHub-Link installieren“ in `ENTSCHEIDUNGEN.md`. Die Image-Route (Entry-Point, oben) bleibt möglich.

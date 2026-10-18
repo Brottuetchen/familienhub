@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "familienhub-plugin-example-notes"
+version = "0.1.0"
+description = "Template for Familienhub plugins"
+requires-python = ">=3.12"
+# Only list what the hub does not ship. fastapi, httpx, pydantic and sqlalchemy come from the hub
+# (its versions are used), so never list them here.
+dependencies = []
+
+# Lets the plugin also be installed with pip into a custom Docker image. The installer in the app
+# uses entry_point from familienhub-plugin.json; keep both identical.
+[project.entry-points."familienhub.plugins"]
+example_notes = "fh_plugin_example_notes.plugin:ExampleNotesPlugin"
+
+[tool.setuptools.packages.find]
+include = ["fh_plugin_example_notes*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

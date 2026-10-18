@@ -19,6 +19,7 @@ Run them locally with `.forgejo/ci/security.sh`. A full manual review was done o
   - 2 MB request limit
   - the secret key is generated on first start (kept in `<DATA_DIR>/secret_key`, mode 0600); production refuses to start with a default or short key if none can be stored
   - CORS same-origin by default
+- **Plugins installed from GitHub run inside the hub with full access.** Only admins can install them, the installer pins one commit, talks only to GitHub, unpacks archives safely and keeps a plugin's routes below `/api/plugins/<id>/` behind the login. That is not a sandbox: install only plugins you trust, see [plugins](plugins.md#security-notes). `PLUGIN_INSTALL_ENABLED=false` turns the installer off.
 - **No secrets and no household data in the repository.**
 
 ## First admin and secret key
@@ -35,7 +36,7 @@ Run them locally with `.forgejo/ci/security.sh`. A full manual review was done o
 | Request books, movies and shows; connect own Nextcloud/Habitica | | ✓ | ✓ | ✓ |
 | Create and edit tasks, events, meal plan, recipes, family reminders | | | ✓ | ✓ |
 | Control the house (lights, switches, scenes) | | | ✓ | ✓ |
-| Administration: people, plugins, themes, service keys, log | | | | ✓ |
+| Administration: people, plugins (installing them from GitHub too), themes, service keys, log | | | | ✓ |
 
 The server enforces every rule (`require_min_role`). The app also hides what a role cannot do.
 

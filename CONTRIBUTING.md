@@ -7,7 +7,7 @@ Thanks for helping! Familienhub is a family project that grew up, so please keep
 - **Translate:** copy `app/lib/l10n/app_en.arb` to `app_<code>.arb`, translate the values, and add the language to `appLanguages` in `app/lib/l10n/l10n.dart`.
 - **Server texts** (error messages, push notifications, plugin names and settings) are written in German in the code and translated in `backend/app/core/i18n.py`. The server answers in the app's language (`X-App-Language` / `Accept-Language`) and sends push texts in each person's last-used app language. `tests/test_i18n.py` fails when a new German text has no English entry.
 - **Themes:** see [docs/themes.md](docs/themes.md). Share a `theme.json` on GitHub, or propose a built-in one.
-- **Plugins:** see [docs/plugins.md](docs/plugins.md). Most integrations can live in their own package.
+- **Plugins:** see [docs/plugins.md](docs/plugins.md). Most integrations can live in their own repository: start from [examples/plugin-template](examples/plugin-template/) and admins install it with a GitHub link.
 - **Code:** pick an issue, or open one first for larger changes.
 
 ## Development
