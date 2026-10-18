@@ -31,7 +31,11 @@ def _core_settings():
     """Allgemeine Einstellungen aus dem Einrichtungs-Assistenten (keine Plugins)."""
     from app.plugins.base import Setting
 
-    return (Setting("APP_NAME", "Name des Hubs"), Setting("TIMEZONE", "Zeitzone"))
+    return (Setting("APP_NAME", "Name des Hubs"), Setting("TIMEZONE", "Zeitzone"),
+            # Sources per area (Administration → Sources): one source for shopping, a selection for tasks/calendar
+            Setting("SHOPPING_SOURCE", "Einkauf aus", required=False),
+            Setting("TASKS_SOURCES", "Aufgaben aus", required=False),
+            Setting("CALENDAR_SOURCES", "Termine aus", required=False))
 
 
 def _specs():

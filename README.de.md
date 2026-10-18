@@ -14,7 +14,26 @@ Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan,
 
 ## Warum
 
-Viele Familien betreiben schon Nextcloud, Home Assistant, Paperless oder einen Medienserver, aber niemand will fünf Apps am Kühlschrank. Familienhub ist eine App für alle in der Familie. **Die Daten bleiben, wo sie sind:** Aufgaben in Nextcloud, die Einkaufsliste in Home Assistant, Dokumente in Paperless. Der Hub zeigt sie an, macht sie bedienbar und benachrichtigt die richtige Person.
+Eine App für alle in der Familie, die **allein funktioniert und anbindet, was ihr schon betreibt**.
+
+- **Sofort nutzbar:** Aufgaben, Einkaufsliste, Familienkalender, Essensplan und Erinnerungen speichert der Hub selbst. Ein weiterer Dienst ist nicht nötig.
+- **Alles anschließbar:** Jeder Bereich kann seine Daten statt aus dem Hub oder zusätzlich aus einem Dienst holen. Beispiele:
+  - Aufgaben aus jedem CalDAV-Server (Nextcloud, iCloud, Radicale …) oder Habitica
+  - die Einkaufsliste aus Home Assistant
+  - Dokumente aus Paperless
+  - und alles, was ein Plugin liefert
+
+  Angebundene Daten bleiben, wo sie sind.
+
+| Bereich | Im Hub | Oder aus (Plugins) |
+|---|:-:|---|
+| Aufgaben | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica, auch mehrere nebeneinander |
+| Einkaufsliste | ✓ | Home Assistant |
+| Kalender | ✓ Familienkalender | CalDAV, zusammen mit dem Hub-Kalender |
+| Essensplan & Rezepte | ✓ | Cookidoo |
+| Dokumente · Bücher · Filme & Serien | – | Paperless-ngx · Shelfarr · Seerr |
+
+Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unter *Verwaltung → Quellen je Bereich*.
 
 ## Was es kann
 

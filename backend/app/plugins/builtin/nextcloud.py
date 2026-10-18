@@ -7,8 +7,8 @@ class NextcloudPlugin(Plugin):
     def __init__(self):
         super().__init__(
             id="nextcloud",
-            name="Nextcloud / CalDAV",
-            description="Aufgaben und Termine aus Nextcloud (oder jedem CalDAV-Server), Konto pro Person.",
+            name="CalDAV (Nextcloud, iCloud, Radicale …)",
+            description="Aufgaben und Termine von jedem CalDAV-Server (Nextcloud, iCloud, mailbox.org, Radicale …), Konto pro Person.",
             capabilities=frozenset({"tasks", "calendar"}),
             settings=(
                 Setting("CALDAV_URL", "Gemeinsamer Kalender: CalDAV-Adresse", required=False,

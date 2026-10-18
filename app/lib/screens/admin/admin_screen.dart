@@ -13,6 +13,7 @@ import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
 import 'admin_users_screen.dart';
 import '../../l10n/l10n.dart';
+import 'sources_screen.dart';
 
 final adminOverviewProvider =
     FutureProvider.autoDispose<AdminOverview>((ref) => ref.watch(apiClientProvider).adminOverview());
@@ -51,6 +52,13 @@ class AdminScreen extends ConsumerWidget {
               title: l10n.setupWizard,
               subtitle: l10n.setupWizardHint,
               onTap: () => open(const SetupWizardScreen(standalone: true)),
+            ),
+            _Area(
+              key: const Key('admin-sources'),
+              icon: Icons.alt_route,
+              title: l10n.sourcesAdmin,
+              subtitle: l10n.sourcesAdminHint,
+              onTap: () => open(const SourcesScreen()),
             ),
             _Area(
               key: const Key('admin-users'),

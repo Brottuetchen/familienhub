@@ -1293,6 +1293,14 @@ class ApiClient {
 
   // ── Admin: Plugins & Zugänge ───────────────────────────────────────────────
 
+  Future<List<SourceArea>> adminSources() async => _maps(
+          ((await _send('GET', '/api/admin/sources')) as Map<String, dynamic>)['areas'])
+      .map(SourceArea.fromJson)
+      .toList();
+
+  Future<void> setSources(String area, List<String> selected) =>
+      _send('PUT', '/api/admin/sources', body: {'area': area, 'selected': selected});
+
   Future<List<AdminPlugin>> adminPlugins() async =>
       _maps(await _send('GET', '/api/admin/settings')).map(AdminPlugin.fromJson).toList();
 

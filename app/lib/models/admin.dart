@@ -261,3 +261,41 @@ class InviteInfo {
         oidc: j['oidc'] == true,
       );
 }
+
+/// A possible source of an area (`/api/admin/sources`): the hub itself or a plugin.
+class SourceOption {
+  final String id;
+  final String name;
+  final String description;
+  final bool fallback; // the hub's own source
+  final bool configured;
+  final bool active;
+  final bool selected;
+
+  const SourceOption({required this.id, required this.name, this.description = '', this.fallback = false,
+      this.configured = true, this.active = true, this.selected = false});
+
+  factory SourceOption.fromJson(Map<String, dynamic> j) => SourceOption(
+        id: j['id'] as String,
+        name: (j['name'] as String?) ?? j['id'] as String,
+        description: (j['description'] as String?) ?? '',
+        fallback: j['fallback'] == true,
+        configured: j['configured'] != false,
+        active: j['active'] != false,
+        selected: j['selected'] == true,
+      );
+}
+
+class SourceArea {
+  final String area; // tasks | shopping | calendar
+  final bool multiple;
+  final List<SourceOption> sources;
+
+  const SourceArea({required this.area, required this.multiple, this.sources = const []});
+
+  factory SourceArea.fromJson(Map<String, dynamic> j) => SourceArea(
+        area: j['area'] as String,
+        multiple: j['multiple'] == true,
+        sources: ((j['sources'] as List?) ?? const []).whereType<Map<String, dynamic>>().map(SourceOption.fromJson).toList(),
+      );
+}
