@@ -163,7 +163,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Jährlich'), findsOneWidget); // Anzeige deutsch, gespeichert bleibt „yearly“
     await tester.enterText(find.byKey(const Key('native-text')), 'Neu');
+    // The page is longer now (fields are stacked): the focused field scrolls its caret back into view after
+    // typing, which would hide the save button again. Leave the field first, then scroll down.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.byKey(const Key('native-save')), 400, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('native-save')));
     await tester.pumpAndSettle();
     final body = bodyOf(backend.sent('PATCH', '/api/tasks/t1').single);

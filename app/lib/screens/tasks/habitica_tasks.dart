@@ -168,6 +168,36 @@ class _HabiticaButtonsState extends ConsumerState<HabiticaTaskButtons> {
   }
 }
 
+/// Habitica to-do attributes and difficulties (`native.attribute`, `native.priority`), shared by the account
+/// editor and the create sheet.
+Map<String, String> habiticaAttributes() =>
+    {'str': l10n.attrStrength, 'int': l10n.attrIntelligence, 'per': l10n.attrPerception, 'con': l10n.attrConstitution};
+Map<num, String> habiticaDifficulties() =>
+    <num, String>{0.1: l10n.diffTrivial, 1: l10n.diffEasy, 1.5: l10n.diffMedium, 2: l10n.diffHard};
+
+/// Two form fields side by side when there is room, stacked on narrow screens or with large text, so that
+/// labels and values never collide.
+class FieldPair extends StatelessWidget {
+  final Widget first, second;
+  final int firstFlex, secondFlex;
+  const FieldPair({super.key, required this.first, required this.second, this.firstFlex = 1, this.secondFlex = 1});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
+    return LayoutBuilder(builder: (context, c) {
+      if (c.maxWidth < 480 || scale > 1.15) {
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [first, const SizedBox(height: 16), second]);
+      }
+      return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(flex: firstFlex, child: first),
+        const SizedBox(width: 12),
+        Expanded(flex: secondFlex, child: second),
+      ]);
+    });
+  }
+}
+
 class HabiticaTaskEditor extends ConsumerStatefulWidget {
   final String account;
   final Task? task;
@@ -276,13 +306,11 @@ class _HabiticaEditorState extends ConsumerState<HabiticaTaskEditor> {
     title: Text(label), value: value(key, fallback) == true,
     onChanged: !_writable ? null : (v) => setState(() => _changes[key] = v));
   Widget choice(String key, String label, Map<String, String> values, [String? fallback]) => DropdownButtonFormField<String>(
-    initialValue: value(key, fallback) as String?, decoration: InputDecoration(labelText: label),
+    key: Key('native-$key'), isExpanded: true, initialValue: value(key, fallback) as String?, decoration: InputDecoration(labelText: label),
     items: [for (final v in values.entries) DropdownMenuItem(value: v.key, child: Text(v.value))],
     onChanged: !_writable ? null : (v) => setState(() => _changes[key] = v));
 
   static Map<String, String> get _types => {'todo': l10n.habiticaTodo, 'daily': l10n.habiticaDailyTask, 'habit': l10n.habiticaHabit, 'reward': l10n.habiticaReward};
-  static Map<String, String> get _attributes => {'str': l10n.attrStrength, 'int': l10n.attrIntelligence, 'per': l10n.attrPerception, 'con': l10n.attrConstitution};
-  static Map<num, String> get _priorities => <num, String>{0.1: l10n.diffTrivial, 1: l10n.diffEasy, 1.5: l10n.diffMedium, 2: l10n.diffHard};
   static Map<String, String> get _frequencies => {'daily': l10n.recurDaily, 'weekly': l10n.recurWeekly, 'monthly': l10n.recurMonthly, 'yearly': l10n.recurYearly};
 
   /// Erinnerungszeit: Habitica speichert ein ISO-Datum, für Erinnerungen zählt nur die Uhrzeit.
@@ -343,19 +371,18 @@ class _HabiticaEditorState extends ConsumerState<HabiticaTaskEditor> {
       if (_options?['writes_enabled'] != true)
         Text(l10n.habiticaViewOnly,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-      DropdownButtonFormField<String>(initialValue: _type,
+      DropdownButtonFormField<String>(key: const Key('native-type'), isExpanded: true, initialValue: _type,
         decoration: InputDecoration(labelText: widget.task == null ? l10n.type : l10n.typeFixed),
         items: [for (final t in _types.entries) DropdownMenuItem(value: t.key, child: Text(t.value))],
         onChanged: widget.task != null || !_writable ? null : (v) => setState(() { _type = v!; _changes.removeWhere((key, _) => !['text','notes','alias','attribute','priority','tags','reminders'].contains(key)); _changes['type'] = v; })),
       field('text', l10n.title),
       field('notes', l10n.notes, maxLines: 4),
-      Row(children: [
-        Expanded(child: DropdownButtonFormField<num>(initialValue: value('priority', 1) as num, decoration: InputDecoration(labelText: l10n.difficulty),
-          items: [for (final p in _priorities.entries) DropdownMenuItem(value: p.key, child: Text(p.value))],
-          onChanged: !_writable ? null : (v) => setState(() => _changes['priority'] = v))),
-        const SizedBox(width: 12),
-        Expanded(child: choice('attribute', l10n.attribute, _attributes, 'str')),
-      ]),
+      FieldPair(
+        first: DropdownButtonFormField<num>(key: const Key('native-priority'), isExpanded: true, initialValue: value('priority', 1) as num, decoration: InputDecoration(labelText: l10n.difficulty),
+          items: [for (final p in habiticaDifficulties().entries) DropdownMenuItem(value: p.key, child: Text(p.value))],
+          onChanged: !_writable ? null : (v) => setState(() => _changes['priority'] = v)),
+        second: choice('attribute', l10n.attribute, habiticaAttributes(), 'str'),
+      ),
       if (_type == 'todo') dateField('date', l10n.dueOn),
       if (_type == 'reward') field('value', l10n.costGold, number: true),
       if (_type == 'habit') ...[
@@ -365,12 +392,12 @@ class _HabiticaEditorState extends ConsumerState<HabiticaTaskEditor> {
       ],
       if (_type == 'daily') ...[
         section(l10n.repeat),
-        Row(children: [
-          Expanded(child: choice('frequency', l10n.frequency, _frequencies, 'weekly')),
-          const SizedBox(width: 12),
-          SizedBox(width: 120, child: field('everyX', switch (frequency) {
-            'daily' => l10n.everyXDays, 'monthly' => l10n.everyXMonths, 'yearly' => l10n.everyXYears, _ => l10n.everyXWeeks }, number: true)),
-        ]),
+        FieldPair(
+          firstFlex: 3, secondFlex: 2,
+          first: choice('frequency', l10n.frequency, _frequencies, 'weekly'),
+          second: field('everyX', switch (frequency) {
+            'daily' => l10n.everyXDays, 'monthly' => l10n.everyXMonths, 'yearly' => l10n.everyXYears, _ => l10n.everyXWeeks }, number: true),
+        ),
         if (frequency == 'weekly' || frequency == null)
           Wrap(spacing: 6, runSpacing: 6, children: [for (final d in {'m':l10n.wdMon,'t':l10n.wdTue,'w':l10n.wdWed,'th':l10n.wdThu,'f':l10n.wdFri,'s':l10n.wdSat,'su':l10n.wdSun}.entries) FilterChip(
             label: Text(d.value), selected: (value('repeat', {}) as Map)[d.key] != false,

@@ -487,10 +487,124 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
   String _recurrence = 'weekly';
   final _rotation = <int>[];
 
+  /// Place type where the task of the current recipient lands (null while unknown): decides which
+  /// provider-specific fields are shown (#58). The hub routes the task; the sheet only mirrors that choice.
+  String? _place;
+  int _placeRequest = 0;
+  num _difficulty = 1;
+  String? _attribute;
+  int _priority = 0;
+  final _tags = <String>{};
+  List<Map<String, dynamic>>? _habiticaTags;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlace();
+  }
+
   @override
   void dispose() {
     _title.dispose();
     super.dispose();
+  }
+
+  bool get _isOwn => _target is _Me;
+
+  /// Ask the hub where a task for the current recipient (or the family list) lands. Switching the recipient
+  /// supersedes a pending answer; an unknown place simply shows no extra fields.
+  Future<void> _loadPlace() async {
+    final request = ++_placeRequest;
+    final target = _target;
+    final api = ref.read(apiClientProvider);
+    final String? place;
+    if (_household || target is _FamilyList) {
+      place = await api.taskPlaceOf(family: true);
+    } else if (target is _PersonTarget) {
+      place = await api.taskPlaceOf(userId: target.person.id);
+    } else {
+      place = (await api.taskPlace())?.place;
+    }
+    if (!mounted || request != _placeRequest) return;
+    setState(() => _place = place);
+    if (place == 'habitica' && target is _Me && _habiticaTags == null) _loadTags(request);
+  }
+
+  /// Own Habitica tags (only the own account's tags are valid for a to-do); fails soft.
+  Future<void> _loadTags(int request) async {
+    try {
+      final options = await ref.read(apiClientProvider).habiticaOptions();
+      final tags = [for (final t in (options['tags'] as List? ?? const [])) Map<String, dynamic>.from(t as Map)];
+      if (mounted) setState(() => _habiticaTags = tags);
+    } catch (_) {
+      if (mounted) setState(() => _habiticaTags = const []);
+    }
+  }
+
+  void _pickTarget(_Target target) {
+    setState(() {
+      _target = target;
+      _place = null;
+    });
+    _loadPlace();
+  }
+
+  /// Fields of the place the task lands in; hub and CalDAV share the plain priority.
+  List<Widget> _placeFields(BuildContext context) {
+    final place = _place;
+    if (place == null) return const [];
+    final theme = Theme.of(context);
+    final fields = <Widget>[
+      Text(l10n.taskOptionsIn(taskPlaceName(place)), key: const Key('task-place-fields'),
+          style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+    ];
+    if (place == 'habitica') {
+      fields.addAll([
+        DropdownButtonFormField<num>(
+          key: const Key('task-field-difficulty'),
+          isExpanded: true,
+          initialValue: _difficulty,
+          decoration: InputDecoration(labelText: l10n.difficulty),
+          items: [for (final p in habiticaDifficulties().entries) DropdownMenuItem(value: p.key, child: Text(p.value))],
+          onChanged: _saving ? null : (v) => setState(() => _difficulty = v ?? 1),
+        ),
+        DropdownButtonFormField<String>(
+          key: const Key('task-field-attribute'),
+          isExpanded: true,
+          initialValue: _attribute ?? 'str',
+          decoration: InputDecoration(labelText: l10n.attribute),
+          items: [for (final a in habiticaAttributes().entries) DropdownMenuItem(value: a.key, child: Text(a.value))],
+          onChanged: _saving ? null : (v) => setState(() => _attribute = v),
+        ),
+        if (_isOwn && (_habiticaTags ?? const []).isNotEmpty)
+          Column(key: const Key('task-field-tags'), crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(l10n.tags, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final tag in _habiticaTags!)
+                FilterChip(
+                  label: Text(tag['name'] as String? ?? ''),
+                  selected: _tags.contains(tag['id']),
+                  onSelected: _saving ? null : (on) => setState(() {
+                    if (on) { _tags.add(tag['id'] as String); } else { _tags.remove(tag['id']); }
+                  }),
+                ),
+            ]),
+          ]),
+        Text(l10n.checklistLater, key: const Key('task-field-checklist-hint'),
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      ]);
+    } else {
+      fields.add(DropdownButtonFormField<int>(
+        key: const Key('task-field-priority'),
+        isExpanded: true,
+        initialValue: _priority,
+        decoration: InputDecoration(labelText: place == 'nextcloud' ? l10n.caldavPriority : l10n.taskPriority),
+        items: [for (final p in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) DropdownMenuItem(value: p, child: Text('$p'))],
+        onChanged: _saving ? null : (v) => setState(() => _priority = v ?? 0),
+      ));
+    }
+    return [for (final (i, w) in fields.indexed) ...[if (i > 0) const SizedBox(height: 12), w]];
   }
 
   Future<void> _save() async {
@@ -502,6 +616,7 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
     }
     setState(() => _saving = true);
     final target = _target;
+    final place = _place;
     final meId = ref.read(sessionProvider).user?.id;
     final ok = await runChange(
       context,
@@ -513,6 +628,15 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
             recurrence: _household ? _recurrence : 'none',
             rotation: _household ? List.of(_rotation) : const [],
             meId: meId,
+            priority: place != null && place != 'habitica' && _priority > 0 ? _priority : null,
+            native: place == 'habitica'
+                ? {
+                    'type': 'todo',
+                    'priority': _difficulty,
+                    if (_attribute != null) 'attribute': _attribute,
+                    if (target is _Me && _tags.isNotEmpty) 'tags': _tags.toList(),
+                  }
+                : null,
           ) != null,
     );
     if (!mounted) return;
@@ -573,13 +697,18 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
             title: Text(l10n.householdRotation),
             subtitle: Text(l10n.householdRotationHint),
             value: _household,
-            onChanged: _saving ? null : (value) => setState(() {
-              _household = value;
-              if (value) _due ??= DateTime.now();
-            }),
+            onChanged: _saving ? null : (value) {
+              setState(() {
+                _household = value;
+                _place = null;
+                if (value) _due ??= DateTime.now();
+              });
+              _loadPlace();
+            },
           ),
           if (_household) ...[
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _recurrence,
               decoration: InputDecoration(labelText: l10n.repeat),
               items: [for (final entry in reminderRecurrences.entries)
@@ -610,7 +739,7 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
                 ChoiceChip(
                   label: Text(label),
                   selected: isSelected(target),
-                  onSelected: (_) => setState(() => _target = target),
+                  onSelected: (_) => _pickTarget(target),
                 ),
             ],
           ),
@@ -622,9 +751,12 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
                   style: Theme.of(context).textTheme.bodySmall),
             ),
           ],
+          if (_place != null) ...[const SizedBox(height: 16), ..._placeFields(context)],
           const SizedBox(height: 12),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 8,
             children: [
               TextButton.icon(
                 onPressed: _pickDue,
@@ -674,13 +806,49 @@ class _TaskEditState extends ConsumerState<TaskEditSheet> {
     setState(() => _busy = false);
     if (ok) Navigator.pop(context, true);
   }
+  Future<void> _pickDue() async {
+    final date = await showDatePicker(context: context, initialDate: _due ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
+    if (date != null) setState(() => _due = date);
+  }
+
   @override
-  Widget build(BuildContext context) => Padding(padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom), child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Text(l10n.editTask), TextField(controller: _title, decoration: InputDecoration(labelText: l10n.title)),
-    TextField(controller: _notes, decoration: InputDecoration(labelText: l10n.notes)),
-    DropdownButtonFormField<int>(initialValue: _priority ?? 0, decoration: InputDecoration(labelText: l10n.caldavPriority), items: [for (final p in [0,1,2,3,4,5,6,7,8,9]) DropdownMenuItem(value: p, child: Text('$p'))], onChanged: _busy ? null : (v) => _priority = v),
-    Row(children: [TextButton(onPressed: _busy ? null : () async { final date = await showDatePicker(context: context, initialDate: _due ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100)); if (date != null) setState(() => _due = date); }, child: Text(_due == null ? l10n.dueDate : dayLabel(_due!))),
-      IconButton(onPressed: _busy ? null : () => setState(() => _due = null), icon: const Icon(Icons.clear), tooltip: l10n.removeDueDate)]),
-    FilledButton(onPressed: _busy ? null : _save, child: Text(l10n.save)),
-  ])));
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Every field has its own full-width row with a gap; nothing is placed next to another widget, so labels,
+    // values and buttons cannot overlap at any width or text size.
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(l10n.editTask, style: theme.textTheme.titleLarge),
+          const SizedBox(height: 16),
+          TextField(key: const Key('edit-title'), controller: _title, decoration: InputDecoration(labelText: l10n.title)),
+          const SizedBox(height: 16),
+          TextField(key: const Key('edit-notes'), controller: _notes, minLines: 1, maxLines: 4,
+              keyboardType: TextInputType.multiline, decoration: InputDecoration(labelText: l10n.notes)),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<int>(
+            key: const Key('edit-priority'),
+            isExpanded: true,
+            initialValue: _priority ?? 0,
+            decoration: InputDecoration(labelText: widget.task.provider == 'nextcloud' ? l10n.caldavPriority : l10n.taskPriority),
+            items: [for (final p in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) DropdownMenuItem(value: p, child: Text('$p'))],
+            onChanged: _busy ? null : (v) => setState(() => _priority = v),
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            key: const Key('edit-due'),
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.event),
+            title: Text(_due == null ? l10n.dueDate : dayLabel(_due!)),
+            onTap: _busy ? null : _pickDue,
+            trailing: IconButton(onPressed: _busy || _due == null ? null : () => setState(() => _due = null),
+                icon: const Icon(Icons.clear), tooltip: l10n.removeDueDate),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(key: const Key('edit-save'), onPressed: _busy ? null : _save, child: Text(l10n.save)),
+        ]),
+      ),
+    );
+  }
 }

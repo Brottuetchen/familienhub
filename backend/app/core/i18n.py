@@ -188,6 +188,7 @@ EN: Dict[str, str] = {
     "Paperless ist nicht eingerichtet": "Paperless is not set up",
     "Paperless kennt dieses Token nicht": "Paperless does not know this token",
     "Paperless-Zugang ungültig": "Invalid Paperless access",
+    "Person nicht gefunden": "Person not found",
     "Plugin nicht gefunden": "Plugin not found",
     "Position muss eine nichtnegative Ganzzahl sein": "The position must be a non-negative whole number",
     "Rezeptzutaten können nicht gelöscht werden": "Recipe ingredients cannot be deleted",

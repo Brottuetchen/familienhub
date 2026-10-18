@@ -726,6 +726,8 @@ class ApiClient {
     String recurrence = 'none',
     List<int> rotation = const [],
     int? meId,
+    int? priority,
+    Map<String, dynamic>? native,
   }) async {
     final path = _taskPath('', provider, account);
     final body = {
@@ -733,6 +735,8 @@ class ApiClient {
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       if (due != null) 'due': _dateOnly(due),
       if (assigneeId != null) 'assignee_id': assigneeId,
+      if (priority != null) 'priority': priority,
+      if (native != null && native.isNotEmpty) 'native': native,
       if (family) 'list': 'family',
       if (rotation.isNotEmpty) ...{
         'recurrence': recurrence,
@@ -741,7 +745,8 @@ class ApiClient {
       },
     };
     // Einfache Nextcloud-Aufgaben gehen auch offline; Haushaltsrotation und Habitica nicht.
-    if (provider == 'habitica' || rotation.isNotEmpty) {
+    // Native Habitica options mean the task lands in Habitica (hub-routed): never queued either.
+    if (provider == 'habitica' || rotation.isNotEmpty || (native != null && native.isNotEmpty)) {
       final json = await _send('POST', path, replayOn401: false, body: body);
       return Task.fromJson(json as Map<String, dynamic>);
     }
@@ -779,6 +784,18 @@ class ApiClient {
   Future<TaskPlaceInfo?> taskPlace() async {
     try {
       return TaskPlaceInfo.fromJson(await _send('GET', '/api/tasks/me/place') as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Place type (`habitica`, `nextcloud`, `hub_tasks`, ...) where a task for [userId] (or the family list) lands,
+  /// so the create sheet can show the matching fields. null if unknown (old server, offline).
+  Future<String?> taskPlaceOf({int? userId, bool family = false}) async {
+    try {
+      final json = await _send('GET', family ? '/api/tasks/place/family' : '/api/tasks/place/$userId') as Map<String, dynamic>;
+      final place = json['place'] as String?;
+      return place == null || place.isEmpty ? null : place;
     } catch (_) {
       return null;
     }

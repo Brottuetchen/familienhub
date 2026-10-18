@@ -354,3 +354,67 @@ def test_explicit_provider_keeps_the_legacy_path(client, world):
     assert len(_todos(world.calendars["rt-mia"])) == 1
     with SessionLocal() as db:
         assert db.query(TaskAssignment).filter_by(creator_id=world.mia).count() == 0
+
+
+# --- #58: the sheet learns where a task lands; options follow the final provider ---
+
+
+def _habitica_posts(world):
+    import json
+    return [json.loads(c.request.content) for c in world.http.calls
+            if c.request.method == "POST" and str(c.request.url).endswith("/api/v3/tasks/user")]
+
+
+def test_place_of_a_person_exposes_only_the_place_type(client, world):
+    for who, expected in ((world.mia, "nextcloud"), (world.const, "habitica"), (world.kid, "hub_tasks")):
+        r = client.get(f"/api/tasks/place/{who}", headers=world.h_creator)
+        assert r.status_code == 200, r.text
+        assert r.json() == {"place": expected}
+    # a stated preference counts, a child may ask too
+    client.put("/api/tasks/me/place", headers=world.h_mia, json={"place": "hub_tasks"})
+    assert client.get(f"/api/tasks/place/{world.mia}", headers=world.h_kid).json() == {"place": "hub_tasks"}
+    assert client.get("/api/tasks/place/family", headers=world.h_creator).json() == {"place": "nextcloud"}
+
+
+def test_place_of_unknown_person_or_without_login_is_refused(client, world):
+    assert client.get("/api/tasks/place/999999", headers=world.h_creator).status_code == 404
+    assert client.get(f"/api/tasks/place/{world.mia}").status_code in (401, 403)
+
+
+def test_own_habitica_todo_gets_the_native_options_and_drops_foreign_ones(client, world):
+    world.habitica_remote()
+    r = world.create(world.h_leo, native={"priority": 2, "attribute": "int", "checklist": [{"text": "x"}],
+                                            "frequency": "daily"}, priority=5)
+    assert r.status_code == 201, r.text
+    assert r.json()["placed"]["provider"] == "habitica"
+    body = _habitica_posts(world)[-1]
+    assert (body["type"], body["priority"], body["attribute"]) == ("todo", 2, "int")
+    assert "checklist" not in body and "frequency" not in body
+
+
+def test_habitica_recipient_gets_difficulty_but_never_foreign_tags(client, world):
+    world.habitica_remote()
+    r = world.create(world.h_creator, assignee_id=world.const,
+                     native={"priority": 1.5, "tags": ["77777777-7777-4777-8777-777777777777"]})
+    assert r.status_code == 201, r.text
+    assert r.json()["placed"] == {"provider": "habitica", "fallback": False, "recipient": world.const}
+    body = _habitica_posts(world)[-1]
+    assert body["priority"] == 1.5 and "tags" not in body
+
+
+def test_native_options_are_ignored_when_the_task_lands_elsewhere(client, world):
+    # Nextcloud recipient and own Nextcloud task: native options do not apply, the plain priority does
+    r = world.create(world.h_creator, assignee_id=world.mia, native={"priority": 2}, priority=3)
+    assert r.status_code == 201, r.text
+    assert r.json()["placed"]["provider"] == "nextcloud"
+    assert len(_todos(world.calendars["rt-mia"])) == 1
+    r = world.create(world.h_mia, native={"priority": 2, "attribute": "str"}, priority=3)
+    assert r.status_code == 201, r.text
+    assert r.json()["placed"]["provider"] == "nextcloud"
+    # Habitica fails: the hub takes the task; it uses the plain priority, not the Habitica options
+    world.http.post(f"{HABITICA}/api/v3/tasks/user").respond(500, json={"success": False})
+    r = world.create(world.h_leo, native={"priority": 2}, priority=4)
+    assert r.status_code == 201, r.text
+    assert r.json()["placed"] == {"provider": "hub_tasks", "fallback": True, "recipient": None}
+    with SessionLocal() as db:
+        assert db.query(HubTask).filter_by(uid=r.json()["uid"]).one().priority == 4  # plain priority applies, native does not
