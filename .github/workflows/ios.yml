@@ -1,0 +1,45 @@
+# iPhone-App als unsignierte IPA (Installation per Sideloadly/AltStore mit eigener Apple-ID).
+# Läuft nur auf GitHub (gespiegelt aus Forgejo); Forgejo nutzt .forgejo/workflows.
+# Ohne Apple-Entwicklerkonto: keine Push-Mitteilungen, keine Widgets, Signatur gilt 7 Tage.
+name: iOS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "ios-*"]
+    paths: ["app/**", ".github/workflows/ios.yml"]
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Build-Nummer aus der Commit-Zahl (+400, wie release.sh)
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.7"
+          channel: stable
+          cache: true
+      - name: Abhängigkeiten
+        working-directory: app
+        run: flutter pub get
+      - name: IPA bauen (unsigniert)
+        working-directory: app
+        run: |
+          NAME=$(grep -E '^version:' pubspec.yaml | sed -E 's/version: *([0-9.]+).*/\1/')
+          NUM=$(( $(git rev-list --count HEAD) + 400 ))
+          flutter build ios --release --no-codesign --build-name="$NAME" --build-number="$NUM" \
+            --dart-define=FH_VERSION="$NAME+$NUM"
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qry "familienhub-ios-$NAME+$NUM.ipa" Payload
+          ls -la *.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: familienhub-ios
+          path: app/*.ipa
+          retention-days: 14
+          if-no-files-found: error
