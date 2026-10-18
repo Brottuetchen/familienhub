@@ -19,7 +19,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **More sources:** calendar subscriptions (ICS: school holidays, waste collection, clubs), Mealie (recipes, meal plan, shopping), then Grocy, Vikunja/Todoist, Google and Microsoft
 - **Repository and docs:** English README with screenshots, guides for plugins, themes and notifications, contribution guide
 - **Server texts in both languages:** push texts in the recipient's language, error messages via `Accept-Language`
-- **Media requests:** Seerr webhook (notify when a requested movie or show is available)
+- **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
 - **Books:** "Discover" with German-language sources
 - **iOS widgets** (WidgetKit extension)
 
