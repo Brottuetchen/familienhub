@@ -43,7 +43,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
 - **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
-- **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books
+- **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books, and discover books available in German
 - **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
 - **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
 - **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading

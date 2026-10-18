@@ -649,5 +649,14 @@
   "openLink": "Open link",
   "recipeFromSource": "Recipe from {name}",
   "searchInSource": "Search recipe in {name}",
-  "openInSource": "Open in {name}"
+  "openInSource": "Open in {name}",
+  "discover": "Discover",
+  "shelfPopular": "Popular",
+  "shelfNew": "New & popular",
+  "shelfTopRated": "Top rated",
+  "shelfCrime": "Crime & thriller",
+  "shelfFantasy": "Fantasy",
+  "shelfRomance": "Romance",
+  "shelfKids": "Kids & teens",
+  "discoverHint": "Books available in German – popular with readers on Open Library."
 }

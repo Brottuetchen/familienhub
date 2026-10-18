@@ -188,6 +188,25 @@ def _search_items(data: Dict[str, Any]) -> list:
     return items
 
 
+@router.get("/discover")
+async def discover(shelf: str = "popular", _: User = Depends(get_current_user)):
+    """Browse books that exist in German (Open Library): popular, new, well rated, by genre. Request them as usual."""
+    import httpx
+
+    from app.services import book_discover
+
+    if shelf not in book_discover.SHELVES:
+        raise HTTPException(422, "Unbekanntes Regal")
+    base = {"shelves": book_discover.SHELVES, "shelf": shelf}
+    if not _configured():
+        return {**_unavailable("Shelfarr ist nicht eingerichtet", "items"), **base}
+    try:
+        return {"status": "ok", "error": None, "items": await book_discover.shelf(shelf), **base}
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("Open Library nicht erreichbar: %s", type(exc).__name__)
+        return {"status": "unavailable", "error": "Open Library gerade nicht erreichbar", "items": [], **base}
+
+
 @router.get("/requests")
 async def my_requests(current_user: User = Depends(get_current_user)):
     """Eigene Wünsche, neueste zuerst."""
