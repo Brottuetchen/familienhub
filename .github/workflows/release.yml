@@ -1,0 +1,126 @@
+# Release: push a tag like v1.2.0 (or v1.2.0-beta.1 for a pre-release).
+# Builds the Android APK and the unsigned iOS IPA and attaches them, with docker-compose.yml,
+# to a GitHub release. The server image comes from docker.yml (same tag).
+#
+# Optional repository secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#     Your own signing key. Without it the APK is signed with a throwaway debug key, and phones
+#     cannot update from one release to the next without uninstalling.
+#   GOOGLE_SERVICES_JSON
+#     Firebase config of your own project for push in the Android app (otherwise use ntfy).
+# See docs/releasing.md.
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.v.outputs.name }}
+      number: ${{ steps.v.outputs.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag matches the app version
+        id: v
+        run: |
+          NAME=$(grep -E '^version:' app/pubspec.yaml | sed -E 's/version: *([0-9.]+).*/\1/')
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "${TAG%%-*}" != "$NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $NAME in app/pubspec.yaml"; exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "number=$(( $(git rev-list --count HEAD) + 400 ))" >> "$GITHUB_OUTPUT"
+
+  apk:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NAME: ${{ needs.check.outputs.name }}
+      NUM: ${{ needs.check.outputs.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.7"
+          channel: stable
+          cache: true
+      - name: Signing key and Firebase config (if set)
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
+            printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+              "$RUNNER_TEMP/release.jks" "$STORE_PW" "$KEY_ALIAS" "$KEY_PW" > "$RUNNER_TEMP/key.properties"
+            echo "FAMILIENHUB_SIGNING=$RUNNER_TEMP/key.properties" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: the APK is signed with a debug key and cannot update older installs."
+          fi
+          if [ -n "$GOOGLE_SERVICES" ]; then
+            echo "$GOOGLE_SERVICES" > app/android/app/google-services.json
+          else
+            echo "::notice::No GOOGLE_SERVICES_JSON secret: the APK has no Firebase push (ntfy works)."
+          fi
+      - name: Build APK
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter build apk --release --build-name="$NAME" --build-number="$NUM" \
+            --dart-define=FH_VERSION="${GITHUB_REF_NAME#v}+$NUM"
+          mv build/app/outputs/flutter-apk/app-release.apk "familienhub-${GITHUB_REF_NAME#v}.apk"
+      - run: rm -f "$RUNNER_TEMP/release.jks" "$RUNNER_TEMP/key.properties" app/android/app/google-services.json
+        if: always()
+      - uses: actions/upload-artifact@v4
+        with:
+          name: familienhub-android
+          path: app/familienhub-*.apk
+          if-no-files-found: error
+
+  ipa:
+    needs: check
+    uses: ./.github/workflows/ios.yml
+
+  release:
+    needs: [check, apk, ipa]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          for f in dist/*.ipa; do mv "$f" "dist/familienhub-$VER.ipa"; done
+          cp docker-compose.yml dist/
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          PRE=""; [[ "$VER" == *-* ]] && PRE="--prerelease"
+          cat > notes.md <<NOTES
+          **Server:** \`docker compose up -d\` with the attached \`docker-compose.yml\` (image \`ghcr.io/${GITHUB_REPOSITORY,,}:$VER\`).
+          **Android:** install \`familienhub-$VER.apk\` (or follow this repo's releases in Obtainium).
+          **iPhone:** sideload \`familienhub-$VER.ipa\` with SideStore or Sideloadly, or use the web app (Safari → Add to Home Screen).
+          Setup guide: [getting started](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/getting-started.md)
+          NOTES
+          sed -i 's/^ *//' notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* --title "Familienhub $VER" --notes-file notes.md --generate-notes $PRE
