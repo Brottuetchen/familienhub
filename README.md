@@ -48,7 +48,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
 - **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
 - **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
-- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub; German and English
+- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (ten in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
 
 <details>
 <summary>More screenshots</summary>
@@ -92,7 +92,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 | [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
 | [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
 | [Plugins](docs/plugins.md) | what ships, how to write, install and share a plugin |
-| [Themes](docs/themes.md) | the `theme.json` format, how to share a theme |
+| [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
 | [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
 | [Roadmap](docs/roadmap.md) | what's done, next and later |
 | [Contributing](CONTRIBUTING.md) | development setup, translations, pull requests |

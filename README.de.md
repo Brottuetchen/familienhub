@@ -47,7 +47,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 - **Mitteilungen:** Firebase (Android-App), Web Push (Browser/Web-App) und ntfy (z. B. iPhone), mit Ruhezeiten und Kategorien
 - **Familie:** Rollen (Admin, Partner, Kind, Gast), Einladungen, Anmeldung per OIDC (Authentik, Keycloak …) oder lokal
 - **Apps:** Android-App mit Widgets und Offline-Warteschlange, Web-App (PWA), iOS-App zum Sideloaden
-- **Anpassbar:** Themes mit Hell/Dunkel und Schriften, installierbar aus GitHub; Deutsch und Englisch
+- **Anpassbar:** Themes mit Hell/Dunkel und Schriften, installierbar aus GitHub (zehn in der [Theme-Galerie](https://github.com/Brottuetchen/familienhub-themes)); Deutsch und Englisch
 
 <details>
 <summary>Weitere Screenshots</summary>
