@@ -33,6 +33,7 @@ from app.routers import (
     modules,
     notifications,
     ntfy,
+    plugins as plugins_router,
     profile,
     recipe_sources,
     push,
@@ -62,6 +63,10 @@ async def lifespan(app: FastAPI):
         apply_overrides(_cfg_db)
     finally:
         _cfg_db.close()
+    # Plugins an admin installed from GitHub: a broken one is logged and skipped, the hub keeps running
+    from app.plugins import installer
+
+    installer.load_installed(app)
     logger.info("Plugins aktiv: %s", ", ".join(p.id for p in plugin_registry.all() if p.active) or "keine")
     # Ersteinrichtung: ohne Admin einen Einrichtungscode ins Log schreiben (#4)
     from app.services import setup as setup_service
@@ -164,7 +169,7 @@ async def refresh_after_changes(request, call_next):
 
 # Kern-Router; Integrationen bringen ihre Router als Plugin mit
 for module in (health, auth, calendar, modules, notifications, today, tasks, reminders, meals, recipes, push, themes, profile, admin,
-               admin_panel, feedback, invites, setup, ntfy, recipe_sources):
+               admin_panel, feedback, invites, setup, ntfy, recipe_sources, plugins_router):
     app.include_router(module.router)
 plugin_registry.include_routers(app)
 
