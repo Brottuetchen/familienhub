@@ -53,7 +53,7 @@ void main() {
     addDefaults(b);
     b.json('GET', '/api/admin/feedback', {'items': [
       {'id': 3, 'text': 'Pixel-Theme zu dunkel', 'area': 'Darstellung', 'platform': 'android', 'app_version': '1.0.0+420',
-       'created_at': '2026-10-18T07:00:00', 'done': false, 'from': 'Carina'},
+       'created_at': '2026-10-18T07:00:00', 'done': false, 'from': 'Mia'},
     ]});
     b.json('POST', '/api/admin/feedback/3/done', {'done': true});
     final opened = <Uri>[];
