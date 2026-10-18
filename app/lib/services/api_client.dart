@@ -294,6 +294,7 @@ class ApiClient {
     }
     request.headers['Accept'] = 'application/json';
     request.headers['Accept-Language'] = appLanguage; // Server-Meldungen in der Sprache der App
+    request.headers['X-App-Language'] = appLanguage; // wins over the browser's Accept-Language (web app)
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);

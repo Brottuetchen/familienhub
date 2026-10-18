@@ -35,6 +35,7 @@ class User(Base):
     # Where tasks that others assign to this person land: a task provider id, or NULL = derived from the
     # connected accounts (see app/services/task_routing.py)
     task_place = Column(String(32), nullable=True)
+    language = Column(String(5), nullable=True)  # app language (de/en) for push texts; set from Accept-Language
 
     # Rolle: admin | partner | child | guest
     role = Column(String, default=ROLE_PARTNER, nullable=False)
