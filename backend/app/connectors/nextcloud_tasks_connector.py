@@ -370,10 +370,8 @@ class NextcloudTasksConnector(BaseConnector):
 
                             # View-Filter nach created_by
                             if view == "mine":
-                                # Meine Liste, von mir oder ohne Ersteller
-                                created_by = task.get("created_by")
-                                if created_by and created_by != self.user_id:
-                                    continue
+                                # Everything in my own list, also tasks others gave me (overview)
+                                pass
                             elif view == "for_me":
                                 # Meine Liste, von anderen
                                 created_by = task.get("created_by")

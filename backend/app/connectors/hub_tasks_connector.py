@@ -85,7 +85,7 @@ class HubTasksConnector:
                 owner, mine = self._owner(t), t.created_by in (me, None)
                 personal = not t.family
                 keep = {
-                    "mine": personal and owner == me and mine,
+                    "mine": personal and owner == me,  # everything I have to do, also from others
                     "for_me": personal and owner == me and not mine,
                     "from_me": personal and t.created_by == me and owner != me,
                     "family": t.family,
