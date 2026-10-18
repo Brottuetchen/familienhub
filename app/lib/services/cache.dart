@@ -55,10 +55,14 @@ class ResponseCache {
   /// Beim Abmelden: keine Daten des vorherigen Nutzers liegen lassen – auch keine gemerkten Änderungen.
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
-    for (final key in prefs.getKeys().where((k) => k.startsWith(_prefix) || k.startsWith(queuePrefix)).toList()) {
+    for (final key in prefs.getKeys().where((k) => k.startsWith(_prefix) || k.startsWith(queuePrefix) || serverBoundKeys.contains(k)).toList()) {
       await prefs.remove(key);
     }
   }
+
+  /// Plain preference keys that hold server or user content (typed shopping items, calendar ids). They are
+  /// removed with the cache when the server changes or the session ends.
+  static const serverBoundKeys = {'shopping_recent', 'calendar_hidden', 'calendar_last_target'};
 
   /// Offline-Warteschlange (#32), je Server und Identität getrennt wie der Cache.
   static const queuePrefix = 'offline_queue:';
