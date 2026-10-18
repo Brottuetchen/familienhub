@@ -590,7 +590,7 @@
   "shoppingCount": "Shopping · {count}",
   "andMore": "\n… and {count} more",
   "in1HourShort": "In 1 hr",
-  "iosPushHint": "On the iPhone, notifications come via the web app: open the hub in Safari, “Add to Home Screen” and allow notifications there.",
+  "iosPushHint": "On the iPhone, notifications come via ntfy (see below, if set up) or via the web app: open the hub in Safari, “Add to Home Screen” and allow notifications there.",
   "firebaseMissing": "Firebase is not set up in this app version",
   "androidNotificationsOff": "Notifications are turned off in the Android settings",
   "pushSetupFailed": "Push could not be set up: {error}",
@@ -606,5 +606,13 @@
   "fromRecipes": "From recipes",
   "freeItems": "Other items",
   "list": "List",
-  "sessionExpired": "Session expired, please sign in again"
+  "sessionExpired": "Session expired, please sign in again",
+  "ntfyTitle": "Notifications via ntfy",
+  "ntfySubtitle": "For iPhones and anyone without the Familienhub app: real push notifications via the ntfy app",
+  "ntfySteps": "1. Install the ntfy app (App Store / Play Store)\n2. Add the server {server} in the app\n3. Subscribe to this topic – it is secret, do not share it:",
+  "ntfyCopyTopic": "Copy topic",
+  "ntfyOpen": "Open in ntfy",
+  "ntfyNewTopic": "New topic",
+  "ntfyNewTopicQuestion": "Generate a new topic?",
+  "ntfyNewTopicHint": "The old topic will no longer receive anything. You need to subscribe to the new one in the ntfy app."
 }

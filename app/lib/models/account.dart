@@ -308,3 +308,22 @@ class ApiTokenInfo {
         token: json['token'] as String?,
       );
 }
+
+/// Push via ntfy (`/api/me/ntfy`): the admin sets the server, each person has a secret topic.
+class NtfySettings {
+  final bool available;
+  final String? server;
+  final bool enabled;
+  final String? topic;
+  final String? subscribeUrl;
+
+  const NtfySettings({this.available = false, this.server, this.enabled = false, this.topic, this.subscribeUrl});
+
+  factory NtfySettings.fromJson(Map<String, dynamic> json) => NtfySettings(
+        available: json['available'] == true,
+        server: json['server'] as String?,
+        enabled: json['enabled'] == true,
+        topic: json['topic'] as String?,
+        subscribeUrl: json['subscribe_url'] as String?,
+      );
+}
