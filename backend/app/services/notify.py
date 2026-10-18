@@ -232,6 +232,13 @@ async def notify(
             if ok:
                 success += 1
 
+        from app.models.ntfy import NtfyTarget
+        from app.services import ntfy
+
+        target = db.get(NtfyTarget, user_id)
+        if target is not None and target.enabled and await ntfy.publish(target.topic, title, body, data, category):
+            success += 1
+
         entry.delivered = success
         db.commit()
         return success

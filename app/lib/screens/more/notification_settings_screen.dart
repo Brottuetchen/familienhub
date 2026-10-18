@@ -6,6 +6,7 @@ import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
+import 'ntfy_card.dart';
 
 /// Kategorien an/aus, Ruhezeiten, registrierte Geräte, Test-Nachricht.
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
@@ -152,6 +153,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ),
+                    const NtfyCard(),
                     for (final entry in notificationCategories.entries)
                       SwitchListTile(
                         title: Text(entry.value),

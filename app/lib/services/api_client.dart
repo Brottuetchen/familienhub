@@ -1379,6 +1379,15 @@ class ApiClient {
   Future<void> deleteDevice(int id) => _send('DELETE', '/api/push/devices/$id');
 
   /// Schickt eine Testnachricht an alle eigenen Geräte; liefert die Zahl erreichter Geräte.
+  Future<NtfySettings> ntfySettings() async =>
+      NtfySettings.fromJson(await _send('GET', '/api/me/ntfy') as Map<String, dynamic>);
+
+  Future<NtfySettings> setNtfy({required bool enabled, String? topic}) async => NtfySettings.fromJson(
+      await _send('PUT', '/api/me/ntfy', body: {'enabled': enabled, if (topic != null) 'topic': topic}) as Map<String, dynamic>);
+
+  Future<NtfySettings> newNtfyTopic() async =>
+      NtfySettings.fromJson(await _send('POST', '/api/me/ntfy/new-topic') as Map<String, dynamic>);
+
   Future<int> testPush() async {
     final json = await _send('POST', '/api/push/test');
     return parseInt(json) ?? 0;

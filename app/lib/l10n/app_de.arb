@@ -1055,7 +1055,7 @@
     }
   },
   "in1HourShort": "In 1 Std.",
-  "iosPushHint": "Auf dem iPhone kommen Mitteilungen über die Web-App: Hub in Safari öffnen, „Zum Home-Bildschirm“ und dort Mitteilungen erlauben.",
+  "iosPushHint": "Auf dem iPhone kommen Mitteilungen über ntfy (siehe unten, falls eingerichtet) oder über die Web-App: Hub in Safari öffnen, „Zum Home-Bildschirm“ und dort Mitteilungen erlauben.",
   "firebaseMissing": "Firebase ist in dieser App-Version nicht eingerichtet",
   "androidNotificationsOff": "Mitteilungen sind in den Android-Einstellungen aus",
   "pushSetupFailed": "Push konnte nicht eingerichtet werden: {error}",
@@ -1086,5 +1086,18 @@
   "fromRecipes": "Aus Rezepten",
   "freeItems": "Freie Artikel",
   "list": "Liste",
-  "sessionExpired": "Sitzung abgelaufen, bitte neu anmelden"
+  "sessionExpired": "Sitzung abgelaufen, bitte neu anmelden",
+  "ntfyTitle": "Mitteilungen über ntfy",
+  "ntfySubtitle": "Für iPhones und alle ohne Familienhub-App: echte Push-Mitteilungen über die ntfy-App",
+  "ntfySteps": "1. ntfy-App installieren (App Store / Play Store)\n2. In der App den Server {server} eintragen\n3. Dieses Topic abonnieren – es ist geheim, nicht weitergeben:",
+  "@ntfySteps": {
+    "placeholders": {
+      "server": {}
+    }
+  },
+  "ntfyCopyTopic": "Topic kopieren",
+  "ntfyOpen": "In ntfy öffnen",
+  "ntfyNewTopic": "Neues Topic",
+  "ntfyNewTopicQuestion": "Neues Topic erzeugen?",
+  "ntfyNewTopicHint": "Das alte Topic bekommt danach nichts mehr. Das neue musst du in der ntfy-App abonnieren."
 }

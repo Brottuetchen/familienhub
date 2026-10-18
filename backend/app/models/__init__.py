@@ -5,6 +5,7 @@ from app.models.task_completion import TaskCompletion
 from app.models.api_token import ApiToken
 from app.models.caldav import CalDAVAccount, TaskList
 from app.models.notification_log import NotificationLog
+from app.models.ntfy import NtfyTarget
 from app.models.service_key import ServiceKey
 from app.models.config import ConfigOverride
 from app.models.push_device import PushDevice
@@ -17,6 +18,7 @@ from app.models.theme import Theme
 from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
+    "NtfyTarget",
     "Feedback",
     "Invite",
     "HabiticaAccount",
