@@ -39,7 +39,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 - **Heute:** Begrüßung, Aufgaben (meine / für mich / Familie), Einkauf, Termine, Essensplan, Erinnerungen und Haus-Kacheln auf einem Bildschirm
 - **Kalender:** Liste, Woche und Monat, Farben und Filter je Kalender; neue Termine landen genau im gewählten Kalender (Familie zuerst), bearbeiten und löschen; dieselben CalDAV-Kalender und Erinnerungen auf iPhone und Android, siehe [Kalender & Handy](docs/calendar.md)
-- **Aufgaben:** eigene, gemeinsame und zugewiesene Aufgaben, Haushaltsrotation; Nextcloud und Habitica nebeneinander
+- **Aufgaben:** eigene, gemeinsame und zugewiesene Aufgaben, Haushaltsrotation; Nextcloud und Habitica nebeneinander. Eine Aufgabe für jemanden landet am Aufgabenort des Empfängers (im Profil einstellbar), nicht dort, wo der Ersteller arbeitet
 - **Einkauf, Essen, Rezepte:** Einkaufsliste, Wochenplan, Rezeptbuch im Hub (Zutaten, Zubereitung, Link); Rezepte auf Tage legen und Zutaten auf die Liste, auch von Cookidoo
 - **Erinnerungen:** zu einer Zeit, wiederkehrend oder *wenn ich heimkomme* (über Home Assistant), mit Knöpfen direkt in der Mitteilung
 - **Haus:** Zustände sowie Licht, Schalter und Szenen aus Home Assistant, ausgewählt vom Admin

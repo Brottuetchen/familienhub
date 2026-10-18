@@ -89,6 +89,17 @@ At start-up the hub loads every entry point in the group `familienhub.plugins` (
 - **Database tables** need an Alembic migration. Prefer a key-value or JSON column in your own table over changing core tables.
 - **Tests:** mock the external system (`respx` for httpx), never call real services in tests.
 
+## Tasks: where a task lands
+
+`POST /api/tasks?provider=auto` (what the app sends) routes by recipient; an explicit `provider=` keeps the old behaviour for older clients.
+
+- **Preferred task place** per person: their explicit choice (profile, `PUT /api/tasks/me/place`), else derived from the connected accounts in this order: CalDAV (Nextcloud) account, Habitica account (native writes released), the hub itself. `GET /api/tasks/me/place` returns `place`, `explicit`, `auto` and the options. A stale choice (account removed) is ignored.
+- **Task for another person** is written with the **recipient's own connector and stored credentials**, never the creator's account. If she has no usable account for her place, or the provider errors, the task is stored in the hub (`placed.fallback: true`). A Habitica error leaves that account's write lock in place (see the Habitica contract), the task is then kept in the hub; a duplicate is possible if Habitica did create it.
+- **Family tasks and household rotation** go to the family list of the first source of the area that can hold one (`family_tasks=True` on the plugin; sources per area apply), else the hub.
+- **Own tasks** go to the creator's preferred place. Native Habitica types (habit, daily, reward) are still created in the Habitica account screen.
+- **"Von mir"** reads the `task_assignments` records (creator, recipient, provider, remote id, title, status). Open/done is read on each request through the recipient's connector and fails soft (`stale: true`, last known status). Tasks deleted by the recipient drop out. The creator never sees anything else from the recipient's lists. Hub tasks are listed natively, other providers appear as read-only items (`provider: "assigned"`, `via`).
+- Providers without a creator field (Habitica) get a "Von <name>" line in the notes.
+
 ## Install a plugin
 
 Build a small image on top of the Familienhub image: `ghcr.io/brottuetchen/familienhub:latest`, or `familienhub:local` if you build from source (`docker compose -f docker-compose.yml -f docker-compose.dev.yml build` tags it that way):
