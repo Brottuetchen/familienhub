@@ -1,26 +1,63 @@
-name: Bug report
-description: Something does not work as expected
-labels: [bug]
+name: "Bug report"
+description: Report something that does not work as expected
+title: "[Bug]: "
+labels: ["bug"]
 body:
-  - type: textarea
-    id: what
+  - type: markdown
     attributes:
-      label: What happened?
-      description: What did you do, what did you expect, what happened instead?
+      value: |
+        Thanks for helping improve FamilienHub! English and German are both welcome.
+        For security vulnerabilities, [report privately](https://github.com/Brottuetchen/familienhub/security/advisories/new).
+        Never share passwords, tokens, private URLs, or personal family information.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where does it happen?
+      options:
+        - Android
+        - iOS
+        - Web / PWA
+        - Server / Docker
+        - Plugin / integration
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Explain what you did and what happened.
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead?
     validations:
       required: true
   - type: input
-    id: version
+    id: app-version
     attributes:
-      label: App version and platform
-      description: "More → Send feedback shows both, e.g. 1.0.0+440 · android"
+      label: App version (optional)
+      description: More → Send feedback
   - type: input
-    id: server
+    id: server-version
     attributes:
-      label: Server version
-      description: Administration → overview
+      label: Server version (optional)
+      description: Administration → Overview
   - type: textarea
     id: logs
     attributes:
-      label: Log or screenshot
-      description: Administration → Log. Please remove personal data.
+      label: Logs or screenshots (optional)
+      description: Remove credentials, private URLs and personal data before posting.
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have searched for a similar issue.
