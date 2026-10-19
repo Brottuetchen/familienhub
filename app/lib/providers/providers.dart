@@ -13,6 +13,7 @@ import '../models/pending.dart';
 import '../models/shopping.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/today_layout.dart';
 import '../services/api_client.dart';
 import 'cached_read.dart';
 import '../services/home_widgets.dart';
@@ -258,6 +259,10 @@ final todayProvider = StateNotifierProvider<CachedRead<TodayData>, AsyncValue<Ap
     if (!result.fromCache) unawaited(HomeWidgets.updateToday(result.data));
     return result;
   }));
+
+/// Own arrangement of Today. Errors (older server, offline) are not shown: callers fall back to the built-in one.
+final todayLayoutProvider = StateNotifierProvider<CachedRead<TodayLayout>, AsyncValue<ApiResult<TodayLayout>>>(
+  (ref) => _cachedRead(ref, 'layout:today', TodayLayout.fromJson, (api) => api.todayLayout()));
 
 final tasksProvider = StateNotifierProvider.family<CachedRead<SourceResult<Task>>, AsyncValue<ApiResult<SourceResult<Task>>>, TaskView>(
   (ref, view) => _cachedRead(ref, 'tasks:${view.apiName}',

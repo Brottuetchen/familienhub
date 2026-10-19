@@ -22,10 +22,10 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **Repository and docs:** English README with screenshots, guides for plugins, themes and notifications, contribution guide
 - **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
 - **Books:** "Discover" with German-language sources *(done 18.10.: Open Library shelves, German titles)*
+- **Customisable home screen:** each person arranges "Today" (show or hide cards, order, size), with defaults set by the admin *(done 19.10.)*
 - **iOS widgets** (WidgetKit extension)
 
 ## Later
-- **Customisable home screen:** each person arranges "Today" (show or hide cards, order, size), with defaults set by the admin
 - **Kiosk mode** for a wall-mounted tablet: fullscreen, screen stays on, large tiles, exit by PIN, its own restricted device account
 - **iOS push via APNs**, once the project has an Apple Developer account (until then: ntfy or the web app)
 - **More languages**: add `app/lib/l10n/app_<code>.arb`

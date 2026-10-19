@@ -12,6 +12,7 @@ import '../../models/themes.dart' show hexColor;
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../more/notifications_screen.dart';
+import 'today_layout_editor.dart';
 import '../tasks/habitica_tasks.dart';
 import '../tasks/tasks_screen.dart' show taskDueLabel;
 import '../../l10n/l10n.dart';
@@ -128,6 +129,12 @@ class TodayHeader extends ConsumerWidget {
             ),
           ),
           if (status != null) status!,
+          IconButton(
+            key: const Key('today-customise'),
+            tooltip: l10n.customiseToday,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TodayLayoutEditor())),
+            icon: const Icon(Icons.tune),
+          ),
           IconButton(
             key: const Key('today-bell'),
             tooltip: unread == 0 ? l10n.notifications : l10n.unreadNotifications(unread),

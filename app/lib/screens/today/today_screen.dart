@@ -5,6 +5,7 @@ import '../../core/constants/colors.dart';
 import '../../core/theme/hub_style.dart';
 import '../../models/task.dart';
 import '../../models/today.dart';
+import '../../models/today_layout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../main_shell.dart';
@@ -32,24 +33,29 @@ class TodayScreen extends ConsumerWidget {
             error: (e, _) => ErrorView(error: e, onRetry: refresh),
             data: (result) {
               final online = !result.offline;
-              final cards = _cards(context, ref, result.data, online: online, compact: style.bento);
-              final house = HouseCard(
+              final layout = (ref.watch(todayLayoutProvider).valueOrNull?.data ?? TodayLayout.builtin)
+                  .forStyle(bento: style.bento);
+              // Half size only has an effect in the bento layout on a narrow screen
+              final halves = {
+                if (style.bento) for (final c in layout.cards) if (c.half) c.id,
+              };
+              final cards = _cards(context, ref, result.data, online: online, compact: halves);
+              cards['house'] = HouseCard(
                 // Nicht an „wird aktualisiert“ koppeln: sonst leert sich die Haus-Karte bei jedem Nachladen
                 online: online && result.refreshError == null,
                 states: result.data.house,
               );
-              final ordered = [
-                for (final k in ['tasks', 'meals', 'shopping', 'events', 'reminders'])
-                  if (cards[k] != null) cards[k]!,
-                house,
+              final shown = [
+                for (final c in layout.cards)
+                  if (c.visible && cards[c.id] != null) (cards[c.id]!, halves.contains(c.id)),
               ];
               Widget body;
               if (isWide(context)) {
-                body = _TwoColumns(children: _accented(ordered));
+                body = _TwoColumns(children: _accented([for (final (w, _) in shown) w]));
               } else if (style.bento) {
-                body = _bento(cards, house);
+                body = _bento(shown);
               } else {
-                body = Column(children: [for (final c in _accented(ordered)) ...[c, const SizedBox(height: 12)]]);
+                body = Column(children: [for (final c in _accented([for (final (w, _) in shown) w])) ...[c, const SizedBox(height: 12)]]);
               }
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -74,31 +80,25 @@ class TodayScreen extends ConsumerWidget {
   static List<Widget> _accented(List<Widget> cards) =>
       [for (final (i, c) in cards.indexed) SectionAccentScope(index: i, child: c)];
 
-  /// Kachel-Layout (Clean Cards): große Karten volle Breite, kleine paarweise nebeneinander.
-  static Widget _bento(Map<String, Widget> cards, Widget house) {
+  /// Tile layout (Clean Cards): full-width cards; two neighbouring half cards sit side by side.
+  static Widget _bento(List<(Widget, bool)> cards) {
     var i = 0;
     Widget accent(Widget w) => SectionAccentScope(index: i++, child: w);
     final rows = <Widget>[];
-    void full(String k) {
-      if (cards[k] != null) rows.add(accent(cards[k]!));
+    for (var k = 0; k < cards.length; k++) {
+      final (card, half) = cards[k];
+      if (half && k + 1 < cards.length && cards[k + 1].$2) {
+        final next = cards[++k].$1;
+        rows.add(IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [Expanded(child: accent(card)), const SizedBox(width: 12), Expanded(child: accent(next))],
+          ),
+        ));
+      } else {
+        rows.add(accent(card));
+      }
     }
-
-    full('tasks');
-    final pair = [for (final k in ['shopping', 'events']) if (cards[k] != null) cards[k]!];
-    if (pair.length == 2) {
-      rows.add(IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [Expanded(child: accent(pair[0])), const SizedBox(width: 12), Expanded(child: accent(pair[1]))],
-        ),
-      ));
-    } else {
-      rows.addAll(pair.map(accent));
-    }
-    for (final k in ['meals', 'reminders']) {
-      full(k);
-    }
-    rows.add(accent(house));
     return Column(children: [for (final r in rows) ...[r, const SizedBox(height: 12)]]);
   }
 
@@ -109,7 +109,7 @@ class TodayScreen extends ConsumerWidget {
   }
 
   Map<String, Widget> _cards(BuildContext context, WidgetRef ref, TodayData data,
-      {required bool online, required bool compact}) {
+      {required bool online, required Set<String> compact}) {
     final modules = ref.watch(appModulesProvider);
     final muted = TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     void go(AppTab tab) => ref.read(tabProvider.notifier).state = tab;
@@ -127,9 +127,9 @@ class TodayScreen extends ConsumerWidget {
         'events': SectionCard(
           key: const Key('today-events'),
           icon: Icons.event,
-          title: compact ? l10n.today : l10n.tabCalendar,
+          title: compact.contains('events') ? l10n.today : l10n.tabCalendar,
           onTap: () => go(AppTab.calendar),
-          child: compact
+          child: compact.contains('events')
               ? EventsTile(
                   count: data.events.length,
                   next: nextEvent == null
@@ -187,7 +187,7 @@ class TodayScreen extends ConsumerWidget {
         'shopping': SectionCard(
           key: const Key('today-shopping'),
           icon: Icons.shopping_cart,
-          title: compact ? l10n.tabShopping : l10n.shoppingList,
+          title: compact.contains('shopping') ? l10n.tabShopping : l10n.shoppingList,
           onTap: () => go(AppTab.shopping),
           child: ShoppingQuick(openCount: data.shoppingOpen, online: online),
         ),
