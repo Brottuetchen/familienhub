@@ -114,6 +114,9 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           for f in dist/*.ipa; do mv "$f" "dist/familienhub-$VER.ipa"; done
           cp docker-compose.yml dist/
+          # Make the attached Compose file work for this exact release,
+          # including pre-releases where the default :latest tag is not published.
+          sed -i "s/FAMILIENHUB_VERSION:-latest/FAMILIENHUB_VERSION:-$VER/" dist/docker-compose.yml
           (cd dist && sha256sum * > SHA256SUMS.txt)
           PRE=""; [[ "$VER" == *-* ]] && PRE="--prerelease"
           cat > notes.md <<NOTES
