@@ -142,16 +142,6 @@ class MealieService:
             await self._call("POST", f"/api/households/shopping/lists/{list_id}/recipe/{rid}")
         return len(recipe_ids)
 
-    async def recipe(self, recipe_id: str) -> Dict[str, Any]:
-        """Name and ingredient lines of a recipe (for merging ingredients on the shopping list)."""
-        r = await self._call("GET", f"/api/recipes/{recipe_id}") or {}
-        lines = []
-        for i in r.get("recipeIngredient") or []:
-            text = (i.get("display") or i.get("note") or "").strip()
-            if text:
-                lines.append(text)
-        return {"id": recipe_id, "name": r.get("name") or "", "ingredients": lines}
-
 
 mealie_service = MealieService()
 
