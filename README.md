@@ -127,10 +127,16 @@ Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its f
 
 ## Support
 
-<!-- annual goal: change the first amount in both READMEs -->
-[![Goal 2026](https://img.shields.io/badge/Goal%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-orange)](https://ko-fi.com/brottuetchen) [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Familienhub-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/brottuetchen)
+Familienhub is free and built in spare time. To ship real native apps, the project needs an Apple Developer licence (99 €/year, for TestFlight, the App Store and iPhone widgets, see [#9](https://github.com/Brottuetchen/familienhub/issues/9)) and a one-time Google Play developer account (about 25 €). That makes an annual goal of **150 €**. If the hub helps your family, every bit of support helps.
 
-Familienhub is free and built in spare time. To ship real native apps, the project needs an Apple Developer licence (99 €/year, for TestFlight, the App Store and iPhone widgets, see [#9](https://github.com/Brottuetchen/familienhub/issues/9)) and a one-time Google Play developer account (about 25 €). That makes an annual goal of **150 €**. If the hub helps your family, you can chip in on [Ko-fi](https://ko-fi.com/brottuetchen) or via [GitHub Sponsors](https://github.com/sponsors/Brottuetchen).
+<div align="center">
+
+<!-- annual goal: update the first amount in the badge URL by hand, in both READMEs -->
+<a href="https://ko-fi.com/brottuetchen"><img src="https://img.shields.io/badge/Goal%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-F97316?style=for-the-badge" alt="Goal 2026: 0 € / 150 €" height="32"></a>
+
+<a href="https://ko-fi.com/brottuetchen"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" height="36"></a>&nbsp;&nbsp;<a href="https://github.com/sponsors/Brottuetchen"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors" height="36"></a>
+
+</div>
 
 ## License
 
