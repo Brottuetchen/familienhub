@@ -542,6 +542,25 @@ EN: Dict[str, str] = {
     "Belohnung abgelehnt": "Reward declined",
     "Sterne bestätigen": "Confirm stars",
     "Sterne bestätigt": "Stars confirmed",
+    # --- store (docs/store.md) ---
+    "Quelle nicht gefunden": "Source not found",
+    "Bild nicht gefunden": "Image not found",
+    "Dieser Eintrag stammt aus einer ungeprüften Quelle. Bitte die Warnung bestätigen":
+        "This entry comes from an unreviewed source. Please confirm the warning",
+    "Der Store-Eintrag hat sich geändert. Bitte die Liste neu laden und erneut prüfen":
+        "The store entry has changed. Please reload the list and review it again",
+    "Der Eintrag braucht Familienhub {needed} oder neuer": "The entry needs Familienhub {needed} or newer",
+    "Bitte bestätigen, dass die Quelle nicht von den Maintainern geprüft ist":
+        "Please confirm that the source has not been reviewed by the maintainers",
+    "Diese Quelle gibt es schon": "This source already exists",
+    "Höchstens {max} eigene Quellen": "At most {max} custom sources",
+    "Die Quelle ist gerade nicht erreichbar": "The source is not reachable right now",
+    "Im Repository liegt keine gültige index.json (siehe docs/store.md)":
+        "The repository has no valid index.json (see docs/store.md)",
+    "Adresse: https://github.com/<Besitzer>/<Repository> (optional /tree/<Branch>)":
+        "Address: https://github.com/<owner>/<repository> (optionally /tree/<branch>)",
+    "Die Plugin-ID im Repository („{found}“) weicht vom Store-Eintrag („{expected}“) ab":
+        "The plugin id in the repository (“{found}”) differs from the store entry (“{expected}”)",
 }
 
 # Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)
