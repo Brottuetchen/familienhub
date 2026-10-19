@@ -32,14 +32,13 @@ import sqlite3
 import tempfile
 import threading
 import zipfile
-from dataclasses import dataclass
 from datetime import date, datetime, time as dtime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import Date, DateTime, LargeBinary, Numeric, Time, create_engine, delete, inspect as sa_inspect, select, text
-from sqlalchemy.engine import Connection, Engine, make_url
+from sqlalchemy.engine import Connection, Engine
 
 from app import __version__
 from app.config import settings

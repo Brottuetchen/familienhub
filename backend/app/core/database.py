@@ -25,6 +25,8 @@ engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
     pool_pre_ping=True,
+    # The app opens many requests at once (Today cards, avatars); 5+10 was too tight
+    **({} if DATABASE_URL.startswith("sqlite") else {"pool_size": 10, "max_overflow": 20}),
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

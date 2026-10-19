@@ -11,7 +11,7 @@ Permissions:
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field, model_validator

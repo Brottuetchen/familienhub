@@ -15,7 +15,7 @@ from app.models.event_alarm import EventAlarmSent
 from app.models.birthday import Birthday, GiftIdea
 from app.models.service_key import ServiceKey
 from app.models.config import ConfigOverride
-from app.models.today_layout import TodayLayout
+from app.models.today_layout import TodayLayout  # noqa: F401  (registers the table)
 from app.models.timetable import TimetableEntry, TimetableSource
 from app.models.push_device import PushDevice
 from app.models.recipe import MealPlanEntry, Recipe

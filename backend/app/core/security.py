@@ -202,11 +202,14 @@ def require_scope(scope: str):
     return _dep
 
 
-async def get_current_user(
+def get_current_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
+    # Plain def on purpose: FastAPI runs it in the thread pool. As async def, the blocking DB checkout ran on
+    # the event loop; with the pool exhausted (many avatars at once) it froze the loop, so no request could
+    # finish and give its connection back (prod outage 2026-10-19).
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
