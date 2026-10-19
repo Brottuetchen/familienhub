@@ -110,6 +110,7 @@ def test_copy_day_and_week(client, auth):
 
 
 def test_ab_weeks(client, auth):
+    from app.services import timetable as svc
 
     kid, _ = _user(client, "tt_ab", "child")
     _, partner = _user(client, "tt_parent", "partner")
