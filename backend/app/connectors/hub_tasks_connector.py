@@ -84,10 +84,13 @@ class HubTasksConnector:
             for t in q.order_by(HubTask.created_at).all():
                 owner, mine = self._owner(t), t.created_by in (me, None)
                 personal = not t.family
+                for_me_family = t.family and t.assignee_id == me  # family task / rotation turn assigned to me
                 keep = {
-                    "mine": personal and owner == me,  # everything I have to do, also from others
-                    "for_me": personal and owner == me and not mine,
-                    "from_me": personal and t.created_by == me and owner != me,
+                    # everything I have to do: own and given tasks, family tasks assigned to me
+                    "mine": (personal and owner == me) or for_me_family,
+                    "for_me": ((personal and owner == me) or for_me_family) and not mine,
+                    "from_me": t.created_by == me and (owner != me if personal else
+                                                       t.assignee_id is not None and t.assignee_id != me),
                     "family": t.family,
                 }.get(view, self._visible(t))
                 if keep:

@@ -61,6 +61,14 @@ def test_hub_tasks_views_follow_assignment(client):
     assert {"Für alle"} <= _view(client, anna, "family", acc_a)
     assert _view(client, ben, "for_me", acc_b) == {"Für Ben"}
     assert "Für Ben" in _view(client, ben, "mine", acc_b)  # overview includes assigned tasks
+    # family tasks: assigned to someone count for that person; self-assigned ones are not "from me"
+    _create(client, anna, acc_a, title="Familie für Ben", list="family", assignee_id=ben_id)
+    _create(client, anna, acc_a, title="Familie für Anna", list="family", assignee_id=_user("hub_anna"))
+    assert {"Familie für Ben"} <= _view(client, ben, "mine", acc_b) and "Familie für Ben" in _view(client, ben, "for_me", acc_b)
+    assert "Familie für Anna" in _view(client, anna, "mine", acc_a)
+    assert "Familie für Anna" not in _view(client, anna, "from_me", acc_a)
+    assert "Familie für Ben" in _view(client, anna, "from_me", acc_a)
+    assert "Für alle" not in _view(client, anna, "mine", acc_a)
     # private tasks stay private
     assert "Anna privat" not in _view(client, ben, "all", acc_b)
     created = client.get("/api/tasks", params={"provider": "hub_tasks", "view": "for_me", "account": acc_b}, headers=ben).json()["items"][0]
