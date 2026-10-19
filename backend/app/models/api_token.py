@@ -16,6 +16,10 @@ from app.core.database import Base
 
 TOKEN_PREFIX = "fhp_"
 
+# Scopes for the voice endpoints (``/api/voice``); the preset "voice" stands for all of them.
+VOICE_SCOPES = ("shopping:read", "shopping:write", "tasks:write", "meals:read", "calendar:read", "reminders:write")
+SCOPE_PRESETS = {"voice": VOICE_SCOPES}
+
 
 class ApiToken(Base):
     __tablename__ = "api_tokens"
@@ -28,6 +32,12 @@ class ApiToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_used_at = Column(DateTime, nullable=True)
     revoked_at = Column(DateTime, nullable=True)
+    # Space-separated scope names; NULL = unrestricted (keys from before scopes). Scoped keys only reach /api/voice.
+    scopes = Column(String, nullable=True)
+
+    @property
+    def scope_list(self):
+        return None if self.scopes is None else self.scopes.split()
 
     @staticmethod
     def hash(raw: str) -> str:
