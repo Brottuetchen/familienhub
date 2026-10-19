@@ -1415,11 +1415,29 @@
   "alarmHourBefore": "1 Stunde vorher",
   "alarmDayBefore": "1 Tag vorher",
   "alarmMinutesBefore": "{n} Minuten vorher",
-  "@alarmMinutesBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmMinutesBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "alarmHoursBefore": "{n} Stunden vorher",
-  "@alarmHoursBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmHoursBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "alarmDaysBefore": "{n} Tage vorher",
-  "@alarmDaysBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmDaysBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "calendarOnPhone": "Kalender ist am Handy eingerichtet",
   "calendarOnPhoneHint": "Dann erinnert das Handy an Termine. Ist das aus, schickt der Hub eine Mitteilung, sobald eine Termin-Erinnerung fällig ist.",
   "customiseToday": "Heute anpassen",
@@ -1467,5 +1485,97 @@
   "importBlocked": "Diese Adresse darf der Hub nicht abrufen.",
   "importUnreachable": "Die Seite konnte nicht geladen werden.",
   "importTooLarge": "Die Seite ist zu groß.",
-  "importInvalid": "Das ist kein gültiger Link. Er muss mit http:// oder https:// beginnen."
+  "importInvalid": "Das ist kein gültiger Link. Er muss mit http:// oder https:// beginnen.",
+  "birthdays": "Geburtstage",
+  "birthdaysHint": "Geburtstage, Jahrestage und Geschenkideen",
+  "birthdaysEmpty": "Noch keine Einträge. Lege Geburtstage und Jahrestage an, damit der Hub rechtzeitig erinnert.",
+  "addBirthday": "Geburtstag oder Jahrestag anlegen",
+  "editBirthday": "Eintrag bearbeiten",
+  "birthdayName": "Name",
+  "birthdayKindBirthday": "Geburtstag",
+  "birthdayKindAnniversary": "Jahrestag",
+  "birthdayDay": "Tag",
+  "birthdayMonth": "Monat",
+  "birthdayYear": "Jahr (optional)",
+  "birthdayLeapHint": "29. Februar: in Jahren ohne Schalttag wird am 28. Februar erinnert.",
+  "birthdayInvalidDate": "Dieses Datum gibt es nicht.",
+  "birthdayLinkedUser": "Gehört zu einem Konto im Hub",
+  "birthdayNoUser": "Keins",
+  "birthdayLinkedHint": "Diese Person sieht die Geschenkideen nicht.",
+  "birthdayRemind": "Erinnerung",
+  "birthdayRemindNone": "Keine Erinnerung",
+  "birthdayRemindDays": "{days, plural, =0{Am Tag selbst} =1{1 Tag vorher} other{{days} Tage vorher}}",
+  "@birthdayRemindDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayDeleteQuestion": "Eintrag löschen?",
+  "birthdayDeleteHint": "Auch die Geschenkideen dazu werden gelöscht.",
+  "birthdayWhenBirthday": "{name} hat {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}} Geburtstag",
+  "@birthdayWhenBirthday": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenTurns": "{name} wird {age} {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversary": "{name}: Jahrestag {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenAnniversary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversaryYears": "{name}: {years}. Jahrestag {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenAnniversaryYears": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "years": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeas": "Geschenkideen",
+  "giftIdeaCount": "{count, plural, =1{1 Geschenkidee} other{{count} Geschenkideen}}",
+  "@giftIdeaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeaText": "Geschenkidee",
+  "giftIdeaLink": "Link (optional)",
+  "giftIdeasEmpty": "Noch keine Ideen. Sammle sie übers Jahr.",
+  "giftIdeaDone": "Schon besorgt",
+  "giftIdeaInvalidLink": "Der Link muss mit http:// oder https:// beginnen."
 }

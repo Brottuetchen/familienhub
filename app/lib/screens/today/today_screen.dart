@@ -9,6 +9,7 @@ import '../../models/today_layout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../main_shell.dart';
+import '../more/birthdays_screen.dart';
 import 'house_controls.dart';
 import 'today_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -191,6 +192,19 @@ class TodayScreen extends ConsumerWidget {
           onTap: () => go(AppTab.shopping),
           child: ShoppingQuick(openCount: data.shoppingOpen, online: online),
         ),
+      if (data.birthdays.isNotEmpty)
+        'birthdays': SectionCard(
+          key: const Key('today-birthdays'),
+          icon: Icons.cake_outlined,
+          title: l10n.birthdays,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const BirthdaysScreen())),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final b in data.birthdays) _Line(leading: '', text: b.whenText, wide: true),
+            ],
+          ),
+        ),
       if (data.reminders.isNotEmpty)
         'reminders': SectionCard(
           key: const Key('today-reminders'),
@@ -211,7 +225,8 @@ class _Line extends StatelessWidget {
   final String leading;
   final Color? leadingColor;
   final String text;
-  const _Line({required this.leading, required this.text, this.leadingColor});
+  final bool wide; // no leading column: the text takes the whole line
+  const _Line({required this.leading, required this.text, this.leadingColor, this.wide = false});
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +236,7 @@ class _Line extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!wide)
           SizedBox(
             width: 92,
             child: Text(

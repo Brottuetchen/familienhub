@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/account.dart';
 import '../models/admin.dart';
+import '../models/birthday.dart';
 import '../models/books.dart';
 import '../models/calendar_event.dart';
 import '../models/common.dart';
@@ -395,6 +396,8 @@ class ApiClient {
     } else if (path.startsWith('/api/meals') || path.startsWith('/api/cookidoo/')) {
       prefixes.addAll(['meals:', 'today']);
       if (path.contains('shopping')) prefixes.add('shopping');
+    } else if (path.startsWith('/api/birthdays')) {
+      prefixes.addAll(['events:', 'today']);
     } else if (path.startsWith('/api/me/today-layout') || path.startsWith('/api/admin/today-layout')) {
       prefixes.add('layout:today');
     } else if (path.startsWith('/api/house/')) {
@@ -1218,6 +1221,49 @@ class ApiClient {
 
   Future<void> snoozeReminder(int id, int minutes) =>
       _send('POST', '/api/reminders/$id/snooze', body: {'minutes': minutes});
+
+  // ── Geburtstage und Jahrestage ─────────────────────────────────────────────
+
+  Future<List<Birthday>> birthdays() async =>
+      _maps(await _send('GET', '/api/birthdays')).map(Birthday.fromJson).toList();
+
+  Map<String, dynamic> _birthdayBody(String name, String kind, int month, int day, int? year, int? userId,
+          int? remindDaysBefore) =>
+      {
+        'name': name,
+        'kind': kind,
+        'month': month,
+        'day': day,
+        'year': year,
+        'user_id': userId,
+        'remind_days_before': remindDaysBefore,
+      };
+
+  Future<void> saveBirthday({
+    int? id,
+    required String name,
+    required String kind,
+    required int month,
+    required int day,
+    int? year,
+    int? userId,
+    int? remindDaysBefore,
+  }) =>
+      _send(id == null ? 'POST' : 'PUT', id == null ? '/api/birthdays' : '/api/birthdays/$id',
+          body: _birthdayBody(name, kind, month, day, year, userId, remindDaysBefore));
+
+  Future<void> deleteBirthday(int id) => _send('DELETE', '/api/birthdays/$id');
+
+  Future<List<GiftIdea>> giftIdeas(int birthdayId) async =>
+      _maps(await _send('GET', '/api/birthdays/$birthdayId/gifts')).map(GiftIdea.fromJson).toList();
+
+  Future<void> addGiftIdea(int birthdayId, String text, {String? link}) => _send('POST', '/api/birthdays/$birthdayId/gifts',
+      body: {'text': text, if (link != null && link.isNotEmpty) 'link': link});
+
+  Future<void> setGiftIdeaDone(int birthdayId, int giftId, bool done) =>
+      _send('PATCH', '/api/birthdays/$birthdayId/gifts/$giftId', body: {'done': done});
+
+  Future<void> deleteGiftIdea(int birthdayId, int giftId) => _send('DELETE', '/api/birthdays/$birthdayId/gifts/$giftId');
 
   // ── Mitteilungen ───────────────────────────────────────────────────────────
 

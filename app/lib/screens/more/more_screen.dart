@@ -14,6 +14,7 @@ import 'appearance_screen.dart';
 import 'profile_screen.dart';
 import 'caldav_account_screen.dart';
 import 'notification_settings_screen.dart';
+import 'birthdays_screen.dart';
 import 'reminders_screen.dart';
 import 'task_lists_screen.dart';
 import '../../l10n/l10n.dart';
@@ -65,6 +66,13 @@ class MoreScreen extends ConsumerWidget {
             title: Text(l10n.reminders),
             onTap: () => open(const RemindersScreen()),
           ),
+          if (canAct)
+            ListTile(
+              leading: const Icon(Icons.cake_outlined),
+              title: Text(l10n.birthdays),
+              subtitle: Text(l10n.birthdaysHint),
+              onTap: () => open(const BirthdaysScreen()),
+            ),
           if (modules.has('documents'))
             ListTile(
               leading: const Icon(Icons.description_outlined),

@@ -60,6 +60,7 @@ const _enPatterns = {
   'EEE d.M., HH:mm': 'EEE M/d, HH:mm',
   'EEE, d.M. HH:mm': 'EEE, M/d HH:mm',
   'd.': 'd',
+  'd. MMMM': 'MMMM d',
 };
 
 /// Datumsformat in der Sprache der App. Muster werden deutsch notiert, Englisch über [_enPatterns].

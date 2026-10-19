@@ -1,3 +1,4 @@
+import 'birthday.dart';
 import 'calendar_event.dart';
 import 'common.dart';
 import 'task.dart';
@@ -75,6 +76,7 @@ class TodayData {
   final Map<String, dynamic>? weather;
   final int notificationsUnread;
   final SourceResult<TodayHouseState> house;
+  final List<Birthday> birthdays;
 
   const TodayData({
     required this.date,
@@ -86,6 +88,7 @@ class TodayData {
     this.weather,
     this.notificationsUnread = 0,
     this.house = const SourceResult(status: SourceStatus.notConfigured),
+    this.birthdays = const [],
   });
 
   factory TodayData.fromJson(Map<String, dynamic> json) {
@@ -106,6 +109,7 @@ class TodayData {
           ? json['weather'] as Map<String, dynamic>
           : null,
       notificationsUnread: parseInt(json['notifications_unread']) ?? 0,
+      birthdays: maps(json['birthdays']).map(Birthday.fromJson).toList(),
       house: house is Map<String, dynamic>
           ? SourceResult.fromJson(house, TodayHouseState.fromJson)
           : const SourceResult(status: SourceStatus.notConfigured),

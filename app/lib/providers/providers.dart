@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/account.dart';
+import '../models/birthday.dart';
 import '../models/calendar_event.dart';
 import '../models/common.dart';
 import '../models/meals.dart';
@@ -310,6 +311,12 @@ final eventsRangeProvider = StateNotifierProvider.family<CachedRead<List<Calenda
 
 final remindersProvider = FutureProvider.autoDispose<List<Reminder>>(
     (ref) => ref.watch(apiClientProvider).reminders());
+
+final birthdaysProvider = FutureProvider.autoDispose<List<Birthday>>(
+    (ref) => ref.watch(apiClientProvider).birthdays());
+
+final giftIdeasProvider = FutureProvider.autoDispose.family<List<GiftIdea>, int>(
+    (ref, birthdayId) => ref.watch(apiClientProvider).giftIdeas(birthdayId));
 
 final devicesProvider = FutureProvider.autoDispose<List<Device>>(
     (ref) => ref.watch(apiClientProvider).devices());

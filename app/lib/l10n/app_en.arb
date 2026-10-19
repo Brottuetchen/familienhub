@@ -819,5 +819,97 @@
   "importBlocked": "The hub is not allowed to open this address.",
   "importUnreachable": "The page could not be loaded.",
   "importTooLarge": "The page is too large.",
-  "importInvalid": "This is not a valid link. It must start with http:// or https://."
+  "importInvalid": "This is not a valid link. It must start with http:// or https://.",
+  "birthdays": "Birthdays",
+  "birthdaysHint": "Birthdays, anniversaries and gift ideas",
+  "birthdaysEmpty": "Nothing here yet. Add birthdays and anniversaries so the hub can remind you in time.",
+  "addBirthday": "Add birthday or anniversary",
+  "editBirthday": "Edit entry",
+  "birthdayName": "Name",
+  "birthdayKindBirthday": "Birthday",
+  "birthdayKindAnniversary": "Anniversary",
+  "birthdayDay": "Day",
+  "birthdayMonth": "Month",
+  "birthdayYear": "Year (optional)",
+  "birthdayLeapHint": "29 February: in years without a leap day the hub uses 28 February.",
+  "birthdayInvalidDate": "That date does not exist.",
+  "birthdayLinkedUser": "Belongs to a hub account",
+  "birthdayNoUser": "None",
+  "birthdayLinkedHint": "This person cannot see the gift ideas.",
+  "birthdayRemind": "Reminder",
+  "birthdayRemindNone": "No reminder",
+  "birthdayRemindDays": "{days, plural, =0{On the day} =1{1 day before} other{{days} days before}}",
+  "@birthdayRemindDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayDeleteQuestion": "Delete entry?",
+  "birthdayDeleteHint": "Its gift ideas are deleted as well.",
+  "birthdayWhenBirthday": "{name}’s birthday is {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenBirthday": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenTurns": "{name} turns {age} {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversary": "{name}: anniversary {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenAnniversary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversaryYears": "{name}: {years} years {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenAnniversaryYears": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "years": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeas": "Gift ideas",
+  "giftIdeaCount": "{count, plural, =1{1 gift idea} other{{count} gift ideas}}",
+  "@giftIdeaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeaText": "Gift idea",
+  "giftIdeaLink": "Link (optional)",
+  "giftIdeasEmpty": "No ideas yet. Collect them over the year.",
+  "giftIdeaDone": "Already bought",
+  "giftIdeaInvalidLink": "The link must start with http:// or https://."
 }

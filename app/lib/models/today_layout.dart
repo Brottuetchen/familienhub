@@ -18,7 +18,7 @@ class TodayLayout {
   const TodayLayout(this.cards, {this.source = 'builtin'});
 
   /// Every card the screen knows, in the order of the built-in bento arrangement.
-  static const knownIds = ['tasks', 'shopping', 'events', 'meals', 'reminders', 'house'];
+  static const knownIds = ['tasks', 'shopping', 'events', 'meals', 'reminders', 'house', 'birthdays'];
 
   /// Arrangement before the layout became customisable.
   static const builtin = TodayLayout([
@@ -28,10 +28,11 @@ class TodayLayout {
     TodayCard('meals'),
     TodayCard('reminders'),
     TodayCard('house'),
+    TodayCard('birthdays'),
   ]);
 
   /// Plain (non-bento) themes always stacked meals before shopping and events.
-  static const _legacyList = ['tasks', 'meals', 'shopping', 'events', 'reminders', 'house'];
+  static const _legacyList = ['tasks', 'meals', 'shopping', 'events', 'reminders', 'house', 'birthdays'];
 
   /// Unknown ids are dropped, cards the server did not mention are appended with their defaults.
   static TodayLayout normalize(Iterable<TodayCard> cards, {String source = 'builtin'}) {
