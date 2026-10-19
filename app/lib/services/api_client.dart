@@ -118,6 +118,9 @@ class ApiClient {
     await _republish();
   }
 
+  /// How long a change waits for the queue ahead of it before the UI moves on.
+  static const flushGrace = Duration(milliseconds: 400);
+
   void _scheduleFlush() {
     _flushTimer?.cancel();
     if (_pending.any((c) => !c.isConflict)) {
@@ -155,7 +158,10 @@ class ApiClient {
     if (_pending.any((c) => !c.isConflict)) {
       // Ältere Änderungen warten noch: hinten anstellen, damit die Reihenfolge stimmt
       await _setPending([..._pending, change]);
-      await flushPending();
+      // Older changes are still waiting: send them, but never keep the screen waiting for a slow server
+      // longer than `flushGrace`; the rest drains in the background and the change shows as saved meanwhile.
+      final settled = flushPending().then((_) {}, onError: (Object _) {});
+      await Future.any([settled, Future<void>.delayed(flushGrace)]);
       final sent = !_pending.any((c) => c.id == change.id);
       return (sent: sent, json: null);
     }

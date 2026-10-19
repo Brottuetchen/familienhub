@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:familienhub/models/pending.dart';
+import 'package:familienhub/services/api_client.dart';
+import 'package:http/testing.dart';
 import 'package:familienhub/models/task.dart';
 import 'package:familienhub/screens/today/today_widgets.dart';
 import 'package:familienhub/screens/shopping/shopping_screen.dart';
@@ -85,6 +89,28 @@ void main() {
       final sent = b.requests.where((r) => r.method != 'GET').toList();
       expect(sent.map((r) => '${r.method} ${r.url.path}'), ['POST /api/shopping', 'PATCH /api/shopping/s1']);
       expect(sent.map((r) => r.headers['Idempotency-Key']), ids);
+    });
+
+    test('a new change does not wait for a slow queue ahead of it', () async {
+      final b = _backend()..offline = true;
+      final store = MemorySessionStore(url: 'https://hub.test', access: 'token-1', refresh: 'refresh-1');
+      await b.api(store: store).addShoppingItem('Eins');
+      final gate = Completer<void>();
+      final api = ApiClient(
+        httpClient: MockClient((request) async {
+          if (request.method == 'POST') await gate.future; // slow server
+          return b.routes['${request.method} ${request.url.path}']!(request);
+        }),
+        store: store,
+      );
+      final watch = Stopwatch()..start();
+      final sent = await api.addShoppingItem('Zwei');
+      expect(sent, isFalse, reason: 'queued behind the slow change, drains in the background');
+      expect(watch.elapsed, lessThan(ApiClient.flushGrace + const Duration(seconds: 1)));
+      expect(api.pending, hasLength(2));
+      gate.complete();
+      await api.flushPending();
+      expect(api.pending, isEmpty);
     });
 
     test('Lesen zeigt gemerkte Änderungen sofort', () async {
