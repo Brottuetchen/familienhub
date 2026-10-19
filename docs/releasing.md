@@ -22,9 +22,10 @@ Before publishing:
 5. Add the version's section to [`CHANGELOG.md`](../CHANGELOG.md) (`## [1.0.0-beta.2]`). The release workflow copies that section into the GitHub release notes.
 6. GitHub is the primary repository. Do not push to it from a mirror: a push mirror with pruning overwrites `main` and deletes branches and tags.
 
-Create a **Git tag**, not a release in the GitHub web UI: the tag-triggered `.github/workflows/release.yml` itself creates the GitHub Release. Manually publishing a Release first can cause an "already exists" error in that workflow.
+Either way works:
 
-With a clean local checkout of `main` at the intended commit:
+- **In the browser, no Git needed:** *Releases → Draft a new release → Choose a tag*. Type `v1.0.0-beta.2`, choose *Create new tag on publish* and target `main`. Tick *Set as a pre-release*, then *Publish release*. The new tag starts the workflows. The release workflow then attaches the APK, IPA, compose file and checksums to this release and replaces its notes with the CHANGELOG section.
+- **With Git:** push a tag. The workflow then creates the release itself:
 
 ```bash
 git status --short
