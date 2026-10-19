@@ -1,7 +1,7 @@
 """Kids mode: stars for tasks and rewards
 
 Revision ID: 17a1c0de5701
-Revises: a1b2c3d4e5f7
+Revises: 21a0b1c2d3e4
 Create Date: 2026-10-19 12:00:00
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "17a1c0de5701"
-down_revision: Union[str, None] = "a1b2c3d4e5f7"
+down_revision: Union[str, None] = "21a0b1c2d3e4"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
