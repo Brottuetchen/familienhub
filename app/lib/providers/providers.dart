@@ -43,10 +43,22 @@ class SessionState {
 
 class SessionNotifier extends StateNotifier<SessionState> {
   final ApiClient api;
+  final void Function()? onScopeChanged;
   StreamSubscription<void>? _sub;
   int _revision = 0;
 
-  SessionNotifier(this.api, {bool autoStart = true})
+  /// Tells [sessionScopeProvider] when the signed-in session ends or the person changes.
+  @override
+  set state(SessionState value) {
+    final before = state;
+    final ended = before.phase == SessionPhase.loggedIn &&
+        (value.phase == SessionPhase.loggedOut || value.phase == SessionPhase.needsServer);
+    final otherPerson = before.user != null && value.user != null && before.user!.id != value.user!.id;
+    super.state = value;
+    if (ended || otherPerson) onScopeChanged?.call();
+  }
+
+  SessionNotifier(this.api, {bool autoStart = true, this.onScopeChanged})
       : super(const SessionState(SessionPhase.loading)) {
     _sub = api.loggedOut.listen((_) {
       unawaited(WidgetAccess.forget()); // Sitzung beendet: keine Inhalte mehr auf dem Startbildschirm
@@ -160,8 +172,17 @@ class SessionNotifier extends StateNotifier<SessionState> {
 }
 
 final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>(
-  (ref) => SessionNotifier(ref.watch(apiClientProvider)),
+  (ref) => SessionNotifier(ref.watch(apiClientProvider),
+      onScopeChanged: () => Future.microtask(() {
+        try { ref.read(sessionScopeProvider.notifier).state++; } catch (_) {} // container already disposed
+      })),
 );
+
+/// Counter that moves whenever a signed-in session ends (logout, expiry, server switch) or another person
+/// signs in. Every provider that holds server or user data and is not
+/// auto-disposed watches this, so a server switch, logout or login as someone else drops the old state instead
+/// of showing it (modules, lists, tasks, accounts of the previous server/user) for the new one (#67).
+final sessionScopeProvider = StateProvider<int>((ref) => 0);
 
 /// Rollenstufe der Anmeldung. Ohne bekannte Rolle (offline gestartet) wie Partner:
 /// Der Server prüft ohnehin und lehnt Unerlaubtes mit einer Meldung ab.
@@ -214,6 +235,7 @@ final appModulesProvider = Provider<AppModules>(
 
 CachedRead<T> _cachedRead<T>(Ref ref, String key, T Function(dynamic) parse,
     Future<ApiResult<T>> Function(ApiClient) load) {
+  ref.watch(sessionScopeProvider);
   final read = CachedRead(ref.watch(apiClientProvider), key, parse, load);
   // Zurück zum Reiter: vorhandene Daten bleiben synchron, nur HTTP läuft neu.
   ref.onResume(() => read.refresh().ignore());
@@ -222,6 +244,7 @@ CachedRead<T> _cachedRead<T>(Ref ref, String key, T Function(dynamic) parse,
 
 /// Gemerkte Offline-Änderungen (#32). Beim Zurückkehren in die App wird sofort gesendet.
 final pendingChangesProvider = StreamProvider<List<PendingChange>>((ref) async* {
+  ref.watch(sessionScopeProvider);
   final api = ref.watch(apiClientProvider);
   final listener = AppLifecycleListener(onResume: () => api.flushPending().ignore());
   ref.onDispose(listener.dispose);
@@ -285,6 +308,6 @@ final taskPlaceProvider = FutureProvider.autoDispose<TaskPlaceInfo?>((ref) {
 });
 
 final taskAccountsProvider = FutureProvider<List<TaskProviderInfo>>((ref) {
-  ref.watch(sessionProvider.select((s) => s.user?.id));
+  ref.watch(sessionScopeProvider);
   return ref.watch(apiClientProvider).taskProviders();
 });
