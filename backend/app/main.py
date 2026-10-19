@@ -41,6 +41,7 @@ from app.routers import (
     push,
     recipes,
     reminders,
+    stars,
     tasks,
     themes,
     timetable,
@@ -191,7 +192,7 @@ async def refresh_after_changes(request, call_next):
 # Kern-Router; Integrationen bringen ihre Router als Plugin mit
 for module in (health, auth, calendar, birthdays, modules, notifications, today, today_layout, timetable, tasks, reminders, meals, recipes,
                push, themes, profile, admin, admin_panel, feedback, invites, list_templates, setup, ntfy, recipe_sources, plugins_router,
-               voice):
+               voice, stars):
     app.include_router(module.router)
 plugin_registry.include_routers(app)
 

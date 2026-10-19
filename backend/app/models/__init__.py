@@ -3,6 +3,7 @@
 from app.models.habitica import HabiticaAccount, HabiticaSelection, HabiticaOperation
 from app.models.task_completion import TaskCompletion
 from app.models.task_assignment import TaskAssignment
+from app.models.stars import StarAccount, StarLedger, StarRequest, StarReward, StarTask
 from app.models.api_token import ApiToken
 from app.models.caldav import CalDAVAccount, TaskList
 from app.models.notification_log import NotificationLog
@@ -34,6 +35,11 @@ __all__ = [
     "ListTemplateItem",
     "SeerrNotice",
     "TaskAssignment",
+    "StarTask",
+    "StarAccount",
+    "StarLedger",
+    "StarReward",
+    "StarRequest",
     "HubEvent",
     "HubShoppingItem",
     "HubTask",

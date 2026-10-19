@@ -5,7 +5,7 @@ from app.core.security import get_password_hash
 from app.models.user import User
 
 ME, ADMIN = "/api/me/today-layout", "/api/admin/today-layout"
-IDS = ["tasks", "shopping", "events", "meals", "reminders", "house", "birthdays", "timetable"]
+IDS = ["tasks", "shopping", "events", "meals", "reminders", "house", "birthdays", "timetable", "stars"]
 
 
 def _partner(client, name):
@@ -37,7 +37,7 @@ def test_layout_is_per_person_and_resettable(client, auth):
     r = client.put(ME, headers=a, json={"cards": _cards(order, hidden=("house",))})
     assert r.status_code == 200 and r.json()["source"] == "user"
     got = client.get(ME, headers=a).json()["cards"]
-    assert [c["id"] for c in got] == order and not got[2]["visible"]
+    assert [c["id"] for c in got] == order + ["stars"] and not got[2]["visible"]
     assert client.get(ME, headers=b).json()["source"] == "builtin"
     reset = client.delete(ME, headers=a).json()
     assert reset["source"] == "builtin" and [c["id"] for c in reset["cards"]] == IDS
@@ -46,7 +46,7 @@ def test_layout_is_per_person_and_resettable(client, auth):
 def test_missing_cards_are_appended(client, auth):
     h = _partner(client, "tl_c")
     r = client.put(ME, headers=h, json={"cards": _cards(["house", "meals"])})
-    assert [c["id"] for c in r.json()["cards"]] == ["house", "meals", "tasks", "shopping", "events", "reminders", "birthdays", "timetable"]
+    assert [c["id"] for c in r.json()["cards"]] == ["house", "meals", "tasks", "shopping", "events", "reminders", "birthdays", "timetable", "stars"]
 
 
 def test_admin_default_is_fallback_and_user_wins(client, auth):

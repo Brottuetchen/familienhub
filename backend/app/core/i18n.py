@@ -524,6 +524,24 @@ EN: Dict[str, str] = {
     "Manifest: hosts ist eine Liste von Hostnamen ohne https://, höchstens 20":
         "Manifest: hosts is a list of host names without https://, at most 20",
     "Manifest: capabilities erlaubt nur {names}": "Manifest: capabilities only allows {names}",
+    # --- kids mode: stars and rewards ---
+    "Eintrag nicht gefunden": "Entry not found",
+    "Eigene Sterne kannst du nicht selbst bestätigen": "You cannot confirm your own stars",
+    "Dieser Eintrag wurde bereits entschieden": "This entry has already been decided",
+    "Ungültige Anzahl Sterne": "Invalid number of stars",
+    "Nicht genug Sterne": "Not enough stars",
+    "Belohnung nicht gefunden": "Reward not found",
+    "Anfrage nicht gefunden": "Request not found",
+    "Diese Anfrage wurde bereits entschieden": "This request has already been decided",
+    "Eigene Anfragen kannst du nicht selbst entscheiden": "You cannot decide on your own requests",
+    "Habitica vergibt eigene Belohnungen": "Habitica hands out its own rewards",
+    "Nur der Verlauf der eigenen Sterne ist sichtbar": "Only the history of your own stars is visible",
+    "Eigene Sterne kannst du nicht selbst ändern": "You cannot change your own stars",
+    "Belohnung gewünscht": "Reward requested",
+    "Belohnung bewilligt": "Reward approved",
+    "Belohnung abgelehnt": "Reward declined",
+    "Sterne bestätigen": "Confirm stars",
+    "Sterne bestätigt": "Stars confirmed",
 }
 
 # Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)

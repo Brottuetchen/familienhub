@@ -113,6 +113,9 @@ async def read_tasks(user_id, db, provider="all", account=None, view="all", incl
             items.extend(await task_routing.assigned_items(user_id, db, include_done, skip=seen))
         except Exception:  # noqa: BLE001 - never an exception into the UI
             logger.warning("Zugewiesene Aufgaben nicht lesbar", exc_info=True)
+    from app.services import stars as stars_svc
+
+    stars_svc.attach_stars(db, items)
     state = "ok" if items or any(s["status"] == "ok" for s in statuses.values()) else (
         "unavailable" if any(s["status"] == "unavailable" for s in statuses.values()) else "not_configured")
     return {"status": state, "error": next((s["error"] for s in statuses.values() if s["error"]), None),
@@ -136,6 +139,7 @@ class TaskCreateRequest(BaseModel):
     habitica: bool = False
     native: dict | None = None
     operation_id: CanonicalUUID | None = None
+    stars: int | None = Field(None, ge=0, le=100)  # kids mode: stars for completing the task (hub-side)
 
     @model_validator(mode="after")
     def validate_household(self):
@@ -166,6 +170,7 @@ class TaskUpdateRequest(BaseModel):
     native: dict | None = None
     expected_version: str | None = None
     operation_id: CanonicalUUID | None = None
+    stars: int | None = Field(None, ge=0, le=100)  # kids mode, see TaskCreateRequest
 
 
 class CalDAVAccountRequest(BaseModel):
@@ -290,8 +295,26 @@ async def _notify_assigned(task: TaskCreateRequest, current_user: User, assignee
 async def _create_task(task: TaskCreateRequest, provider: str, account: str | None, current_user: User, db: Session):
     """Erstellt eine neue Aufgabe; ``provider=auto`` routet nach Empfänger bzw. Familienliste (#38)."""
     if provider == "auto":
-        return await _create_task_auto(task, current_user, db)
-    return await _create_task_in(task, provider, account, current_user, db)
+        result = await _create_task_auto(task, current_user, db)
+    else:
+        result = await _create_task_in(task, provider, account, current_user, db)
+    _store_stars(task, result, current_user, db)
+    return result
+
+
+def _store_stars(task: TaskCreateRequest, result, current_user: User, db: Session) -> None:
+    """Kids mode: remember the stars of a new task (hub-side, keyed by provider and uid). Never fails the create."""
+    if not task.stars or not isinstance(result, dict) or not result.get("uid"):
+        return
+    from app.services import stars as stars_svc
+
+    try:
+        provider = (result.get("placed") or {}).get("provider") or result.get("provider")
+        if provider and provider != "habitica":
+            stars_svc.set_task_stars(db, str(provider), str(result["uid"]), task.stars, current_user)
+            result["stars"] = task.stars
+    except Exception:  # noqa: BLE001
+        logger.warning("Sterne konnten nicht gespeichert werden", exc_info=True)
 
 
 async def _create_task_auto(task: TaskCreateRequest, current_user: User, db: Session):
@@ -508,6 +531,7 @@ async def update_task(
     connector = plugin_registry.task_connector(provider, current_user.id, db, account)
 
     updates = task.model_dump(exclude_unset=True)
+    updates.pop("stars", None)  # hub-side, not a connector field
     if "operation_id" in updates:
         updates["operation_id"] = str(task.operation_id)
     if task.title is not None:
@@ -532,7 +556,12 @@ async def update_task(
             detail="Task not found",
         )
 
-    return context_task(result, provider, connector)
+    out = context_task(result, provider, connector)
+    if task.stars is not None and isinstance(out, dict):
+        from app.services import stars as stars_svc
+
+        out["stars"] = stars_svc.set_task_stars(db, provider, uid, task.stars, current_user) or None
+    return out
 
 
 @router.post("/{uid}/complete")
@@ -564,7 +593,37 @@ async def complete_task(
     if isinstance(result, dict):
         result.pop("_score", None)  # Legacy-Hinweis ist keine Autorisierung für ein anderes Plugin.
 
-    return context_task(result, provider, connector)
+    out = context_task(result, provider, connector)
+    awarded = await _award_stars(db, current_user, provider, uid, result)
+    if awarded and isinstance(out, dict):
+        out["stars_awarded"] = awarded
+    return out
+
+
+async def _award_stars(db: Session, user: User, provider: str, uid: str, result) -> dict | None:
+    """Kids mode: the person who completed a starred task gets its stars (or a pending entry to confirm)."""
+    from app.services import stars as stars_svc
+
+    try:
+        if isinstance(result, dict) and result.get("done") is False:
+            return None
+        awarded = stars_svc.award_for_completion(db, user, provider, uid, result)
+        if provider == "hub_tasks":
+            from app.models.hub import HubTask
+
+            row = db.get(HubTask, uid)
+            stars_svc.carry_to_successor(db, provider, uid, row.successor_uid if row else None)
+        if awarded and awarded["status"] == "pending":
+            from app.routers.stars import notify_parents
+
+            await notify_parents(db, "Sterne bestätigen",
+                                 f"{stars_svc.display(user)}: {awarded['title'] or uid} ({awarded['stars']} ⭐)",
+                                 skip=user.id)
+        return awarded
+    except Exception:  # noqa: BLE001 - stars never break completing a task
+        db.rollback()
+        logger.warning("Sterne konnten nicht vergeben werden", exc_info=True)
+        return None
 
 
 @router.delete("/{uid}", status_code=status.HTTP_204_NO_CONTENT)
