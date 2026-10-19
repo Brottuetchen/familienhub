@@ -253,10 +253,10 @@ def test_patch_stars_only_and_clear(client, fam):
 def test_rotation_successor_keeps_the_stars(client, fam):
     mom = fam["mom"]
     r = client.post("/api/tasks", params={"provider": "hub_tasks", "account": f"{fam['mom_id']}:hub"}, headers=mom,
-                    json={"title": "Bad putzen", "list": "family", "recurrence": "weekly", "due": "2026-11-01",
+                    json={"title": "Sterne-Bad putzen", "list": "family", "recurrence": "weekly", "due": "2026-11-01",
                           "rotation": [fam["kid_id"], fam["kid2_id"]], "stars": 6})
     assert r.status_code == 201, r.text
     assert _complete(client, fam, r.json()["uid"]).json()["stars_awarded"]["stars"] == 6
     items = client.get("/api/tasks", params={"provider": "hub_tasks", "view": "family",
                                              "account": f"{fam['kid2_id']}:hub"}, headers=fam["kid2"]).json()["items"]
-    assert [t["stars"] for t in items if t["title"] == "Bad putzen"] == [6]
+    assert [t["stars"] for t in items if t["title"] == "Sterne-Bad putzen"] == [6]
