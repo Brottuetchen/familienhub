@@ -143,4 +143,10 @@ jobs:
           awk -v v="$VER" '/^## \[/ { p = ($0 == "## [" v "]"); next } p' CHANGELOG.md \
             | sed -E "s#\]\((docs/|\.env\.example)#](${BASE}\1#g" > changes.md
           if [ -s changes.md ]; then { echo; cat changes.md; } >> notes.md; fi
-          gh release create "$GITHUB_REF_NAME" dist/* --title "Familienhub $VER" --notes-file notes.md --generate-notes $PRE
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            # Release already created in the web UI (that is how the tag was made): attach the files, set the notes
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+            gh release edit "$GITHUB_REF_NAME" --title "Familienhub $VER" --notes-file notes.md $PRE
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --title "Familienhub $VER" --notes-file notes.md --generate-notes $PRE
+          fi
