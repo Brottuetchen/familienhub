@@ -227,7 +227,7 @@ include = ["fh_plugin_grocy*"]
 
 ### Rules
 
-- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Recipe sources (`meal_planning`) appear in the app as "Recipe from <name>" through `/api/recipe-sources` (`backend/app/routers/recipe_sources.py`); a new source adds its service there. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints. A `calendar` plugin overrides two methods, `calendars(user, db)` and `async calendar_events(start, end, user, db)`, see [Calendar plugins](#calendar-plugins); all active calendar plugins are merged.
+- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `timetable`, `push_ntfy`. Plugins provide data for `shopping`, `meal_planning` and `timetable` by overriding methods of `Plugin`, see [Data sources](#data-sources); recipe sources appear in the app as "Recipe from <name>" through `/api/recipe-sources` without any change to the hub. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints. A `calendar` plugin overrides two methods, `calendars(user, db)` and `async calendar_events(start, end, user, db)`, see [Calendar plugins](#calendar-plugins); all active calendar plugins are merged.
 - **Settings** are read only through `get_setting(KEY)`: admin entry > core setting > environment. Fields with `secret` are stored encrypted (Fernet, key derived from the hub's `SECRET_KEY`) and never sent back to the app: the app only learns *set* or *not set*.
 - **Active** means all required settings are set and the id is not in `PLUGINS_DISABLED`. Override `is_configured()` if your plugin works with per-person accounts instead.
 - **Fail softly.** Lists from external systems use `{status: ok | unavailable | not_configured, error, items}`. An external system that is down must never break the app: catch `httpx.HTTPError` and parse errors, set a timeout (6 s is a good default), return `unavailable` plus a short message. An exception in your code becomes an error page for the user, so catch what you can foresee.
@@ -288,7 +288,7 @@ Besides endpoints and capabilities, a plugin can hook into the hub. Every hook i
 | `reward_actions()` + `async run_reward_action(...)` | Action when a parent approves a reward (kids mode) | on approval | 20 s | [Reward actions](#reward-actions-kids-mode) |
 | `async test_settings(values) -> dict` | "Test connection" with values that are not saved yet | install and settings screens | 15 s | [Credentials and test](#credentials-and-connection-test) |
 | Calendar events from plugins | Plugin events in the family calendar | – | – | see [Calendar plugins](#calendar-plugins) |
-| Data sources (timetable, recipes, shopping) and image proxy | Plugin data for timetable, recipes and shopping | – | – | see [Data sources](#data-sources) |
+| Data sources: `shopping_connector`, `recipe_search` / `recipe`, `timetable`, `proxy_image` | Plugin data for shopping, recipes and timetable; images from internal servers | – | – | see [Data sources](#data-sources) |
 
 General rules for all hooks:
 
@@ -425,10 +425,6 @@ Settings in the manifest drive the install screen. When an admin installs a plug
 
 The [plugin template](../examples/plugin-template/) shows `today_cards` and `test_settings` working with tests.
 
-### Data sources
-
-See the documentation of data sources (timetable, recipes, shopping, image proxy), added together with those hooks.
-
 ## Calendar plugins
 
 A plugin with the capability `calendar` can show events in the family calendar. It is read-only: the hub never writes to a plugin's calendars. Two methods of `Plugin` are the whole interface:
@@ -470,6 +466,128 @@ class SchoolTripsPlugin(Plugin):
 - Only active plugins that the admin did not exclude under *Sources per area* are asked. The built-in sources (family calendar, CalDAV, calendar subscriptions, birthdays) are read by the hub itself, plugins with these ids are never called.
 - Today shows plugin events like any other. The `/api/calendar/holidays` endpoint (German public holidays, computed in the hub) is not affected.
 - The hook exists since hub **1.0.0-beta.3**. Set `"min_hub_version": "1.0.0-beta.3"` in your store entry and manifest so older hubs refuse the install with a reason.
+
+## Data sources
+
+A plugin can be the **data source** of an existing area of the app: the shopping list, recipes, or a child's timetable. The app, the voice assistant and the Today screen keep working as before; they just read from your plugin. You provide a source by overriding a method of `Plugin` and declaring the capability in the manifest and the class.
+
+For events in the calendar see [Calendar plugins](#calendar-plugins); for Today cards, notifications, scheduled jobs and the other hooks see [Extension points](#extension-points).
+
+Rules that apply to every hook below:
+
+- **Every hook has a safe default** (nothing, empty, "not supported"). Override only what you provide.
+- **The hub calls hooks with a timeout** (15 s; the timetable 3 s, because Today waits for it) and **catches every exception**. The user sees "not reachable", never your error text and never a stack trace; details go to the admin log (warning level, so never put secrets in an exception message).
+- **Return plain data** (dicts, lists, strings, numbers). Unknown or malformed rows are dropped; texts are shortened to their field's length.
+- Hooks are `async`, except `shopping_connector`. Do not block the event loop: use `httpx.AsyncClient`.
+- **Setup:** the plugin must be *active* (all required settings set). Admins choose a single source for shopping under *Administration → Sources per area*; recipe sources and timetable plugins are offered as soon as they are active.
+
+### 1. Shopping list: capability `shopping`
+
+```python
+from app.plugins import Plugin, ShoppingConnector          # ShoppingConnector lives in app.plugins.sources
+
+
+class GrocyList(ShoppingConnector):
+    async def list_items(self):                            # all items, open and checked
+        return [{"uid": "17", "summary": "Milk", "status": "needs_action", "description": "2 l"}]
+
+    async def add(self, summary, user_id=None, description=None) -> bool: ...
+    async def set_done(self, uid, done) -> bool: ...        # check / uncheck
+    async def delete(self, uid) -> bool: ...                # False = not found (HTTP 404)
+    async def rename(self, uid, summary) -> bool:           # optional
+        return False
+
+
+class GrocyPlugin(Plugin):
+    def shopping_connector(self, db):                       # not async; db is a short-lived session
+        return GrocyList()                                  # None = not supported
+```
+
+Items are dicts `{uid, summary, status, description?, amount?}`. `status` is `needs_action` (open) or `completed` (checked); `uid` is any string that is stable for the item; `amount` is shown as the description when there is none. Only `list_items`, `add`, `set_done` and `delete` are required; `rename` is optional (without it, equal recipe ingredients are listed one by one instead of merged into one entry).
+
+When an admin chooses your plugin under *Sources per area → Shopping*, **everything** uses it: the shopping screen (list, add, check, delete, suggestions from recently checked items), template lists ("apply to shopping list"), recipe ingredients (also the week's shopping list), voice ("add milk") and the open-items counter on Today. Open entries are merged with new recipe ingredients as on the hub list. Do not keep `db` after `shopping_connector` returns; it is meant for reading hub-side data and is closed afterwards.
+
+Failures: reading fails softly (`{"status": "unavailable", "groups": []}`, the app shows its offline banner); a failing write answers HTTP 502 with a short generic text.
+
+### 2. Recipes: capability `meal_planning`
+
+```python
+class GrocyPlugin(Plugin):
+    async def recipe_search(self, query: str, limit: int) -> list[dict]:
+        return [{"id": "42", "name": "Potato gratin", "thumbnail": "/api/plugins/grocy/img/42",
+                 "url": "https://grocy.example.org/recipe/42", "minutes": 45}]
+
+    async def recipe(self, recipe_id: str) -> dict:
+        return {"id": "42", "name": "Potato gratin", "image": "/api/plugins/grocy/img/42",
+                "url": "https://grocy.example.org/recipe/42", "servings": 4, "minutes": 45,
+                "ingredients": ["500 g potatoes", "200 ml cream"], "steps": ["Slice", "Bake 40 minutes"]}
+
+    async def recipe_to_shopping(self, recipe_ids: list[str], user_id: int | None = None) -> int | None:
+        ...  # optional: put the ingredients on the plugin's own list, return how many recipes went in
+```
+
+The plugin appears next to Mealie and Cookidoo as **Recipe from \<name\>** (`GET /api/recipe-sources` lists every active plugin that overrides `recipe_search`): search (at least 3 characters), recipe quick view, **plan on a day**, and **ingredients to the shopping list**. `recipe_search` returns at most `limit` rows (30); `id` can be any string, it is passed back to `recipe`. `thumbnail`, `image` and `url` may be absolute `https://` addresses or **hub-relative** routes of your plugin (see [images](#4-images-from-an-internal-server)). `servings` and `minutes` are optional numbers; `ingredients` and `steps` are plain text lines.
+
+- **Planning** is stored by the hub (`meal_plan` rows with the plugin id and your recipe id), so your plugin needs no calendar. A planned recipe shows in the week and on Today like a Mealie recipe, can be removed, and its ingredients are included when the week's shopping list is generated. If the plugin is removed or switched off, its entries are hidden (and stay stored).
+- **Ingredients:** without `recipe_to_shopping` (or when it returns `None`) the hub puts the ingredient lines of `recipe()` on *its* shopping list, merged like other recipes. With `recipe_to_shopping` the plugin's own list is used instead. Return the number of recipes handled, or `None` to let the hub do it.
+- Mealie and Cookidoo are unchanged; built-in sources are not plugins of this kind.
+
+### 3. Timetable: capability `timetable`
+
+```python
+class SchoolPlugin(Plugin):
+    async def timetable(self, child, start: date, end: date, db) -> list[dict]:
+        # child.id (hub user), child.name, child.person_id (the identifier a parent mapped)
+        return [{"date": "2026-10-20", "start": "08:00", "end": "08:45", "title": "Maths",
+                 "kind": "school", "location": "R204", "status": "cancelled",
+                 "note": "Teacher ill", "teacher": "Ms Smith", "period": 1}]
+
+    async def timetable_people(self) -> list[dict]:      # optional: enables a dropdown in the app
+        return [{"id": "1234", "name": "Mia Muster"}]
+```
+
+`timetable` is called with the hub child (`ChildRef`: `id`, `name`, `person_id`), a date range of one calendar week at most (inclusive) and a database session. Fields of a lesson: `date` (`YYYY-MM-DD`, inside the range), `start` and `end` (`HH:MM`, 24 h, `end` not before `start`), `title` (80 characters), `kind` (`school` default, `sport`, `music`, `club`, `other`), `location`, `teacher`, `note` (what changed, shown under the lesson), `period` (number of the lesson, used for "1st-2nd period cancelled") and `status`:
+
+| `status` | Shown as |
+|---|---|
+| `normal` | a lesson |
+| `cancelled` | struck through and marked; on Today as "1st-2nd period cancelled" (or "School cancelled") |
+| `substitution`, `changed` | highlighted with the note; on Today counted as "N substitutions" |
+
+**Mapping children to people.** *Timetable → menu → Timetable sources* (parents only) lets a parent choose per child which plugin provides the timetable and who the child is there. With `timetable_people` the person is a dropdown; the chosen id is validated against the list (HTTP 422 otherwise). Without it, the parent types the identifier as text. The mapping is stored in `timetable_sources`. `GET/PUT /api/timetable/sources` is the API behind it, see [timetable](timetable.md#plugin-timetables).
+
+**Merge rules.** For a day the plugin returns lessons for, those **replace the child's manual `school` entries**; manual sports, music and clubs stay. A day the plugin returns **nothing** for (holidays, weekends, the plugin is down) shows the manual entries as before, so return nothing, not a placeholder, for days without lessons. Results are cached for 60 seconds.
+
+### 4. Images from an internal server
+
+A plugin that shows pictures from a server inside the home network (a photo library, a camera) must not hand its address or API key to the app. `proxy_image` fetches the image inside the hub and answers from the plugin's own, authenticated route:
+
+```python
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from app.core.security import get_current_user
+from app.plugins import get_setting
+from app.plugins.api import proxy_image
+
+router = APIRouter(prefix="/api/plugins/photos")
+
+
+@router.get("/thumb/{asset_id}")
+async def thumb(asset_id: str, request: Request, _=Depends(get_current_user)):
+    if not asset_id.isalnum():                       # you build the URL: validate every part you put in it
+        raise HTTPException(404)
+    base = str(get_setting("PHOTOS_URL")).rstrip("/")
+    return await proxy_image(f"{base}/api/assets/{asset_id}/thumbnail",
+                             {"x-api-key": get_setting("PHOTOS_API_KEY")}, request=request)
+```
+
+`proxy_image(url, headers=None, max_bytes=5_000_000, allowed_types=("image/jpeg", "image/png", "image/webp"), *, request=None, timeout=10.0, max_age=86400, verify=True) -> Response`
+
+- The type is checked by **magic bytes**, not by the server's `Content-Type`; anything else is refused (415). More than `max_bytes` is refused while streaming (413). Redirects are not followed. Other failures give 404 (not found there) or 502; the text never contains the address or the headers.
+- The answer has `Cache-Control: private, max-age=<max_age>` and an `ETag`; pass `request` to answer a matching `If-None-Match` with 304.
+- Use it only for the plugin's own addresses. Never build the URL from unchecked user input (the hub can reach your whole network).
+
+**Showing the image in the app.** Return the route in your data as a hub-relative path (`/api/plugins/photos/thumb/abc`) in `thumbnail`, `image` or `url` fields that the app displays as pictures (recipe thumbnails and images, plan entries). The app loads paths that start with `/` **with the login** and keeps them in memory; absolute addresses load directly, as before. In the app, the widget is `HubImage` (`app/lib/widgets/hub_image.dart`).
 
 ## Tasks: where a task lands
 
