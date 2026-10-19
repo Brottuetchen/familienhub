@@ -58,6 +58,23 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 </details>
 
+## Themes
+
+Make Familienhub look and feel like your family. The [Familienhub Themes gallery](https://github.com/Brottuetchen/familienhub-themes) currently offers ten ready-made themes, each with light and dark variants:
+
+- **Candy Pop** — bright pastels and rounded cards
+- **Cyberpunk** — neon yellow and cyan on near-black
+- **E-Ink Reader** — calm, minimal greyscale
+- **8-Bit Gameboy** — classic handheld greens and pixel-style titles
+- **Matcha Zen** — soft greens and warm latte tones
+- **Nordic Fjord** — glacier blue and violet glass effects
+- **Midnight OLED** — true black with emerald and indigo accents
+- **Retro Synthwave** — 80s neon pink and cyan
+- **Solarized Paper** — warm paper tones and forest colours
+- **Swiss Bauhaus** — bold geometric shapes and primary colours
+
+**Install a theme:** an admin opens **More → Appearance → From GitHub** in the app and pastes a theme link from the gallery's README. No code is needed: themes are JSON style definitions, and each family member can choose a theme per device. Browse the [full gallery and installation links](https://github.com/Brottuetchen/familienhub-themes) or read the [theme guide](docs/themes.md).
+
 ## How it works
 
 ```mermaid
@@ -81,7 +98,7 @@ flowchart LR
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# First public beta (once released); stable versions use :latest by default.
+# Pin a version; change this value when you want to upgrade.
 FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
@@ -102,7 +119,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 
 ## Status
 
-Familienhub is used daily by its first family since October 2026 and is approaching its first public release. Expect rough edges; issues and ideas are welcome.
+Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome.
 
 ## License
 
