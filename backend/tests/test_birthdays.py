@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from app.core.database import SessionLocal
+from app.core.timeutil import local_tz
 from app.core.security import get_password_hash
 from app.models.birthday import Birthday, GiftIdea
 from app.models.event_alarm import EventAlarmSent
@@ -13,6 +14,11 @@ from app.models.user import User
 from app.services import birthdays as svc
 
 B = "/api/birthdays"
+
+
+def _today():
+    """The hub's local date (the container clock may be on another day around midnight)."""
+    return datetime.now(local_tz()).date()
 
 
 @pytest.fixture(autouse=True)
@@ -71,7 +77,7 @@ def test_age_only_with_year():
 
 def test_create_list_with_age_and_validation(client):
     h, _ = _login(client, "bd_p1")
-    today = date.today() + timedelta(days=3)
+    today = _today() + timedelta(days=3)
     item = _add(client, h, name="Oma", month=today.month, day=today.day, year=today.year - 80)
     assert item["days_until"] == 3 and item["turns"] == 80 and item["gift_count"] == 0
     _add(client, h, name="Opa", month=today.month, day=today.day, year=None)
@@ -136,11 +142,14 @@ def test_gift_ideas_hidden_from_the_linked_person(client):
     b2 = _add(client, owner, name="Admin", user_id=admin_id)
     assert client.get(f"{B}/{b2['id']}/gifts", headers=admin).status_code == 404
     # ideas never leak into the calendar or Today
-    day = date.today() + timedelta(days=1)
-    assert "Parfum" not in str(client.get(f"/api/calendar/events?days=30&start={date.today().isoformat()}", headers=mama).json())
+    assert "Parfum" not in str(client.get(f"/api/calendar/events?days=30&start={_today().isoformat()}", headers=mama).json())
     assert "Parfum" not in str(client.get("/api/today", headers=mama).json())
-    _ = day
     assert client.post(B, headers=owner, json={"name": "X", "month": 1, "day": 1, "user_id": 999999}).status_code == 422
+    with SessionLocal() as db:  # do not leave an extra admin behind: other tests count admins
+        db.query(GiftIdea).delete()
+        db.query(Birthday).delete()
+        db.query(User).filter(User.id == admin_id).delete()
+        db.commit()
 
 
 def test_gift_link_must_be_http(client):
@@ -157,23 +166,23 @@ def test_virtual_calendar_events_and_chip(client):
     guest, _ = _login(client, "bd_guest2", "guest")
     cals = client.get("/api/calendar/calendars", headers=h).json()
     assert not [c for c in cals if c["source"] == "birthdays"]  # no chip while empty
-    d = date.today() + timedelta(days=2)
+    d = _today() + timedelta(days=2)
     _add(client, h, name="Oma", month=d.month, day=d.day, year=d.year - 80)
     cals = client.get("/api/calendar/calendars", headers=h).json()
     chip = [c for c in cals if c["id"] == "birthdays"]
     assert chip and chip[0]["writable"] is False and chip[0]["source"] == "birthdays"
-    evs = [e for e in client.get(f"/api/calendar/events?days=10&start={date.today().isoformat()}", headers=h).json()
+    evs = [e for e in client.get(f"/api/calendar/events?days=10&start={_today().isoformat()}", headers=h).json()
            if e["source"] == "birthdays"]
     assert len(evs) == 1 and evs[0]["all_day"] and evs[0]["title"] == "🎂 Oma (80)" and evs[0]["start"] == d.isoformat()
-    assert not [e for e in client.get(f"/api/calendar/events?days=10&start={date.today().isoformat()}", headers=guest).json()
+    assert not [e for e in client.get(f"/api/calendar/events?days=10&start={_today().isoformat()}", headers=guest).json()
                 if e["source"] == "birthdays"]
     assert not [c for c in client.get("/api/calendar/calendars", headers=guest).json() if c["id"] == "birthdays"]
 
 
 def test_today_card_data(client):
     h, uid = _login(client, "bd_p7")
-    d = date.today() + timedelta(days=3)
-    far = date.today() + timedelta(days=100)
+    d = _today() + timedelta(days=3)
+    far = _today() + timedelta(days=100)
     _add(client, h, name="Oma", month=d.month, day=d.day, year=d.year - 80)
     _add(client, h, name="Fern", month=far.month, day=far.day)
     items = client.get("/api/today", headers=h).json()["birthdays"]
@@ -208,11 +217,11 @@ def test_reminder_days_before_once_and_not_for_the_linked_person(client, monkeyp
     h, _ = _login(client, "bd_p9")
     _, mama_id = _login(client, "bd_mama2")
     _, guest_id = _login(client, "bd_guest4", "guest")
-    day = date.today() + timedelta(days=7)
+    day = _today() + timedelta(days=7)
     _add(client, h, name="Mama", month=day.month, day=day.day, year=day.year - 50, user_id=mama_id, remind_days_before=7)
     _add(client, h, name="Spaeter", month=day.month, day=day.day, remind_days_before=3)
     calls = _sent(monkeypatch)
-    noon = datetime.combine(date.today(), datetime.min.time()).replace(hour=12)
+    noon = datetime.combine(_today(), datetime.min.time()).replace(hour=12)
     n = asyncio.run(svc.send_due(noon))
     users = {c[0] for c in calls}
     assert n == len(calls) > 0 and mama_id not in users and guest_id not in users
