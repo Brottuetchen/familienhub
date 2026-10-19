@@ -8,8 +8,6 @@ Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan,
 
 [English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Plugin-Vorlage](examples/plugin-template/) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
-<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
-
 </div>
 
 ## Warum
@@ -48,13 +46,6 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 - **Familie:** Rollen (Admin, Partner, Kind, Gast), Einladungen, Anmeldung per OIDC (Authentik, Keycloak …) oder lokal
 - **Apps:** Android-App mit Widgets und Offline-Warteschlange, Web-App (PWA), iOS-App zum Sideloaden
 - **Anpassbar:** Themes mit Hell/Dunkel und Schriften, installierbar aus GitHub (elf in der [Theme-Galerie](https://github.com/Brottuetchen/familienhub-themes)); Deutsch und Englisch
-
-<details>
-<summary>Weitere Screenshots</summary>
-
-<img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/shopping.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/calendar.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
-
-</details>
 
 ## Schnellstart
 
