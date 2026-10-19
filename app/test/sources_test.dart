@@ -68,4 +68,26 @@ void main() {
     expect(b.sent('PUT', '/api/admin/sources'), hasLength(1)); // last calendar source cannot be removed
     expect(find.text('Mindestens eine Quelle muss bleiben'), findsOneWidget);
   });
+
+  testWidgets('recipe ingredients: no option without the server field', (tester) async {
+    await pump(tester, backend());
+    expect(find.byKey(const Key('recipe-ingredients-merge')), findsNothing);
+  });
+
+  testWidgets('recipe ingredients: shows the mode and saves the other one', (tester) async {
+    final b = backend();
+    b.json('GET', '/api/admin/sources', {'areas': [
+      {'area': 'shopping', 'multiple': false, 'recipe_ingredients': 'merge', 'sources': [
+        src('homeassistant', 'Home Assistant', selected: true),
+      ]},
+    ]});
+    b.json('PUT', '/api/admin/recipe-ingredients', {'areas': []});
+    await pump(tester, b);
+    expect(find.text('Rezeptzutaten'), findsOneWidget);
+    expect(tester.widget<RadioGroup<String>>(find.ancestor(
+        of: find.byKey(const Key('recipe-ingredients-merge')), matching: find.byType(RadioGroup<String>)).first).groupValue, 'merge');
+    await tester.tap(find.byKey(const Key('recipe-ingredients-source')));
+    await tester.pumpAndSettle();
+    expect(bodyOf(b.sent('PUT', '/api/admin/recipe-ingredients').single), {'mode': 'source'});
+  });
 }

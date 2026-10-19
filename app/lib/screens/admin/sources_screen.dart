@@ -63,9 +63,40 @@ class SourcesEditor extends ConsumerWidget {
           ),
           for (final s in area.sources)
             _option(context, ref, area, s, muted),
+          if (area.recipeIngredients != null) _recipeIngredients(context, ref, area.recipeIngredients!, muted),
         ],
       ]),
     );
+  }
+
+  Widget _recipeIngredients(BuildContext context, WidgetRef ref, String mode, TextStyle muted) {
+    Future<void> save(String? v) async {
+      if (v == null || v == mode) return;
+      if (await runAction(context, () => ref.read(apiClientProvider).setRecipeIngredients(v))) {
+        ref.invalidate(adminSourcesProvider);
+      }
+    }
+
+    Widget option(String value, String title, String hint) => RadioListTile<String>(
+          key: Key('recipe-ingredients-$value'),
+          value: value,
+          title: Text(title),
+          subtitle: Text(hint, style: muted),
+        );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Text(l10n.recipeIngredientsTitle, style: Theme.of(context).textTheme.titleSmall),
+      ),
+      RadioGroup<String>(
+        groupValue: mode,
+        onChanged: save,
+        child: Column(children: [
+          option('merge', l10n.recipeIngredientsMerge, l10n.recipeIngredientsMergeHint),
+          option('source', l10n.recipeIngredientsSource, l10n.recipeIngredientsSourceHint),
+        ]),
+      ),
+    ]);
   }
 
   Widget _option(BuildContext context, WidgetRef ref, SourceArea area, SourceOption s, TextStyle muted) {

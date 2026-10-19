@@ -1449,6 +1449,10 @@ class ApiClient {
   Future<void> setSources(String area, List<String> selected) =>
       _send('PUT', '/api/admin/sources', body: {'area': area, 'selected': selected});
 
+  /// Where Cookidoo/Mealie recipe ingredients go: `merge` (our list) or `source` (the recipe source's own list).
+  Future<void> setRecipeIngredients(String mode) =>
+      _send('PUT', '/api/admin/recipe-ingredients', body: {'mode': mode});
+
   /// End of the setup wizard: the server switches off active plugins that were neither chosen as a source nor
   /// set up (`keep`). Returns the ids it disabled.
   Future<List<String>> finishSetup(List<String> keep) async {

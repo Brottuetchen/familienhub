@@ -255,7 +255,12 @@ def _sources_view() -> Dict[str, Any]:
                     "configured": p.is_configured(), "active": p.active, "selected": p.id in chosen}
                    for p in plugin_registry.all() if area in p.capabilities]
         sources.sort(key=lambda s: (not s["fallback"], s["name"]))  # the hub's own source first
-        areas.append({"area": area, "multiple": multiple, "sources": sources})
+        entry = {"area": area, "multiple": multiple, "sources": sources}
+        if area == "shopping":
+            from app.routers.shopping import recipe_ingredients_mode
+
+            entry["recipe_ingredients"] = recipe_ingredients_mode()
+        areas.append(entry)
     return {"areas": areas}
 
 
@@ -280,6 +285,21 @@ async def put_sources(data: SourceChoice, db: Session = Depends(get_db), _: User
     if not multiple and len(ids) > 1:
         raise HTTPException(422, "Für diesen Bereich gibt es genau eine Quelle")
     config_store.save_overrides(db, {key: ",".join(ids)})
+    return _sources_view()
+
+
+class RecipeIngredients(BaseModel):
+    mode: str  # merge | source
+
+
+@router.put("/recipe-ingredients")
+async def put_recipe_ingredients(data: RecipeIngredients, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    """Where Cookidoo/Mealie recipe ingredients go: our merged list (``merge``) or the source's own list (``source``)."""
+    from app.services import config_store
+
+    if data.mode not in ("merge", "source"):
+        raise HTTPException(422, "Unbekannter Modus")
+    config_store.save_overrides(db, {"SHOPPING_RECIPE_INGREDIENTS": data.mode})
     return _sources_view()
 
 

@@ -295,11 +295,21 @@ async def add_recipe_ingredients(entries, user_id: Optional[int]) -> int:
     return done
 
 
+def recipe_ingredients_mode() -> str:
+    """``merge`` (default): Cookidoo/Mealie ingredients go onto our merged list; ``source``: they stay in the
+    recipe source's own list (Cookidoo's to-do list via Home Assistant, Mealie's native import). Hub recipes always merge."""
+    from app.plugins.base import get_setting
+
+    return "source" if str(get_setting("SHOPPING_RECIPE_INGREDIENTS") or "").strip().lower() == "source" else "merge"
+
+
 async def recipes_to_shopping(service, recipe_ids, user_id: Optional[int] = None) -> int:
     """Ingredients of Cookidoo/Mealie recipes via ``add_recipe_ingredients`` (merged); a recipe whose details cannot be
     read goes through the service's own shopping list instead. Raises the service's error when that fails too."""
     from app.services.mealie import MealieShopping, mealie_service
 
+    if recipe_ingredients_mode() == "source":
+        return await service.ingredients_to_shopping(list(recipe_ids))
     entries, native = [], []
     own_list = service is mealie_service and isinstance(_hub_source(), MealieShopping)  # Mealie merges itself
     for rid in recipe_ids:

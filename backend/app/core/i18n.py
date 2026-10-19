@@ -223,6 +223,7 @@ EN: Dict[str, str] = {
     "Unbekannte Zeitzone, z. B. Europe/Berlin": "Unknown time zone, e.g. Europe/Berlin",
     "Unbekannte native Aktion": "Unknown native action",
     "Unbekannter Bereich": "Unknown area",
+    "Unbekannter Modus": "Unknown mode",
     "Unbekanntes Regal": "Unknown shelf",
     "Unbestätigte Aktion: Konto erst nach Betreiberprüfung ändern": "Unconfirmed action: change the account only after an operator check",
     "Ungültige CalDAV-Adresse": "Invalid CalDAV address",
@@ -276,6 +277,9 @@ EN: Dict[str, str] = {
     "Wetter (Open-Meteo)": "Weather (Open-Meteo)",
     "Aufgaben aus": "Tasks from",
     "Einkauf aus": "Shopping from",
+    "Rezeptzutaten": "Recipe ingredients",
+    "merge = Zutaten auf unsere Einkaufsliste zusammenführen (Standard); source = Zutaten von Cookidoo/Mealie in der Liste der Rezeptquelle lassen":
+        "merge = merge ingredients onto our shopping list (default); source = leave Cookidoo/Mealie ingredients in the recipe source's own list",
     "Termine aus": "Events from",
     "Aufgaben direkt im Familienhub: privat, füreinander, Familienliste und Haushaltsrotation. Läuft ohne externen Dienst, auch neben Nextcloud oder Habitica.":
         "Tasks right in Familienhub: private, for each other, family list and household rotation. Works without any other service, also next to Nextcloud or Habitica.",

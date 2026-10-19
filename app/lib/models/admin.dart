@@ -294,12 +294,15 @@ class SourceArea {
   final String area; // tasks | shopping | calendar
   final bool multiple;
   final List<SourceOption> sources;
+  /// Shopping only: where Cookidoo/Mealie recipe ingredients go (`merge` onto our list, or `source`); null elsewhere.
+  final String? recipeIngredients;
 
-  const SourceArea({required this.area, required this.multiple, this.sources = const []});
+  const SourceArea({required this.area, required this.multiple, this.sources = const [], this.recipeIngredients});
 
   factory SourceArea.fromJson(Map<String, dynamic> j) => SourceArea(
         area: j['area'] as String,
         multiple: j['multiple'] == true,
         sources: ((j['sources'] as List?) ?? const []).whereType<Map<String, dynamic>>().map(SourceOption.fromJson).toList(),
+        recipeIngredients: j['recipe_ingredients'] as String?,
       );
 }
