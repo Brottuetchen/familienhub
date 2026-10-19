@@ -2,55 +2,65 @@
 
 # Familienhub
 
-**A self-hosted family organiser that brings your existing services together.**
+**The self-hosted family hub that works on its own and plugs into what you already run.**
 
-Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
-
-[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Birthdays](docs/birthdays.md) · [Timetable](docs/timetable.md) · [Kids mode](docs/kids-mode.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
+[![Release](https://img.shields.io/github/v/release/Brottuetchen/familienhub?include_prereleases&label=release)](https://github.com/Brottuetchen/familienhub/releases/latest) [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE) [![Discussions](https://img.shields.io/badge/chat-Discussions-8957e5)](https://github.com/Brottuetchen/familienhub/discussions)
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
+[Install](#install) · [Features](#features) · [Ecosystem](#ecosystem) · [Roadmap](docs/roadmap.md) · [Community](#community) · [Deutsch](README.de.md)
+
 </div>
 
-## Why
-
-One app for everyone in the family, which **works on its own and connects to what you already run**.
-
-- **Out of the box:** tasks, shopping list, family calendar, meal plan and reminders are stored in the hub itself. No other service is needed.
-- **Connect anything:** each area can take its data from a service instead of, or in addition to, the hub. Examples:
-  - tasks from any CalDAV server (Nextcloud, iCloud, Radicale …) or Habitica
-  - the shopping list from Home Assistant
-  - documents from Paperless
-  - and whatever a [plugin](docs/plugins.md) provides
-
-  Connected data stays where it is. The hub shows it, lets you act on it and notifies the right person.
-
-| Area | In the hub | Or from (plugins) |
-|---|:-:|---|
-| Tasks | ✓ | CalDAV (Nextcloud, iCloud, Radicale …), Habitica – several side by side |
-| Shopping list | ✓ | Home Assistant to-do lists, Mealie |
-| Calendar | ✓ family calendar | CalDAV, calendar subscriptions (ICS), all merged |
-| Meal plan & recipes | ✓ weekly plan and recipe book | Mealie (recipes, meal plan), Cookidoo (recipes), Home Assistant (Cookidoo plan) |
-| Reminders, notifications | ✓ | Home Assistant, Shelfarr, Paperless … as notification sources |
-| Documents · books · movies & shows | – | Paperless-ngx · Shelfarr · Seerr |
-
-Admins choose the source of each area in the setup wizard or under *Administration → Sources per area*.
+Familienhub gives every person in the family one app for what is on today: tasks, shopping, meals, events and reminders. It runs on your own server (one Docker container plus PostgreSQL), has real push notifications, Android widgets and an offline mode, and needs no other service to be useful. If you already run Nextcloud, Home Assistant, Paperless or Mealie, the hub shows that data too and leaves it where it is.
 
 ## Features
 
-- **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
-- **Calendar:** list, week and month views, colours and filter per calendar, new events land in exactly the chosen calendar (family first), edit and delete; the same CalDAV calendars and reminders on iPhone and Android, see [calendar & phone](docs/calendar.md)
-- **Timetable for children:** weekly lessons, sports, music and clubs per child with optional A/B weeks and school holidays from a calendar subscription, a Today card, copy day / week; parents edit, children view, see [timetable](docs/timetable.md)
-- **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side. A task for someone lands in the recipient's own place (set in the profile), not where the creator works
-- **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo; reusable [template lists](docs/templates.md) (packing list, weekly shopping) for the shopping list and tasks; import a recipe from a link ([docs](docs/recipe-import.md))
-- **Birthdays and anniversaries:** yearly, with age, in the calendar and on Today, reminders days before and gift ideas the birthday person cannot see, see [birthdays](docs/birthdays.md)
-- **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
-- **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
-- **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books, and discover books available in German
-- **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
-- **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
-- **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
-- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (eleven in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
+Every item links to its documentation.
+
+### Everyday
+
+- **Today:** one screen with tasks, shopping, events, meals, reminders and house tiles. Everyone arranges their own (order, show/hide, half or full size); admins set the family default. [How](docs/getting-started.md#6-plugins)
+- **Tasks:** own, shared and assigned, with household rotation. In the hub, on CalDAV/Nextcloud or Habitica, side by side. [Tasks and plugins](docs/plugins.md#tasks-where-a-task-lands)
+- **Shopping list:** the hub's own list, merged with Home Assistant, Mealie or Cookidoo lists. [Plugins](docs/plugins.md)
+- **Meals and recipes:** weekly meal plan, recipe book, ingredients to the shopping list, [recipe import from a link](docs/recipe-import.md) and reusable [template lists](docs/templates.md) (packing list, weekly shopping).
+- **Calendar:** list, week and month views; CalDAV, ICS subscriptions and a family calendar in the hub; event reminders. [Calendar and phone](docs/calendar.md)
+- **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with action buttons in the notification. [Notifications](docs/notifications.md)
+
+### Family
+
+- **Kids mode:** stars for tasks, rewards and requests that parents approve. [Kids mode](docs/kids-mode.md)
+- **Birthdays and anniversaries:** yearly, in the calendar and on Today, with gift ideas the birthday person cannot see. [Birthdays](docs/birthdays.md)
+- **Timetable for children:** lessons, sports and clubs per child, optional A/B weeks and school holidays. [Timetable](docs/timetable.md)
+- **Roles and invites:** admin, partner, child and guest, enforced by the server. [Roles](docs/security.md#roles)
+
+### Home and services
+
+- **Home Assistant:** state tiles, lights, switches and scenes, shopping lists, "when I get home" reminders. [Plugins](docs/plugins.md)
+- **Voice assistant:** shopping, tasks, meals, events and reminders through Home Assistant Assist. [Voice assistant](docs/voice-assistant.md)
+- **Paperless, Seerr, Shelfarr:** search documents and get deadlines as reminders; request movies, shows and books. [Plugins](docs/plugins.md)
+- **Notifications from other systems:** Home Assistant, Shelfarr, Paperless and your own scripts can post to the hub. [Notification sources](docs/notification-sources.md)
+
+### Admin and safety
+
+- **Setup wizard and admin panel:** the first person creates the admin account, then you pick the source for each area. [Getting started](docs/getting-started.md)
+- **Backup and restore:** one ZIP from the app, optional nightly backups. [Backup](docs/getting-started.md#7-backup)
+- **Update notice:** Administration shows when a newer release exists; you can switch it off. [Update](docs/getting-started.md#8-update)
+- **Sign-in:** local accounts or OIDC (Authentik, Keycloak ...). Passkeys and 2FA are not built in; use them through your identity provider. [Security](docs/security.md)
+- **Notification channels:** Firebase, Web Push and ntfy, with quiet hours and categories. [Notifications](docs/notifications.md)
+
+### Make it yours
+
+- **Themes:** light and dark variants and fonts; eleven in the [gallery](https://github.com/Brottuetchen/familienhub-themes). [Themes](docs/themes.md)
+- **Store:** find and install reviewed plugins and themes in Administration. [Store](docs/store.md)
+- **Plugins from GitHub:** paste a link, review, run, no restart. Write your own from the [template](examples/plugin-template/). [Plugins](docs/plugins.md)
+
+### Apps
+
+- **Android:** app with widgets, quick actions and an offline queue. [Get the apps](docs/getting-started.md#3-get-the-apps)
+- **Web app (PWA):** install it from the browser; Web Push works there too. [Notifications](docs/notifications.md)
+- **iOS:** app for sideloading from the release; push through ntfy. TestFlight and widgets need an Apple licence, see [#9](https://github.com/Brottuetchen/familienhub/issues/9). [iPhone notes](docs/notifications.md#iphone)
+- **Languages:** German and English.
 
 <details>
 <summary>More screenshots</summary>
@@ -63,23 +73,28 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 </details>
 
-## Themes
+## Install
 
-Make Familienhub look and feel like your family. The [Familienhub Themes gallery](https://github.com/Brottuetchen/familienhub-themes) currently offers eleven ready-made themes, each with light and dark variants:
+### Docker
 
-- **Candy Pop** — bright pastels and rounded cards
-- **Cyberpunk** — neon yellow and cyan on near-black
-- **E-Ink Reader** — calm, minimal greyscale
-- **8-Bit Gameboy** — classic handheld greens and pixel-style titles
-- **Matcha Zen** — soft greens and warm latte tones
-- **Nordic Fjord** — glacier blue and violet glass effects
-- **Präzision** — warm paper, signal red-orange, square panels and technical mono labels
-- **Midnight OLED** — true black with emerald and indigo accents
-- **Retro Synthwave** — 80s neon pink and cyan
-- **Solarized Paper** — warm paper tones and forest colours
-- **Swiss Bauhaus** — bold geometric shapes and primary colours
+```bash
+mkdir familienhub && cd familienhub
+curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
+# Pin a version; change this value when you want to upgrade.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+```
 
-**Install a theme:** an admin opens **More → Appearance → From GitHub** in the app and pastes a theme link from the gallery's README. No code is needed: themes are JSON style definitions, and each family member can choose a theme per device. Browse the [full gallery and installation links](https://github.com/Brottuetchen/familienhub-themes) or read the [theme guide](docs/themes.md).
+No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
+
+### Home Assistant add-on (experimental)
+
+[![Add repository to my Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBrottuetchen%2Ffamilienhub-ha-addon)
+
+The add-on runs the hub inside Home Assistant (SQLite, data in `/data`) and opens on port 8000. It has no Home Assistant sidebar entry yet ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). More in the [add-on repository](https://github.com/Brottuetchen/familienhub-ha-addon).
+
+### Apps
+
+APK and IPA are attached to each [GitHub release](https://github.com/Brottuetchen/familienhub/releases/latest). Android: install the APK. iPhone: sideload the IPA, or use the web app. See [get the apps](docs/getting-started.md#3-get-the-apps).
 
 ## How it works
 
@@ -90,40 +105,47 @@ flowchart LR
   end
   Apps <--> H[Familienhub server<br/>FastAPI + PostgreSQL]
   H <--> P[Plugins]
-  P --- N[Nextcloud] & HA[Home Assistant] & PL[Paperless] & S[Seerr / Shelfarr] & C[Cookidoo] & HB[Habitica]
+  P --- N[Nextcloud] & HA[Home Assistant] & PL[Paperless] & S[Seerr / Shelfarr] & C[Cookidoo] & HB[Habitica] & M[Mealie]
+  ST[Store and GitHub links] -. install .-> P
+  HAA[Home Assistant add-on] -. runs .-> H
   H --> PU[Push: Firebase · Web Push · ntfy]
 ```
 
 - **Server:** one Docker container (FastAPI, serves the web app too) plus PostgreSQL.
-- **Areas and sources:** every area (tasks, shopping, calendar …) has interchangeable sources: the hub's own storage and plugins. Admins choose per area. Personal data is only read with each person's own access.
-- **Plugins from GitHub:** admins paste a link in the app, review the plugin and fill in its settings, and it runs without a restart. Write your own with the [guide and template](docs/plugins.md).
+- **Areas and sources:** every area (tasks, shopping, calendar ...) has interchangeable sources: the hub's own storage and plugins. Admins choose per area. Personal data is only read with each person's own access.
+- **Plugins from GitHub:** admins paste a link or pick an entry in the [store](docs/store.md), review the plugin and fill in its settings, and it runs without a restart.
 - **App:** Flutter, one codebase for Android, iOS and web. Reads are cache-first, and changes made offline are queued.
 
-## Quick start
+### Areas and sources
 
-```bash
-mkdir familienhub && cd familienhub
-curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# Pin a version; change this value when you want to upgrade.
-FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
-```
+| Area | In the hub | Or from (plugins) |
+|---|:-:|---|
+| Tasks | ✓ | CalDAV (Nextcloud, iCloud, Radicale ...), Habitica – several side by side |
+| Shopping list | ✓ | Home Assistant to-do lists, Mealie |
+| Calendar | ✓ family calendar | CalDAV, calendar subscriptions (ICS), all merged |
+| Meal plan & recipes | ✓ weekly plan and recipe book | Mealie (recipes, meal plan), Cookidoo (recipes), Home Assistant (Cookidoo plan) |
+| Reminders, notifications | ✓ | Home Assistant, Shelfarr, Paperless ... as notification sources |
+| Documents · books · movies & shows | – | Paperless-ngx · Shelfarr · Seerr |
 
-No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). The apps (APK and IPA) are attached to each [GitHub release](https://github.com/Brottuetchen/familienhub/releases/latest). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
+Admins choose the source of each area in the setup wizard or under *Administration → Sources per area*.
 
-## Documentation
+## Ecosystem
 
-| | |
+| Repository | What it is |
 |---|---|
-| [Getting started](docs/getting-started.md) | install, reach it, apps, people and sign-in, backup |
-| [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
-| [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
-| [Voice assistant](docs/voice-assistant.md) | Home Assistant Assist: shopping, tasks, meals, events, reminders by voice |
-| [Plugins](docs/plugins.md) | what ships, install a plugin from a GitHub link, write and share one; [plugin template](examples/plugin-template/) |
-| [Kids mode](docs/kids-mode.md) | stars for tasks, rewards, requests and confirmations |
-| [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
-| [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
-| [Roadmap](docs/roadmap.md) | what's done, next and later |
-| [Contributing](CONTRIBUTING.md) | development setup, translations, pull requests |
+| [familienhub-store](https://github.com/Brottuetchen/familienhub-store) | The reviewed index of plugins and themes behind the in-app [store](docs/store.md) |
+| [familienhub-themes](https://github.com/Brottuetchen/familienhub-themes) | Theme gallery with light and dark previews, installable by link |
+| [familienhub-ha-addon](https://github.com/Brottuetchen/familienhub-ha-addon) | Home Assistant add-on (experimental) |
+| [Plugin template](examples/plugin-template/) | Starting point for your own plugin, see the [plugin guide](docs/plugins.md) |
+
+## Community
+
+- **Ask and show:** [GitHub Discussions](https://github.com/Brottuetchen/familienhub/discussions).
+- **Report a bug or wish:** [open an issue](https://github.com/Brottuetchen/familienhub/issues), or use *More → Send feedback* in the app.
+- **Contribute:** see [CONTRIBUTING](CONTRIBUTING.md) for the dev setup and pull requests. Plugins and themes can live in their own repositories.
+- **Translate:** more languages are welcome, planned with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)). Until then, add an `.arb` file as described in [CONTRIBUTING](CONTRIBUTING.md).
+- **Security issue:** please report it privately, see [SECURITY.md](SECURITY.md).
+- **What is next:** the [roadmap](docs/roadmap.md).
 
 ## Status
 
