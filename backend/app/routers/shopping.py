@@ -11,7 +11,8 @@ from app.config import settings
 from app.connectors.registry import registry
 from app.core.security import get_current_user, require_min_role
 from app.models.user import User, ROLE_CHILD
-from app.services import idempotency
+from app.services import idempotency, shopping_recipes
+from app.services.ingredients import OpenItem, plan_merge
 
 router = APIRouter(prefix="/api/shopping", tags=["shopping"])
 logger = logging.getLogger("hermes.shopping")
@@ -72,8 +73,11 @@ async def list_items(_: User = Depends(get_current_user)):
         }
 
     try:
-        manual = await ha.get_todo_items(settings.ha_shopping_todo)
+        manual = shopping_recipes.attach(f"ha:{settings.ha_shopping_todo}",
+                                         await ha.get_todo_items(settings.ha_shopping_todo))
         recipe = await ha.get_todo_items(settings.ha_recipe_shopping_todo)
+        for item in recipe:
+            item.setdefault("recipes", [])
 
         return {
             "status": "ok",
@@ -217,3 +221,100 @@ async def add_to_shopping(items, user_id: Optional[int]) -> int:
             if await ha.add_todo_item(settings.ha_shopping_todo, item):
                 added += 1
     return added
+
+
+async def add_recipe_ingredients(entries, user_id: Optional[int]) -> int:
+    """Puts recipe ingredients on the list and merges equal ones (#70).
+
+    ``entries`` is ``[(recipe name, [ingredient lines])]``. Lines are merged with each other and with the open entries
+    of the list ("200 g Zwiebeln" + "1 Zwiebel" -> "1 Zwiebel + 200 g"); the recipe names stay on the entry (#69). A
+    recipe that is already on an entry is not added again. Returns how many lines were taken in. A Mealie list is not
+    merged here (Mealie merges recipe ingredients itself).
+    """
+    new = [(line.strip(), name or "") for name, lines in entries for line in lines if line and line.strip()]
+    if not new:
+        return 0
+    source = _hub_source()
+    if source is not None:
+        from app.services.hub_shopping import HubShopping
+
+        scope = "hub" if isinstance(source, HubShopping) else ""
+    else:
+        ha = _ha()
+        if ha is None:
+            return 0
+        scope = f"ha:{settings.ha_shopping_todo}"
+    existing = []
+    if scope:
+        try:
+            if source is not None:
+                rows = await source.open_items()
+            else:
+                rows = [i for i in await ha.get_todo_items(settings.ha_shopping_todo) if i.get("summary")]
+            refs = shopping_recipes.lookup(scope, [r["summary"] for r in rows], prune=False)
+            existing = [OpenItem(str(r["uid"]), r["summary"], refs.get(shopping_recipes.key(r["summary"]), []))
+                        for r in rows]
+        except Exception as exc:  # noqa: BLE001 - without the open entries we only add (no merge into them)
+            logger.warning("Open shopping entries not read: %s", type(exc).__name__)
+    ops, handled = plan_merge(existing, new)
+
+    async def add(summary: str) -> bool:
+        if source is not None:
+            return bool(await source.add(summary, user_id))
+        return bool(await ha.add_todo_item(settings.ha_shopping_todo, summary))
+
+    async def rename(uid: str, summary: str) -> bool:
+        if source is not None:
+            return bool(await source.rename(uid, summary))
+        return bool(await ha.rename_todo_item(settings.ha_shopping_todo, uid, summary))
+
+    done = 0
+    old_text = {o.uid: o.summary for o in existing}
+    for op in ops:
+        try:
+            if op.uid is None:
+                if not await add(op.summary):
+                    continue
+                done += 1 + len(op.absorbed)
+                if scope and op.recipes:
+                    shopping_recipes.store(scope, op.summary, op.recipes)
+                continue
+            if op.changed_text and not await rename(op.uid, op.summary):
+                # could not merge into the entry: list the absorbed lines on their own
+                for raw, recipe in op.absorbed:
+                    if await add(raw):
+                        done += 1
+                        if scope and recipe:
+                            shopping_recipes.store(scope, raw, [recipe])
+                continue
+            done += len(op.absorbed)
+            if scope:
+                shopping_recipes.store(scope, op.summary, op.recipes, replace_key=old_text.get(op.uid, ""))
+        except Exception as exc:  # noqa: BLE001 - one failed entry must not stop the others
+            logger.warning("Zutat nicht hinzugefügt: %s", type(exc).__name__)
+    return done
+
+
+async def recipes_to_shopping(service, recipe_ids, user_id: Optional[int] = None) -> int:
+    """Ingredients of Cookidoo/Mealie recipes via ``add_recipe_ingredients`` (merged); a recipe whose details cannot be
+    read goes through the service's own shopping list instead. Raises the service's error when that fails too."""
+    from app.services.mealie import MealieShopping, mealie_service
+
+    entries, native = [], []
+    own_list = service is mealie_service and isinstance(_hub_source(), MealieShopping)  # Mealie merges itself
+    for rid in recipe_ids:
+        if own_list:
+            native.append(rid)
+            continue
+        try:
+            detail = await service.recipe(rid)
+            if not detail.get("ingredients"):
+                raise ValueError("no ingredients")
+            entries.append((detail.get("name") or "", detail["ingredients"]))
+        except Exception as exc:  # noqa: BLE001 - details are optional, the native list is the fallback
+            logger.info("Recipe details not available (%s), using the source's own list", type(exc).__name__)
+            native.append(rid)
+    count = await add_recipe_ingredients(entries, user_id) if entries else 0
+    if native:
+        count += await service.ingredients_to_shopping(native)
+    return count

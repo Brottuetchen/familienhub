@@ -77,7 +77,7 @@ def test_recipe_ingredients_to_hub_shopping_list(client, hub_list):
 
 def test_week_plan_ingredients_go_to_the_current_list(client, hub_list):
     h = _auth(client, "rb_week")
-    rid = client.post("/api/recipes", headers=h, json={"title": "Chili", "ingredients": ["Kidneybohnen", "Mais"]}).json()["id"]
+    rid = client.post("/api/recipes", headers=h, json={"title": "Chili sin carne", "ingredients": ["Kidneybohnen", "Mais"]}).json()["id"]
     assert client.post("/api/meals/plan", headers=h, json={"date": date.today().isoformat(), "recipe_id": rid}).status_code == 200
     r = client.post("/api/meals/shopping-list?days=7", headers=h).json()
     assert "Kidneybohnen" in r["ingredients"] and r["added"] >= 2

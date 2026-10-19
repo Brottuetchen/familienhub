@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 
 from app.core.database import Base
 
@@ -37,6 +37,24 @@ class HubShoppingItem(Base):
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime, nullable=True)
+
+
+class ShoppingItemRecipes(Base):
+    """Which recipes an open shopping entry belongs to (#69).
+
+    Keyed by list scope ("hub", "ha:<entity>") and the normalised entry text: Home Assistant to-do entries carry no
+    recipe field and ``todo.add_item`` returns no uid, so the text is the only stable handle. Rows of entries that no
+    longer exist are pruned whenever the list is read.
+    """
+
+    __tablename__ = "shopping_item_recipes"
+    __table_args__ = (UniqueConstraint("scope", "item_key", name="uq_shopping_item_recipes"),)
+
+    id = Column(Integer, primary_key=True)
+    scope = Column(String(80), nullable=False)
+    item_key = Column(String(220), nullable=False)
+    recipes = Column(JSON, nullable=False, default=list)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class HubEvent(Base):

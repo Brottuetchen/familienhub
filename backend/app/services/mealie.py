@@ -142,12 +142,32 @@ class MealieService:
             await self._call("POST", f"/api/households/shopping/lists/{list_id}/recipe/{rid}")
         return len(recipe_ids)
 
+    async def recipe(self, recipe_id: str) -> Dict[str, Any]:
+        """Name and ingredient lines of a recipe (for merging ingredients on the shopping list)."""
+        r = await self._call("GET", f"/api/recipes/{recipe_id}") or {}
+        lines = []
+        for i in r.get("recipeIngredient") or []:
+            text = (i.get("display") or i.get("note") or "").strip()
+            if text:
+                lines.append(text)
+        return {"id": recipe_id, "name": r.get("name") or "", "ingredients": lines}
+
 
 mealie_service = MealieService()
 
 
 def _label(item: Dict[str, Any]) -> str:
     return (item.get("display") or item.get("note") or "").strip()
+
+
+def _recipe_names(item: Dict[str, Any]) -> List[str]:
+    """Recipe names Mealie reports for an entry (``recipeReferences``), when it includes them."""
+    names: List[str] = []
+    for ref in item.get("recipeReferences") or []:
+        name = ((ref or {}).get("recipe") or {}).get("name")
+        if name and name not in names:
+            names.append(name)
+    return names
 
 
 class MealieShopping:
@@ -163,7 +183,8 @@ class MealieShopping:
         except MealieUnavailable as exc:
             return {"status": "unavailable", "error": str(exc), "groups": []}
         return {"status": "ok", "error": None, "groups": [{"key": "manual", "entity": "mealie", "items": [
-            {"uid": i["id"], "summary": _label(i), "status": "completed" if i.get("checked") else "needs_action"}
+            {"uid": i["id"], "summary": _label(i), "status": "completed" if i.get("checked") else "needs_action",
+             "recipes": _recipe_names(i)}
             for i in items]}]}
 
     async def add(self, summary: str, user_id: Optional[int]) -> bool:
