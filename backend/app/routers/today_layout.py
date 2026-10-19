@@ -24,13 +24,13 @@ class Card(BaseModel):
     @field_validator("id")
     @classmethod
     def _known(cls, v):
-        if v not in svc.KNOWN:
+        if not svc.is_valid_id(v):
             raise ValueError("unknown card id")
         return v
 
 
 class LayoutIn(BaseModel):
-    cards: List[Card] = Field(max_length=len(svc.KNOWN))
+    cards: List[Card] = Field(max_length=len(svc.KNOWN) + svc.MAX_PLUGIN_CARDS)
 
     @field_validator("cards")
     @classmethod

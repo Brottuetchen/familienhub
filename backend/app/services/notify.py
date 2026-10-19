@@ -194,7 +194,7 @@ _notify_service = NotifyService()
 
 
 # Kategorien, die Push-Mitteilungen haben können (App: Kanäle und Einstellungen)
-CATEGORIES = ("task_assigned", "task_due", "reminder", "shopping", "house", "media", "documents", "stars", "system")
+CATEGORIES = ("task_assigned", "task_due", "reminder", "shopping", "house", "media", "documents", "stars", "plugins", "system")
 
 
 async def notify(

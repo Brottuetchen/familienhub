@@ -561,6 +561,19 @@ EN: Dict[str, str] = {
         "Address: https://github.com/<owner>/<repository> (optionally /tree/<branch>)",
     "Die Plugin-ID im Repository („{found}“) weicht vom Store-Eintrag („{expected}“) ab":
         "The plugin id in the repository (“{found}”) differs from the store entry (“{expected}”)",
+    # --- plugin extension points (docs/plugins.md) ---
+    "Belohnungs-Aktion ausgeführt": "Reward action done",
+    "Belohnungs-Aktion fehlgeschlagen": "Reward action failed",
+    "Belohnung eingelöst": "Reward redeemed",
+    "Diese Aktion ist nicht verfügbar (Plugin nicht aktiv?)": "This action is not available (plugin not active?)",
+    "Unbekannter Parameter der Aktion": "Unknown parameter of the action",
+    "Ungültiger Wert für einen Parameter der Aktion": "Invalid value for a parameter of the action",
+    "Pflichtparameter der Aktion fehlt": "A required parameter of the action is missing",
+    "Das Plugin der Belohnungs-Aktion ist nicht aktiv": "The plugin of the reward action is not active",
+    "Die Aktion ist fehlgeschlagen oder hat zu lange gedauert": "The action failed or took too long",
+    "Die Aktion ist fehlgeschlagen": "The action failed",
+    "Zeitüberschreitung – Adresse und Netzwerk prüfen": "Timed out – check the address and the network",
+    "Der Test des Plugins ist fehlgeschlagen": "The plugin's test failed",
 }
 
 # Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)

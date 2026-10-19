@@ -67,6 +67,10 @@ class Plugin:
     # Tasks only: this source can hold the shared family list and household rotation
     family_tasks: bool = False
 
+    # Scheduled jobs (see ``scheduled``): minutes between runs, at least 5. Deliberately not a dataclass field, so a
+    # subclass may set it as a class attribute or in ``__init__`` after ``super().__init__``.
+    schedule_minutes = None
+
     def routers(self) -> List[APIRouter]:
         """FastAPI-Router des Plugins (werden beim Start eingebunden)."""
         return []
@@ -114,6 +118,37 @@ class Plugin:
         """Own status for the admin overview (``{"status", "message"}``) when there is no address to probe."""
         return None
 
+    # --- Extension points (docs/plugins.md, "Extension points"). The defaults do nothing. The hub calls them only
+    # for active plugins, with a timeout, and catches every exception.
+
+    async def today_cards(self, user, db) -> List[Dict[str, Any]]:
+        """Cards for the person's "Today" screen; the shape is described in ``app.plugins.hooks``."""
+        return []
+
+    async def scheduled(self, db) -> None:
+        """Periodic job, every ``schedule_minutes`` minutes (at least 5) while the plugin is active."""
+        return None
+
+    def reward_actions(self) -> List[Dict[str, Any]]:
+        """Actions a parent can attach to a reward: ``[{"id", "label", "params": [field specs]}]``."""
+        return []
+
+    async def run_reward_action(self, action_id: str, params: Dict[str, Any], child, reward, db) -> Dict[str, Any]:
+        """Runs an action when a parent approves the reward. Returns ``{"ok": bool, "message": str}``."""
+        return {"ok": False, "message": "Unknown action"}
+
+    async def test_settings(self, values: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """"Test connection" with the not-yet-saved ``values`` (a secret left empty is filled with the stored one).
+
+        Return ``{"ok": bool, "level": "ok" | "info" | "warn" | "error", "message": str}``. A plugin that does not
+        override this has no test of its own.
+        """
+        return None
+
+    @property
+    def has_test(self) -> bool:
+        return type(self).test_settings is not Plugin.test_settings
+
     def missing_settings(self) -> List[str]:
         return [s.key for s in self.settings if s.required and get_setting(s.key) in (None, "")]
 
@@ -135,6 +170,8 @@ class Plugin:
             "disabled": disabled,
             "active": configured and not disabled,
             "missing_settings": self.missing_settings(),
+            "needs_setup": not configured and not disabled,
+            "has_test": self.has_test,
             "settings": [
                 {"key": s.key, "label": s.label, "secret": s.secret, "required": s.required, "help": s.help}
                 for s in self.settings

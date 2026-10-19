@@ -218,6 +218,11 @@ async def get_today(
     def limited(name, make, default, on_timeout=None):
         return timed(name, make, timeout=SOURCE_TIMEOUT[name], default=default, logger=logger, on_timeout=on_timeout)
 
+    # Cards of plugins (docs/plugins.md): started now, so they run beside the sources below
+    from app.plugins.hooks import collect_today_cards
+
+    plugin_cards_task = asyncio.create_task(collect_today_cards(current_user, db))
+
     # All sources at once: the page takes as long as the slowest one, not the sum. They share the request's
     # DB session, but its (synchronous) queries never overlap on the event loop.
     events, tasks, meals, shopping_open, reminders, weather, house, birthdays, timetable_card = await asyncio.gather(
@@ -231,6 +236,12 @@ async def get_today(
         limited("birthdays", birthdays_part, []),
         limited("timetable", timetable_part, None, on_timeout=lambda: {"status": "unavailable", "children": []}),
     )
+
+    try:
+        plugin_cards = await plugin_cards_task
+    except Exception as exc:  # noqa: BLE001 - plugin cards never break Today
+        logger.warning("Plugin cards failed: %s", type(exc).__name__)
+        plugin_cards = []
 
     # Ungelesene Mitteilungen (Verlauf)
     from app.models.notification_log import NotificationLog
@@ -251,4 +262,5 @@ async def get_today(
         "house": house,
         "birthdays": birthdays,
         "timetable": timetable_card or {"status": "unavailable", "children": []},
+        "plugin_cards": plugin_cards,
     }
