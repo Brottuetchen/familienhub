@@ -85,4 +85,10 @@ async def toggle_plugin(
     if plugin is None:
         raise HTTPException(status_code=404, detail="Plugin nicht gefunden")
     config_store.set_plugin_enabled(db, plugin_id, data.enabled)
+    from app.models.installed_plugin import InstalledPlugin
+
+    record = db.get(InstalledPlugin, plugin_id)  # plugins installed from GitHub keep the switch in their record too
+    if record is not None:
+        record.enabled = data.enabled
+        db.commit()
     return _view(plugin)

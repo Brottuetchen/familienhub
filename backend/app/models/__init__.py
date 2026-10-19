@@ -18,6 +18,7 @@ from app.models.invite import Invite
 from app.models.feedback import Feedback
 from app.models.reminder import Reminder
 from app.models.theme import Theme
+from app.models.installed_plugin import InstalledPlugin
 from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
@@ -46,6 +47,7 @@ __all__ = [
     "TaskCompletion",
     "ApiToken",
     "Theme",
+    "InstalledPlugin",
     "PaperlessAccount",
     "NotificationLog",
     "ServiceKey",

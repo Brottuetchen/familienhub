@@ -72,6 +72,7 @@ flowchart LR
 
 - **Server:** one Docker container (FastAPI, serves the web app too) plus PostgreSQL.
 - **Areas and sources:** every area (tasks, shopping, calendar …) has interchangeable sources: the hub's own storage and plugins. Admins choose per area. Personal data is only read with each person's own access.
+- **Plugins from GitHub:** admins paste a link in the app, review the plugin and fill in its settings, and it runs without a restart. Write your own with the [guide and template](docs/plugins.md).
 - **App:** Flutter, one codebase for Android, iOS and web. Reads are cache-first, and changes made offline are queued.
 
 ## Quick start
@@ -91,7 +92,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 | [Getting started](docs/getting-started.md) | install, reach it, apps, people and sign-in, backup |
 | [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
 | [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
-| [Plugins](docs/plugins.md) | what ships, how to write, install and share a plugin |
+| [Plugins](docs/plugins.md) | what ships, install a plugin from a GitHub link, write and share one; [plugin template](examples/plugin-template/) |
 | [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
 | [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
 | [Roadmap](docs/roadmap.md) | what's done, next and later |

@@ -29,7 +29,7 @@ git clone https://github.com/Brottuetchen/familienhub.git && cd familienhub
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
-The image is tagged `familienhub:local`, the base for [plugins](plugins.md#install-a-plugin).
+The image is tagged `familienhub:local`, the base for [plugins](plugins.md#install-in-a-custom-docker-image).
 
 Database migrations run automatically on start (Alembic).
 

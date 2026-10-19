@@ -6,7 +6,7 @@
 
 Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan, Termine und Erinnerungen, mit echten Push-Mitteilungen, Widgets und Offline-Modus.
 
-[English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
+[English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Plugin-Vorlage](examples/plugin-template/) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
 <img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
 
@@ -67,6 +67,8 @@ docker compose up -d
 Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen (oder die Adresse in der App eintragen): Wer einen neuen Hub zuerst öffnet, legt das Admin-Konto an, danach führt der Einrichtungs-Assistent durch den Rest. Ist der Hub vor der Einrichtung aus dem Internet erreichbar, `SETUP_REQUIRE_CODE=true` setzen (siehe [Sicherheit](docs/security.md#first-admin-and-secret-key), englisch). APK und IPA hängen an jedem [GitHub-Release](https://github.com/Brottuetchen/familienhub/releases/latest). Mehr dazu (Reverse-Proxy, Selbst bauen, Sicherung) im [Einstieg](docs/getting-started.md) (englisch).
 
 ## Mitmachen
+
+Eigene Plugins gibt es per GitHub-Link direkt in der App (*Verwaltung → Plugins & Zugänge → Plugin installieren*); die Anleitung zum Schreiben und eine Vorlage stehen in [docs/plugins.md](docs/plugins.md) (englisch) und [examples/plugin-template](examples/plugin-template/).
 
 Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *Mehr → Feedback senden → An die Entwickler*. Code, Übersetzungen, Themes und Plugins: siehe [CONTRIBUTING](CONTRIBUTING.md).
 

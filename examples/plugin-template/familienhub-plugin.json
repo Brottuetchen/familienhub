@@ -1,0 +1,34 @@
+{
+  "id": "example_notes",
+  "name": {"de": "Beispiel-Notizen", "en": "Example notes"},
+  "version": "0.1.0",
+  "description": {
+    "de": "Zeigt Notizen aus einem Beispieldienst. Vorlage zum Kopieren für eigene Plugins.",
+    "en": "Shows notes from an example service. A template to copy for your own plugins."
+  },
+  "author": "Your name",
+  "homepage": "https://github.com/your-name/familienhub-plugin-example-notes",
+  "license": "MIT",
+  "min_hub_version": "",
+  "package": ".",
+  "entry_point": "fh_plugin_example_notes.plugin:ExampleNotesPlugin",
+  "settings": [
+    {
+      "key": "EXAMPLE_NOTES_URL",
+      "label": {"de": "Adresse des Notiz-Dienstes", "en": "Address of the notes service"},
+      "help": {"de": "So erreicht der Hub den Dienst, z. B. im Heimnetz.", "en": "How the hub reaches the service, e.g. in your home network."},
+      "type": "url",
+      "required": true,
+      "example": "https://notes.example.org"
+    },
+    {
+      "key": "EXAMPLE_NOTES_TOKEN",
+      "label": {"de": "Zugangs-Token", "en": "Access token"},
+      "help": {"de": "Nur nötig, wenn der Dienst ein Token verlangt.", "en": "Only needed if the service asks for a token."},
+      "type": "password",
+      "required": false
+    }
+  ],
+  "hosts": ["notes.example.org"],
+  "capabilities": []
+}

@@ -7,6 +7,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - Plugins: Nextcloud, Habitica, Home Assistant (shopping, house tiles with control), Cookidoo, Paperless-ngx, Shelfarr, Seerr, weather, ntfy
 - Android app with widgets and quick actions, web app (PWA), iOS app for sideloading
 - Push through Firebase, Web Push and ntfy, with quiet hours, categories, history and action buttons
+- Install plugins from GitHub with a link in the app, with a [guide and template](plugins.md) for writing them
 - Server texts in German and English: error messages in the app's language, push texts in the recipient's language, plugin names and settings
 - Offline mode with a queue for changes
 - Roles (admin, partner, child, guest), invites, OIDC (e.g. Authentik) with optional auto-create
@@ -30,6 +31,6 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **More languages**: add `app/lib/l10n/app_<code>.arb`
 
 ## Ideas, not decided
-- **Plugin and theme store:** a shared catalogue to install plugins and themes with one click. Open questions: review, signing, updates, and the security of code plugins.
+- **Plugin and theme store:** a shared catalogue to find plugins and themes (installing from a link already works). Open questions: review, signing, automatic update checks, and the security of code plugins.
 
 Ideas and wishes are welcome as issues, see [CONTRIBUTING](../CONTRIBUTING.md).

@@ -367,8 +367,133 @@ EN: Dict[str, str] = {
     "z. B. http://mealie.lan:9000": "e.g. http://mealie.lan:9000",
     "z. B. http://paperless.lan:8000": "e.g. http://paperless.lan:8000",
     "z. B. http://seerr.lan:5055": "e.g. http://seerr.lan:5055",
-    "z. B. https://ntfy.sh oder http://ntfy.lan:8093": "e.g. https://ntfy.sh or http://ntfy.lan:8093",
+    "z. B. https://ntfy.sh oder http://ntfy.lan:8093": "e.g. https://ntfy.sh or http://ntfy.lan:8093",    # --- plugin installer (admin) ---
+    "Aufgaben": "Tasks",
+    "Termine": "Events",
+    "Einkauf": "Shopping",
+    "Essensplan-Quelle (zusätzlich zum eigenen Plan)": "Meal plan source (in addition to the own plan)",
+    "Rezepte suchen und einplanen": "Search and plan recipes",
+    "Dokumente (Paperless)": "Documents (Paperless)",
+    "Bücher & Hörbücher": "Books & audiobooks",
+    "Filme & Serien wünschen": "Request movies & shows",
+    "Wetter in „Heute“": "Weather in “Today”",
+    "Push über ntfy": "Push via ntfy",
+    "Die Plugin-Installation ist abgeschaltet (PLUGIN_INSTALL_ENABLED)": "Plugin installation is switched off (PLUGIN_INSTALL_ENABLED)",
+    "Dateifehler bei der Installation. Einzelheiten stehen im Protokoll": "File error during installation. See the log for details",
+    "Der Datenordner scheint kein eigenes Volume zu sein. Beim Neu-Erstellen des Containers gehen installierte Plugins verloren":
+        "The data folder does not seem to be a volume of its own. Installed plugins are lost when the container is re-created",
+    "Das Plugin gibt keine Server an, mit denen es sich verbindet": "The plugin does not state which servers it connects to",
+    "Nur https-Adressen von GitHub ohne Zusätze": "Only https addresses from GitHub without extras",
+    "Nur Plugins von GitHub (github.com)": "Only plugins from GitHub (github.com)",
+    "GitHub-Adresse braucht Besitzer und Repository": "A GitHub address needs an owner and a repository",
+    "Ungültige GitHub-Adresse": "Invalid GitHub address",
+    "Ungültiger Pfad": "Invalid path",
+    "Adresse: https://github.com/<Besitzer>/<Repository> (optional /tree/<Branch>/<Ordner>)":
+        "Address: https://github.com/<owner>/<repository> (optionally /tree/<branch>/<folder>)",
+    "Zugriff auf diese Adresse ist nicht erlaubt": "Access to this address is not allowed",
+    "Nicht gefunden (Repository privat oder Adresse falsch?)": "Not found (private repository or wrong address?)",
+    "GitHub leitet um (Repository umbenannt?). Bitte die aktuelle Adresse verwenden":
+        "GitHub redirects (repository renamed?). Please use the current address",
+    "GitHub begrenzt gerade die Anfragen. Bitte später erneut versuchen": "GitHub is limiting requests right now. Please try again later",
+    "GitHub antwortet mit HTTP {code}": "GitHub answers with HTTP {code}",
+    "GitHub antwortet nicht (Zeitüberschreitung)": "GitHub does not answer (timeout)",
+    "GitHub nicht erreichbar": "GitHub not reachable",
+    "Antwort von GitHub ist zu groß": "The answer from GitHub is too large",
+    "Branch, Tag oder Commit nicht gefunden": "Branch, tag or commit not found",
+    "GitHub liefert keine gültige Commit-Kennung": "GitHub did not return a valid commit id",
+    "Ungültige Commit-Kennung": "Invalid commit id",
+    "Im Repository liegt keine {filename}": "The repository contains no {filename}",
+    "{filename} ist größer als 64 KB": "{filename} is larger than 64 KB",
+    "Das Repository ist größer als 10 MB": "The repository is larger than 10 MB",
+    "Das Archiv enthält ungültige Pfade": "The archive contains invalid paths",
+    "Das Archiv enthält Verknüpfungen oder Sondereinträge und wird abgelehnt":
+        "The archive contains links or special entries and is rejected",
+    "Das Archiv enthält mehr als {max_files} Dateien": "The archive contains more than {max_files} files",
+    "Das Archiv enthält eine Datei über 10 MB": "The archive contains a file larger than 10 MB",
+    "Das Archiv ist entpackt größer als 50 MB": "The archive is larger than 50 MB when unpacked",
+    "Das Archiv ist leer": "The archive is empty",
+    "Das Archiv ist beschädigt": "The archive is damaged",
+    "Das Archiv ist beschädigt oder kann nicht entpackt werden": "The archive is damaged or cannot be unpacked",
+    "Der Datenordner ist nicht beschreibbar. Bitte ein Volume unter /app/data einbinden":
+        "The data folder is not writable. Please mount a volume at /app/data",
+    "Unbekannte Einstellung: {names}": "Unknown setting: {names}",
+    "Pflichtfelder fehlen: {names}": "Required fields are missing: {names}",
+    "Wert von {field} ist ungültig": "The value of {field} is invalid",
+    "Wert von {field}: Adresse muss mit http:// oder https:// beginnen": "Value of {field}: the address must start with http:// or https://",
+    "Wert von {field}: keine Zahl": "Value of {field}: not a number",
+    "Wert von {field}: nur true oder false": "Value of {field}: only true or false",
+    "Das Plugin braucht Familienhub {needed} oder neuer (dieser Hub: {have})":
+        "The plugin needs Familienhub {needed} or newer (this hub: {have})",
+    "Die Plugin-ID „{plugin_id}“ ist schon vergeben": "The plugin id “{plugin_id}” is already taken",
+    "Das Plugin „{plugin_id}“ ist schon aus einem anderen Repository installiert":
+        "The plugin “{plugin_id}” is already installed from another repository",
+    "Einstellungen kollidieren mit anderen Plugins oder dem Hub: {names}": "Settings clash with other plugins or the hub: {names}",
+    "Die Abhängigkeiten ließen sich nicht installieren (pip): {log}": "The dependencies could not be installed (pip): {log}",
+    "Die Installation hat zu lange gedauert (pip, Zeitüberschreitung)": "The installation took too long (pip, timeout)",
+    "Der Modulname „{top}“ ist schon belegt. Bitte ein eindeutiges Paket wie fh_plugin_{plugin_id} verwenden":
+        "The module name “{top}” is already in use. Please use a unique package such as fh_plugin_{plugin_id}",
+    "Der Paketordner „{package}“ liegt nicht im Repository": "The package folder “{package}” is not in the repository",
+    "Im Paketordner fehlt eine pyproject.toml": "The package folder has no pyproject.toml",
+    "Das Plugin-Modul stammt nicht aus dem installierten Paket": "The plugin module does not come from the installed package",
+    "Der Einstiegspunkt liefert kein Plugin": "The entry point does not return a plugin",
+    "Die Plugin-ID im Code („{code_id}“) weicht vom Manifest („{plugin_id}“) ab":
+        "The plugin id in the code (“{code_id}”) differs from the manifest (“{plugin_id}”)",
+    "Einstellungen fehlen im Manifest: {names}": "Settings missing in the manifest: {names}",
+    "Fähigkeiten fehlen im Manifest: {names}": "Capabilities missing in the manifest: {names}",
+    "Die Route {path} liegt nicht unter {prefix}/": "The route {path} is not below {prefix}/",
+    "Das Plugin lässt sich nicht laden: {error}": "The plugin cannot be loaded: {error}",
+    "Die Plugin-Dateien fehlen (Datenordner nicht dauerhaft?). Bitte neu installieren":
+        "The plugin files are missing (data folder not persistent?). Please install again",
+    "Manifest: {field} fehlt": "Manifest: {field} is missing",
+    "Manifest: {field} fehlt oder ist kein Text": "Manifest: {field} is missing or not text",
+    "Manifest: {field} ist länger als {max_len} Zeichen": "Manifest: {field} is longer than {max_len} characters",
+    "Manifest: {field} erlaubt nur die Sprachen de und en": "Manifest: {field} only allows the languages de and en",
+    "Manifest: {field}.{lang} ist leer oder länger als {max_len} Zeichen":
+        "Manifest: {field}.{lang} is empty or longer than {max_len} characters",
+    "Manifest: {field} muss Text oder ein Objekt mit de und en sein": "Manifest: {field} must be text or an object with de and en",
+    "Manifest: {field} muss true oder false sein": "Manifest: {field} must be true or false",
+    "Manifest: {field} (Vorgabe) muss true oder false sein": "Manifest: {field} (default) must be true or false",
+    "Manifest: {field} (Vorgabe) muss eine Zahl sein": "Manifest: {field} (default) must be a number",
+    "Manifest: {field} (Vorgabe) muss Text bis 300 Zeichen sein": "Manifest: {field} (default) must be text of up to 300 characters",
+    "Manifest: {where} muss ein Objekt sein": "Manifest: {where} must be an object",
+    "Manifest: {where} hat unbekannte Felder: {names}": "Manifest: {where} has unknown fields: {names}",
+    "Manifest: {where}: Schlüssel muss mit {prefix} beginnen (nur A–Z, 0–9 und _)":
+        "Manifest: {where}: the key must start with {prefix} (only A–Z, 0–9 and _)",
+    "Manifest: {where}: type ist einer von {names}": "Manifest: {where}: type is one of {names}",
+    "Manifest: {where}: geheime Felder dürfen keine Vorgabe haben": "Manifest: {where}: secret fields must not have a default",
+    "Manifest: package ist ein Ordner im Repository (Standard „.“)": "Manifest: package is a folder in the repository (default “.”)",
+    "Manifest: package hat einen ungültigen Pfad (nur Buchstaben, Ziffern, . _ - und /, kein ..)":
+        "Manifest: package has an invalid path (only letters, digits, . _ - and /, no ..)",
+    "Manifest: {manifest_file} muss ein JSON-Objekt sein": "Manifest: {manifest_file} must be a JSON object",
+    "Manifest: {manifest_file} ist größer als 64 KB": "Manifest: {manifest_file} is larger than 64 KB",
+    "Manifest: {manifest_file} ist kein gültiges JSON": "Manifest: {manifest_file} is not valid JSON",
+    "Manifest: unbekannte Felder: {names}": "Manifest: unknown fields: {names}",
+    "Manifest: Feld {key} fehlt": "Manifest: field {key} is missing",
+    "Manifest: id muss kleingeschrieben sein, 2–31 Zeichen (a–z, 0–9, _) und mit einem Buchstaben beginnen":
+        "Manifest: id must be lower case, 2–31 characters (a–z, 0–9, _) and start with a letter",
+    "Manifest: id „{plugin_id}“ ist für den Hub und eingebaute Plugins reserviert":
+        "Manifest: id “{plugin_id}” is reserved for the hub and built-in plugins",
+    "Manifest: version muss z. B. 1.2.0 lauten": "Manifest: version must look like 1.2.0",
+    "Manifest: min_hub_version muss z. B. 1.0.0 lauten": "Manifest: min_hub_version must look like 1.0.0",
+    "Manifest: homepage muss mit https:// beginnen": "Manifest: homepage must start with https://",
+    "Manifest: entry_point hat die Form modul:Klasse, z. B. fh_plugin_demo.plugin:DemoPlugin":
+        "Manifest: entry_point has the form module:Class, e.g. fh_plugin_demo.plugin:DemoPlugin",
+    "Manifest: settings ist eine Liste mit höchstens 20 Einträgen": "Manifest: settings is a list of at most 20 entries",
+    "Manifest: settings enthält einen Schlüssel doppelt": "Manifest: settings contains a duplicate key",
+    "Manifest: hosts ist eine Liste von Hostnamen ohne https://, höchstens 20":
+        "Manifest: hosts is a list of host names without https://, at most 20",
+    "Manifest: capabilities erlaubt nur {names}": "Manifest: capabilities only allows {names}",
 }
+
+# Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)
+_RUNTIME: Dict[str, str] = {}
+
+
+def add_runtime_translations(pairs: Dict[str, str]) -> None:
+    for de, en in pairs.items():
+        if de and en and de != en and de not in EN:
+            _RUNTIME[de] = en
+
 
 _PLACEHOLDER = re.compile(r"\{([a-z_][a-z0-9_]*)\}")
 
@@ -396,6 +521,8 @@ def translate(text: Any, lang: Optional[str]) -> Any:
         return text
     if text in EN:
         return EN[text]
+    if text in _RUNTIME:
+        return _RUNTIME[text]
     if "{" in text or len(text) > 2000:
         return text
     for regex, en, _de in _templates():

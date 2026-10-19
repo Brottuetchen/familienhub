@@ -18,11 +18,16 @@ class PluginRegistry:
     def __init__(self) -> None:
         self._plugins: Dict[str, Plugin] = {}
 
-    def register(self, plugin: Plugin) -> None:
+    def register(self, plugin: Plugin) -> bool:
         if plugin.id in self._plugins:
             logger.warning("Plugin-ID doppelt, übersprungen: %s", plugin.id)
-            return
+            return False
         self._plugins[plugin.id] = plugin
+        return True
+
+    def unregister(self, plugin_id: str) -> Optional[Plugin]:
+        """Takes a plugin out of the registry (installed plugins on removal or update)."""
+        return self._plugins.pop(plugin_id, None)
 
     def load(self) -> None:
         from app.plugins.builtin import BUILTIN_PLUGINS
