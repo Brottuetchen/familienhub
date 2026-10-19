@@ -26,6 +26,7 @@ BUILTIN: List[dict] = [
     {"id": "reminders", "visible": True, "size": "full"},
     {"id": "house", "visible": True, "size": "full"},
     {"id": "birthdays", "visible": True, "size": "full"},
+    {"id": "timetable", "visible": True, "size": "full"},
 ]
 KNOWN = {c["id"] for c in BUILTIN}
 

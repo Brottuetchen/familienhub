@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api", tags=["today"])
 logger = logging.getLogger("hermes.today")
 
 # Seconds a source may take before "Heute" shows its fail-soft state instead of waiting (#71)
-SOURCE_TIMEOUT = {"events": 8.0, "tasks": 8.0, "meals": 6.0, "shopping": 5.0, "reminders": 3.0, "weather": 4.0, "house": 6.0, "birthdays": 3.0}
+SOURCE_TIMEOUT = {"events": 8.0, "tasks": 8.0, "meals": 6.0, "shopping": 5.0, "reminders": 3.0, "weather": 4.0, "house": 6.0, "birthdays": 3.0, "timetable": 4.0}
 
 
 def _occurs_on(event: dict, day) -> bool:
@@ -208,6 +208,10 @@ async def get_today(
         except Exception as exc:  # noqa: BLE001 - fail softly: the card stays empty
             logger.warning("Failed to fetch birthdays: %s", exc, exc_info=True)
             return []
+    async def timetable_part():
+        from app.services import timetable
+
+        return await timetable.today_card(db, current_user, today)
 
     gone = {"status": "unavailable", "error": "Zeitüberschreitung", "items": []}
 
@@ -216,7 +220,7 @@ async def get_today(
 
     # All sources at once: the page takes as long as the slowest one, not the sum. They share the request's
     # DB session, but its (synchronous) queries never overlap on the event loop.
-    events, tasks, meals, shopping_open, reminders, weather, house, birthdays = await asyncio.gather(
+    events, tasks, meals, shopping_open, reminders, weather, house, birthdays, timetable_card = await asyncio.gather(
         limited("events", events_part, []),
         limited("tasks", tasks_part, None, on_timeout=lambda: dict(gone)),
         limited("meals", meals_part, []),
@@ -225,6 +229,7 @@ async def get_today(
         limited("weather", weather_part, None),
         limited("house", house_part, None, on_timeout=lambda: dict(gone)),
         limited("birthdays", birthdays_part, []),
+        limited("timetable", timetable_part, None, on_timeout=lambda: {"status": "unavailable", "children": []}),
     )
 
     # Ungelesene Mitteilungen (Verlauf)
@@ -245,4 +250,5 @@ async def get_today(
         "weather": weather,
         "house": house,
         "birthdays": birthdays,
+        "timetable": timetable_card or {"status": "unavailable", "children": []},
     }
