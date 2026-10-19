@@ -8,7 +8,7 @@ Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan,
 
 [English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Plugin-Vorlage](examples/plugin-template/) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
-<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
+<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/calendar-light.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/calendar-dark.png" width="23%" alt="Termine, dunkel">
 
 </div>
 
@@ -52,7 +52,11 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 <details>
 <summary>Weitere Screenshots</summary>
 
-<img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/shopping.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/calendar.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
+<img src="docs/screenshots/de/tasks-light.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/tasks-dark.png" width="23%" alt="Aufgaben, dunkel"> <img src="docs/screenshots/de/shopping-light.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/shopping-dark.png" width="23%" alt="Einkauf, dunkel">
+
+<img src="docs/screenshots/de/settings-light.png" width="23%" alt="Einstellungen"> <img src="docs/screenshots/de/settings-dark.png" width="23%" alt="Einstellungen, dunkel"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan">
+
+<img src="docs/screenshots/de/calendar-month.png" width="23%" alt="Monatsansicht"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
 
 </details>
 
