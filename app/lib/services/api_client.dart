@@ -28,6 +28,7 @@ import '../models/task.dart';
 import '../models/today.dart';
 import '../models/timetable.dart';
 import '../models/today_layout.dart';
+import '../models/plugin_card.dart';
 import '../models/stars.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
@@ -769,16 +770,31 @@ class ApiClient {
 
   Future<void> cancelRewardRequest(int id) => _send('POST', '/api/stars/requests/$id/cancel', replayOn401: false);
 
-  Future<void> decideRewardRequest(int id, {required bool approve}) =>
-      _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+  /// Approving can run a plugin action of the reward: its outcome comes back (null if the reward has none).
+  Future<RewardActionResult?> decideRewardRequest(int id, {required bool approve}) async {
+    final res = await _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+    return res is Map ? RewardActionResult.fromJson(res['action_result']) : null;
+  }
+
+  /// Actions of active plugins a parent can attach to a reward.
+  Future<List<RewardActionChoice>> rewardActionChoices() async =>
+      RewardActionChoice.listFromJson(await _send('GET', '/api/stars/reward-actions'));
 
   Future<void> decideStarEntry(int id, {required bool confirm}) =>
       _send('POST', '/api/stars/ledger/$id/${confirm ? 'confirm' : 'reject'}', replayOn401: false);
 
-  Future<void> saveReward({int? id, required String title, required int price, bool? active}) => id == null
-      ? _send('POST', '/api/stars/rewards', replayOn401: false, body: {'title': title, 'price': price})
-      : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false,
-          body: {'title': title, 'price': price, if (active != null) 'active': active});
+  /// [setAction]: also send [action] when editing (null removes the action; left out it stays as it is).
+  Future<void> saveReward(
+          {int? id, required String title, required int price, bool? active, RewardActionRef? action, bool setAction = false}) =>
+      id == null
+          ? _send('POST', '/api/stars/rewards',
+              replayOn401: false, body: {'title': title, 'price': price, if (action != null) 'action': action.toJson()})
+          : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {
+              'title': title,
+              'price': price,
+              if (active != null) 'active': active,
+              if (setAction) 'action': action?.toJson(),
+            });
 
   Future<void> setRewardActive(int id, bool active) =>
       _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {'active': active});
@@ -1424,6 +1440,19 @@ class ApiClient {
       return _avatarCache[url] = res.bodyBytes;
     } catch (_) {
       return null; // offline: Initialen statt Bild
+    }
+  }
+
+  /// Picture of a plugin's Today card (a hub path below /api/plugins/, loaded with the login). Not cached: the
+  /// same path may show something else tomorrow. Null when it cannot be loaded.
+  Future<Uint8List?> pluginImageBytes(String path) async {
+    if (!path.startsWith('/api/plugins/')) return null;
+    try {
+      final res = await _raw('GET', path);
+      if (res.statusCode != 200 || !(res.headers['content-type'] ?? '').startsWith('image/')) return null;
+      return res.bodyBytes;
+    } catch (_) {
+      return null;
     }
   }
 

@@ -16,6 +16,7 @@ IconData categoryIcon(String c) => switch (c) {
       'house' => Icons.home_outlined,
       'media' => Icons.auto_stories_outlined,
       'documents' => Icons.description_outlined,
+      'plugins' => Icons.extension_outlined,
       _ => Icons.notifications_none,
     };
 

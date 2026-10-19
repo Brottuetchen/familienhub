@@ -13,6 +13,7 @@ import '../more/birthdays_screen.dart';
 import '../timetable/timetable_screen.dart';
 import '../stars/stars_screen.dart';
 import 'house_controls.dart';
+import 'plugin_card.dart';
 import 'today_widgets.dart';
 import '../../l10n/l10n.dart';
 
@@ -37,12 +38,16 @@ class TodayScreen extends ConsumerWidget {
             data: (result) {
               final online = !result.offline;
               final layout = (ref.watch(todayLayoutProvider).valueOrNull?.data ?? TodayLayout.builtin)
-                  .forStyle(bento: style.bento);
+                  .forStyle(bento: style.bento)
+                  .withPluginCards([for (final c in result.data.pluginCards) c.key]); // new ones: at the end
               // Half size only has an effect in the bento layout on a narrow screen
               final halves = {
                 if (style.bento) for (final c in layout.cards) if (c.half) c.id,
               };
               final cards = _cards(context, ref, result.data, online: online, compact: halves);
+              for (final c in result.data.pluginCards) {
+                cards[c.key] = PluginCard(card: c);
+              }
               cards['house'] = HouseCard(
                 // Nicht an „wird aktualisiert“ koppeln: sonst leert sich die Haus-Karte bei jedem Nachladen
                 online: online && result.refreshError == null,

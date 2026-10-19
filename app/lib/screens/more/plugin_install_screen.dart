@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../models/admin.dart' show ConnectionResult;
 import '../../models/plugin_install.dart';
 import '../../models/store.dart';
 import '../../providers/providers.dart';
@@ -41,6 +42,8 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
   bool _busy = false;
   bool _trusted = false;
   String? _error;
+  ConnectionResult? _test; // result of "Test connection" in the form (an installed plugin only)
+  bool _testing = false;
 
   @override
   void initState() {
@@ -120,6 +123,29 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
     return null;
   }
 
+  Map<String, String> _values(PluginPreview p) => {
+        for (final s in p.settings)
+          s.key: s.type == 'bool' ? ((_flags[s.key] ?? false) ? 'true' : 'false') : (_text[s.key]?.text.trim() ?? ''),
+      };
+
+  /// "Test connection" with the entered values, nothing saved. Only for a plugin that is already installed
+  /// (an update): a new plugin's code is not loaded yet, so it is tested right after installing instead.
+  Future<void> _testConnection() async {
+    final p = _preview!;
+    setState(() {
+      _testing = true;
+      _test = null;
+    });
+    try {
+      final result = await ref.read(apiClientProvider).testPlugin(p.id, _values(p));
+      if (mounted) setState(() => _test = result);
+    } catch (e) {
+      if (mounted) setState(() => _test = ConnectionResult(ok: false, level: 'error', message: errorText(e)));
+    } finally {
+      if (mounted) setState(() => _testing = false);
+    }
+  }
+
   Future<void> _install() async {
     final p = _preview!;
     if (_step == _Step.form && !(_formKey.currentState?.validate() ?? false)) return;
@@ -127,10 +153,7 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
       _busy = true;
       _error = null;
     });
-    final values = <String, String>{
-      for (final s in p.settings)
-        s.key: s.type == 'bool' ? ((_flags[s.key] ?? false) ? 'true' : 'false') : (_text[s.key]?.text.trim() ?? ''),
-    };
+    final values = _values(p);
     try {
       final api = ref.read(apiClientProvider);
       final item = widget.storeItem;
@@ -188,6 +211,27 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
         Icon(Icons.error_outline, color: scheme.error),
         const SizedBox(width: 10),
         Expanded(child: SelectableText(_error!)),
+      ]),
+    );
+  }
+
+  /// Outcome of a connection test: green when it worked, a hint (amber) or an error (red) otherwise.
+  Widget _testBox(BuildContext context, ConnectionResult r) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = r.ok ? (r.level == 'info' ? Colors.amber : Colors.green) : scheme.error;
+    return Container(
+      key: const Key('plugin-test-result'),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(r.ok ? Icons.check_circle_outline : Icons.error_outline, color: color),
+        const SizedBox(width: 10),
+        Expanded(child: SelectableText(r.message)),
       ]),
     );
   }
@@ -392,6 +436,19 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
         child: Text(l10n.pluginSettingsHeading(p.name), style: Theme.of(context).textTheme.titleMedium),
       ),
       Form(key: _formKey, child: Column(children: [for (final s in p.settings) _field(s)])),
+      if (p.isInstalled)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            key: const Key('plugin-test'),
+            onPressed: _busy || _testing ? null : _testConnection,
+            icon: _testing
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.network_check),
+            label: Text(l10n.testConnection),
+          ),
+        ),
+      if (_test != null) _testBox(context, _test!),
       if (_error != null) _errorBox(context),
       const SizedBox(height: 12),
       if (_busy)
@@ -426,6 +483,14 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
       ),
       const SizedBox(height: 8),
       Text(r.active ? l10n.pluginActiveNow : l10n.pluginNeedsSetup, textAlign: TextAlign.center),
+      if (r.connectionTest != null) ...[
+        _testBox(context, r.connectionTest!),
+        if (!r.connectionTest!.ok)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(l10n.pluginTestFailedHint, key: const Key('plugin-test-hint'), textAlign: TextAlign.center),
+          ),
+      ],
       if (r.restartRequired)
         Padding(
           padding: const EdgeInsets.only(top: 12),
