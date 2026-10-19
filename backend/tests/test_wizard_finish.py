@@ -39,7 +39,7 @@ def test_finish_disables_unused_and_keeps_chosen(client, auth, monkeypatch, clea
     assert client.put("/api/admin/sources", headers=auth, json={"area": "tasks", "selected": ["hub_tasks"]}).status_code == 200
     assert client.put("/api/admin/sources", headers=auth, json={"area": "calendar", "selected": ["hub_calendar", "ics"]}).status_code == 200
     # ICS is not set up (no feed), so it is not active; paperless was configured in the services step
-    r = client.post("/api/admin/setup/finish", headers=auth, json={"keep": ["paperless"]})
+    r = client.post("/api/admin/setup/finish", headers=auth, json={"keep": ["paperless", "weather"]})
     assert r.status_code == 200
     disabled = set(r.json()["disabled"])
     assert {"ntfy", "nextcloud"} <= disabled, disabled
@@ -74,3 +74,28 @@ def test_finish_requires_admin(client):
             db.commit()
     tok = client.post("/api/auth/login", json={"username": "wz_partner", "password": "pw-12345"}).json()["access_token"]
     assert client.post("/api/admin/setup/finish", headers={"Authorization": f"Bearer {tok}"}, json={"keep": []}).status_code == 403
+
+
+def test_zero_config_plugins_are_not_set_up_and_go_off_unless_ticked(client, auth, monkeypatch, clean_overrides):
+    """Weather and CalDAV work without settings, but the wizard must not show them as set up or keep them."""
+    monkeypatch.delenv("CALDAV_URL", raising=False)
+    monkeypatch.setattr(settings, "caldav_url", None)
+    before = _plugins(client, auth)
+    assert before["weather"]["active"] and before["nextcloud"]["active"]
+    assert before["weather"]["set_up"] is False and before["nextcloud"]["set_up"] is False
+
+    assert client.put("/api/admin/sources", headers=auth, json={"area": "tasks", "selected": ["hub_tasks"]}).status_code == 200
+    assert client.put("/api/admin/sources", headers=auth, json={"area": "calendar", "selected": ["hub_calendar"]}).status_code == 200
+    disabled = client.post("/api/admin/setup/finish", headers=auth, json={"keep": []}).json()["disabled"]
+    assert {"weather", "nextcloud"} <= set(disabled)
+    assert client.get("/api/modules", headers=auth).json()["modules"]["weather"]["enabled"] is False
+
+
+def test_set_up_follows_explicit_settings(client, auth, monkeypatch, clean_overrides):
+    monkeypatch.setattr(settings, "caldav_url", "https://dav.example.org")
+    monkeypatch.setattr(settings, "weather_latitude", 48.1)
+    plugins = _plugins(client, auth)
+    assert plugins["weather"]["set_up"] is True and plugins["nextcloud"]["set_up"] is True
+    monkeypatch.setenv("PAPERLESS_URL", "http://paperless.test")
+    monkeypatch.setenv("PAPERLESS_TOKEN", "t")
+    assert _plugins(client, auth)["paperless"]["set_up"] is True

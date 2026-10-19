@@ -38,8 +38,10 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   bool _loaded = false;
   bool _saving = false;
 
-  /// Plugins whose settings were saved in the services step: they stay on when the wizard ends.
-  final Set<String> _setUp = {};
+  /// Services ticked in the services step (null until it has loaded): they stay on when the wizard ends.
+  Set<String>? _use;
+
+  Set<String> get _wantedIds => {for (final ids in (_wanted ?? const <String, Set<String>>{}).values) ...ids};
 
   @override
   void initState() {
@@ -115,14 +117,24 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     }
   }
 
-  /// Last step of the first-run wizard: plugins that were not chosen and not set up are switched off (reversible
-  /// under Administration → Plugins & access). Fails softly: the hub works either way. Not on re-runs, which must
-  /// not switch off what the admin set up earlier.
+  /// Last step: ticked services that are switched off go on again. First run: active plugins that were not ticked
+  /// and serve no area are switched off (reversible under Administration → Plugins & access). Re-runs only switch
+  /// off what the admin unticked, never what was set up earlier and left alone. Fails softly: the hub works either way.
   Future<void> _applyResult() async {
-    if (widget.standalone) return;
+    final use = _use;
+    if (widget.standalone && use == null) return;
     setState(() => _saving = true);
     try {
-      await ref.read(apiClientProvider).finishSetup(_setUp.toList());
+      final api = ref.read(apiClientProvider);
+      final plugins = ref.read(adminPluginsProvider).valueOrNull ?? const <AdminPlugin>[];
+      final wanted = _wantedIds;
+      for (final p in plugins) {
+        if (use != null && use.contains(p.id) && p.disabled && p.configured) await api.setPluginEnabled(p.id, true);
+        if (widget.standalone && p.active && !use!.contains(p.id) && !wanted.contains(p.id)) {
+          await api.setPluginEnabled(p.id, false);
+        }
+      }
+      if (!widget.standalone) await api.finishSetup((use ?? const <String>{}).toList());
       ref.invalidate(adminPluginsProvider);
     } catch (_) {
       if (mounted) showInfo(context, l10n.unusedNotSwitchedOff);
@@ -175,9 +187,15 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
           child: switch (_step) {
             0 => _basics(),
             1 => _AreasStep(wanted: _wanted, onChanged: (w) => setState(() => _wanted = w)),
-            2 => _ServicesStep(onSetUp: _setUp.add, wanted: {for (final ids in (_wanted ?? const <String, Set<String>>{}).values) ...ids}),
+            2 => _ServicesStep(
+                wanted: _wantedIds,
+                standalone: widget.standalone,
+                use: _use,
+                onInit: (use) => setState(() => _use ??= use),
+                onToggle: (id, on) => setState(() => on ? (_use ??= {}).add(id) : _use?.remove(id)),
+              ),
             3 => const _FamilyStep(),
-            _ => const _DoneStep(),
+            _ => _DoneStep(use: _use),
           },
         ),
         SafeArea(
@@ -303,11 +321,16 @@ class _AreasStep extends ConsumerWidget {
   }
 }
 
-/// Services: the ones chosen in "areas" first, then the optional ones; "set up" opens their settings.
+/// Services: the ones chosen in "areas" first, then the optional ones. The tick decides whether a service stays on;
+/// tapping opens its settings. Zero-config services (weather, CalDAV) start unticked unless the admin set them up.
 class _ServicesStep extends ConsumerWidget {
   final Set<String> wanted;
-  final void Function(String id)? onSetUp;
-  const _ServicesStep({this.wanted = const {}, this.onSetUp});
+  final bool standalone;
+  final Set<String>? use;
+  final ValueChanged<Set<String>> onInit;
+  final void Function(String id, bool on) onToggle;
+  const _ServicesStep(
+      {this.wanted = const {}, this.standalone = false, required this.use, required this.onInit, required this.onToggle});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -316,6 +339,10 @@ class _ServicesStep extends ConsumerWidget {
       loading: () => const Center(child: HubLoader()),
       error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(adminPluginsProvider)),
       data: (all) {
+        // Re-run: start from what is on now. First run: what was chosen in "areas" or set up already.
+        final current = use ??
+            {for (final p in all) if (standalone ? p.active : wanted.contains(p.id) || (p.setUp && p.active)) p.id};
+        if (use == null) WidgetsBinding.instance.addPostFrameCallback((_) => onInit(current));
         final chosen = [for (final p in all) if (wanted.contains(p.id)) p];
         final others = [for (final p in all) if (!wanted.contains(p.id)) p];
         Widget header(String text) => Padding(
@@ -326,30 +353,43 @@ class _ServicesStep extends ConsumerWidget {
           child: Text(l10n.servicesQuestion),
         ),
         if (chosen.isNotEmpty) header(l10n.forYourChoice),
-        for (final p in chosen) _tile(context, ref, p),
+        for (final p in chosen) _tile(context, ref, p, current),
         if (chosen.isNotEmpty && others.isNotEmpty) header(l10n.moreServices),
-        for (final p in others) _tile(context, ref, p),
+        for (final p in others) _tile(context, ref, p, current),
       ]);
       },
     );
   }
 
-  Widget _tile(BuildContext context, WidgetRef ref, AdminPlugin p) => ListTile(
-            key: Key('wizard-plugin-${p.id}'),
-            leading: Icon(p.active ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: p.active ? Colors.green : null),
-            title: Text(p.name),
-            subtitle: Text(p.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-            trailing: Text(p.active ? l10n.configured : l10n.setUp),
-            onTap: () async {
-              final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
-              if (saved == true) {
-                onSetUp?.call(p.id);
-                ref.invalidate(adminPluginsProvider);
-                ref.invalidate(adminSourcesProvider);
-              }
-            },
-          );
+  Widget _tile(BuildContext context, WidgetRef ref, AdminPlugin p, Set<String> current) {
+    Future<void> openSettings() async {
+      final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => pluginSettingsPage(p)));
+      if (saved == true) {
+        onToggle(p.id, true);
+        ref.invalidate(adminPluginsProvider);
+        ref.invalidate(adminSourcesProvider);
+      }
+    }
+
+    return ListTile(
+      key: Key('wizard-plugin-${p.id}'),
+      leading: Checkbox(
+        key: Key('wizard-use-${p.id}'),
+        value: current.contains(p.id),
+        onChanged: (v) {
+          if (v == true && !p.configured) {
+            openSettings(); // ticked once it is set up
+          } else {
+            onToggle(p.id, v == true);
+          }
+        },
+      ),
+      title: Text(p.name),
+      subtitle: Text(p.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+      trailing: Text(p.setUp ? l10n.configured : l10n.setUp),
+      onTap: openSettings,
+    );
+  }
 }
 
 /// Familie: vorhandene Personen und „Person anlegen“ (bei OIDC meist unnötig).
@@ -391,12 +431,14 @@ class _FamilyStep extends ConsumerWidget {
 
 /// Fertig: kurze Zusammenfassung, was läuft.
 class _DoneStep extends ConsumerWidget {
-  const _DoneStep();
+  final Set<String>? use;
+  const _DoneStep({this.use});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plugins = ref.watch(adminPluginsProvider).valueOrNull ?? const <AdminPlugin>[];
-    final active = [for (final p in plugins) if (p.active) p.name];
+    // What stays on after "Let's go": the ticked services that are set up
+    final active = [for (final p in plugins) if (p.configured && (use?.contains(p.id) ?? p.active)) p.name];
     final theme = Theme.of(context);
     return ListView(padding: const EdgeInsets.all(24), children: [
       Icon(Icons.celebration_outlined, size: 56, color: theme.colorScheme.primary),
