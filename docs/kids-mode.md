@@ -11,6 +11,8 @@ Built-in motivation for children, without Habitica. Parents put stars on tasks a
 5. **Optional confirmation.** With **Confirm completed tasks** switched on (More → Stars, parents only), a child's completed starred tasks stay *waiting* until a parent confirms them; only confirmed stars count. A parent can also reject. Stars earned by adults are never held.
 6. **Today.** The *Stars* card shows the balance and the next reward with a progress bar (parents also see how many decisions wait). It is a normal card of the customisable Today layout (it is last by default, so move it up for a child). It is only shown for people who use stars: children once a reward exists or they have an account, adults once they have an account or something waits for them. Everyone else sees no card.
 
+7. **Reward actions (plugins).** A plugin can offer actions that run when a parent approves a reward, for example unlocking a tablet. When creating or editing a reward, parents pick one in the *Action (plugin)* drop-down and fill in its fields. The approval and the booking come first; the action runs afterwards, and its result is shown to the approving parent (the child is told when it worked). A failing action never reverts the approval. See [Reward actions](plugins.md#reward-actions-kids-mode).
+
 ## Which task sources work
 
 Stars are stored **hub-side, keyed by `(provider, task uid)`**, so they work for the hub's own tasks and for external sources (Nextcloud/CalDAV) without writing anything into the external task:

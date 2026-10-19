@@ -7,6 +7,7 @@ The hub itself is never started: the plugin's router is mounted on a small FastA
 replaced, and the notes service is simulated with respx. Real services are never called in tests.
 """
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -83,3 +84,32 @@ def test_texts_follow_the_app_language(client, notes):
     notes.get(f"{NOTES}/notes").mock(return_value=httpx.Response(503))
     body = client.get("/api/plugins/example_notes/items", headers={"X-App-Language": "en"}).json()
     assert body["error"] == "The notes service is not reachable"
+
+
+def test_today_card_shows_the_latest_notes(notes, monkeypatch):
+    monkeypatch.setenv("EXAMPLE_NOTES_URL", NOTES)
+    notes.get(f"{NOTES}/notes").mock(return_value=httpx.Response(200, json=[{"title": "Milk"}, {"title": "Eggs"}]))
+    cards = asyncio.run(ExampleNotesPlugin().today_cards(object(), None))
+    assert cards == [{"id": "latest", "title": "Notes", "icon": "book", "badge": "2",
+                      "lines": [{"text": "Milk"}, {"text": "Eggs"}]}]
+
+
+@pytest.mark.parametrize("answer", [httpx.Response(500), httpx.Response(200, json=[]), httpx.ConnectError("down")])
+def test_no_card_when_there_is_nothing_to_show(notes, monkeypatch, answer):
+    monkeypatch.setenv("EXAMPLE_NOTES_URL", NOTES)
+    notes.get(f"{NOTES}/notes").mock(side_effect=[answer])
+    assert asyncio.run(ExampleNotesPlugin().today_cards(object(), None)) == []
+
+
+@pytest.mark.parametrize("answer, ok", [
+    (httpx.Response(200, json=[]), True),
+    (httpx.Response(401), False),
+    (httpx.Response(500), False),
+    (httpx.ConnectError("down"), False),
+])
+def test_connection_test_with_the_typed_values(notes, answer, ok):
+    route = notes.get(f"{NOTES}/notes").mock(side_effect=[answer])
+    result = asyncio.run(ExampleNotesPlugin().test_settings({"EXAMPLE_NOTES_URL": NOTES, "EXAMPLE_NOTES_TOKEN": "typed"}))
+    assert result["ok"] is ok and result["level"] == ("ok" if ok else "error")
+    if route.called:
+        assert route.calls.last.request.headers["Authorization"] == "Bearer typed"
