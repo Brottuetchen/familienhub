@@ -1,0 +1,57 @@
+name: "Plugin / integration request"
+description: Propose an integration and find people to build it
+title: "[Plugin]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Families and developers can propose integrations here, in English or German.
+        See the [plugin guide](https://github.com/Brottuetchen/familienhub/blob/main/docs/plugins.md) and the [plugin template](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template).
+  - type: input
+    id: service
+    attributes:
+      label: Service / integration name
+      placeholder: "e.g. Grocy"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Link to the service or its API (optional)
+      placeholder: "https://..."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Tasks / chores
+        - Shopping / inventory
+        - Calendar
+        - Meals / recipes
+        - Notifications
+        - Home / devices
+        - Documents
+        - Books / movies / shows
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What should families be able to do with it?
+      description: Describe one or two everyday use cases.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Technical details (optional)
+      description: API documentation, existing projects or ideas. Never share passwords or tokens.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: I would like to help
+      options:
+        - label: I can test this integration.
+        - label: I might develop or maintain the plugin.
