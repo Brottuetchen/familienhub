@@ -1408,5 +1408,18 @@
   "recipeIngredientsMerge": "Auf unsere Einkaufsliste zusammenführen",
   "recipeIngredientsMergeHint": "Zutaten von Cookidoo, Mealie und dem Rezeptbuch landen auf einer Liste, gleiche Zutaten werden zusammengeführt.",
   "recipeIngredientsSource": "In der Liste der Rezeptquelle lassen",
-  "recipeIngredientsSourceHint": "Cookidoo-Zutaten gehen auf die Cookidoo-Einkaufsliste (abhaken wirkt auch in Cookidoo), Mealie-Rezepte in Mealie. Rezepte aus dem Rezeptbuch landen weiter auf unserer Liste."
+  "recipeIngredientsSourceHint": "Cookidoo-Zutaten gehen auf die Cookidoo-Einkaufsliste (abhaken wirkt auch in Cookidoo), Mealie-Rezepte in Mealie. Rezepte aus dem Rezeptbuch landen weiter auf unserer Liste.",
+  "eventAlarm": "Erinnerung",
+  "alarmNone": "Keine",
+  "alarmAtStart": "Zur Startzeit",
+  "alarmHourBefore": "1 Stunde vorher",
+  "alarmDayBefore": "1 Tag vorher",
+  "alarmMinutesBefore": "{n} Minuten vorher",
+  "@alarmMinutesBefore": {"placeholders": {"n": {"type": "int"}}},
+  "alarmHoursBefore": "{n} Stunden vorher",
+  "@alarmHoursBefore": {"placeholders": {"n": {"type": "int"}}},
+  "alarmDaysBefore": "{n} Tage vorher",
+  "@alarmDaysBefore": {"placeholders": {"n": {"type": "int"}}},
+  "calendarOnPhone": "Kalender ist am Handy eingerichtet",
+  "calendarOnPhoneHint": "Dann erinnert das Handy an Termine. Ist das aus, schickt der Hub eine Mitteilung, sobald eine Termin-Erinnerung fällig ist."
 }

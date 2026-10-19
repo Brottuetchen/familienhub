@@ -36,6 +36,8 @@ class User(Base):
     # connected accounts (see app/services/task_routing.py)
     task_place = Column(String(32), nullable=True)
     language = Column(String(5), nullable=True)  # app language (de/en) for push texts; set from Accept-Language
+    # Calendar synced on the phone (iOS/DAVx5): the phone alerts itself, the hub sends no event reminders
+    calendar_on_phone = Column(Boolean, nullable=False, default=False, server_default=false())
 
     # Rolle: admin | partner | child | guest
     role = Column(String, default=ROLE_PARTNER, nullable=False)

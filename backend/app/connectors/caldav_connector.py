@@ -139,6 +139,10 @@ class CalDAVConnector(BaseConnector):
                 comp.pop(prop, None)
                 if changes[key]:
                     comp.add(prop, changes[key])
+        if "alarm_minutes" in changes:
+            from app.services.event_alarms import set_alarm
+
+            set_alarm(comp, changes["alarm_minutes"], str(comp.get("summary", "")))
         if not series and "start" in changes and "end" in changes:
             for prop in ("dtstart", "dtend"):
                 comp.pop(prop, None)
@@ -243,6 +247,7 @@ class CalDAVConnector(BaseConnector):
         location: Optional[str] = None,
         notes: Optional[str] = None,
         rrule: Optional[str] = None,
+        alarm_minutes: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Erstellt synchron ein Event via CalDAV."""
         try:
@@ -290,6 +295,10 @@ class CalDAVConnector(BaseConnector):
             event.add('description', notes)
         if rrule:
             event.add('rrule', {'freq': rrule})
+        if alarm_minutes is not None:
+            from app.services.event_alarms import set_alarm
+
+            set_alarm(event, alarm_minutes, title)  # phones that sync the calendar alert by themselves
         cal.add_component(event)
 
         # Event speichern
@@ -394,9 +403,19 @@ def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> D
         "uid": str(comp.get("uid", "")) or None,
         # Part of a series: editing changes the whole series
         "recurring": bool(comp.get("rrule") or comp.get("recurrence-id")),
+        "alarm_minutes": _alarm(comp),
         "calendar": cal_name,
         "color": cal_color or None,  # no invented default: the app colours by calendar id
     }
+
+
+def _alarm(comp: Any) -> Optional[int]:
+    from app.services.event_alarms import alarm_minutes
+
+    try:
+        return alarm_minutes(comp)
+    except Exception:  # noqa: BLE001 - an odd alarm must not hide the event
+        return None
 
 
 def _iso(value: Any) -> Optional[str]:

@@ -92,6 +92,12 @@ async def run_scheduler() -> None:
         while True:
             await asyncio.sleep(CHECK_INTERVAL)
             await _tick()
+            try:
+                from app.services.event_alarms import send_due
+
+                await send_due()
+            except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
+                logger.warning("event alarms failed: %s", type(exc).__name__)
             ticks += 1
             if ticks % SEERR_EVERY == 0:
                 try:

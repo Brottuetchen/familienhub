@@ -768,5 +768,15 @@
   "recipeIngredientsMerge": "Merge onto our shopping list",
   "recipeIngredientsMergeHint": "Ingredients from Cookidoo, Mealie and the recipe book go onto one list; equal ingredients are merged.",
   "recipeIngredientsSource": "Keep them in the recipe source's list",
-  "recipeIngredientsSourceHint": "Cookidoo ingredients go onto the Cookidoo shopping list (ticking off also counts in Cookidoo), Mealie recipes into Mealie. Recipe-book recipes still go onto our list."
+  "recipeIngredientsSourceHint": "Cookidoo ingredients go onto the Cookidoo shopping list (ticking off also counts in Cookidoo), Mealie recipes into Mealie. Recipe-book recipes still go onto our list.",
+  "eventAlarm": "Reminder",
+  "alarmNone": "None",
+  "alarmAtStart": "At the start",
+  "alarmHourBefore": "1 hour before",
+  "alarmDayBefore": "1 day before",
+  "alarmMinutesBefore": "{n} minutes before",
+  "alarmHoursBefore": "{n} hours before",
+  "alarmDaysBefore": "{n} days before",
+  "calendarOnPhone": "Calendar is set up on my phone",
+  "calendarOnPhoneHint": "Then your phone reminds you of events. If this is off, the hub sends a notification when an event reminder is due."
 }
