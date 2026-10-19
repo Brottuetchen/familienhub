@@ -56,6 +56,17 @@ jobs:
           flutter-version: "3.47.7"
           channel: stable
           cache: true
+      - name: Require permanent Android release signing
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$STORE_PW" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PW" ]; then
+            echo "::error::Missing signing secrets. Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD before tagging a release."
+            exit 1
+          fi
       - name: Signing key and Firebase config (if set)
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -70,7 +81,8 @@ jobs:
               "$RUNNER_TEMP/release.jks" "$STORE_PW" "$KEY_ALIAS" "$KEY_PW" > "$RUNNER_TEMP/key.properties"
             echo "FAMILIENHUB_SIGNING=$RUNNER_TEMP/key.properties" >> "$GITHUB_ENV"
           else
-            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: the APK is signed with a debug key and cannot update older installs."
+            echo "::error::Android signing key not provided"
+            exit 1
           fi
           if [ -n "$GOOGLE_SERVICES" ]; then
             echo "$GOOGLE_SERVICES" > app/android/app/google-services.json
@@ -114,6 +126,9 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           for f in dist/*.ipa; do mv "$f" "dist/familienhub-$VER.ipa"; done
           cp docker-compose.yml dist/
+          # Make the attached Compose file work for this exact release,
+          # including pre-releases where the default :latest tag is not published.
+          sed -i "s/FAMILIENHUB_VERSION:-latest/FAMILIENHUB_VERSION:-$VER/" dist/docker-compose.yml
           (cd dist && sha256sum * > SHA256SUMS.txt)
           PRE=""; [[ "$VER" == *-* ]] && PRE="--prerelease"
           cat > notes.md <<NOTES
