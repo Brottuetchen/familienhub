@@ -1415,11 +1415,29 @@
   "alarmHourBefore": "1 Stunde vorher",
   "alarmDayBefore": "1 Tag vorher",
   "alarmMinutesBefore": "{n} Minuten vorher",
-  "@alarmMinutesBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmMinutesBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "alarmHoursBefore": "{n} Stunden vorher",
-  "@alarmHoursBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmHoursBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "alarmDaysBefore": "{n} Tage vorher",
-  "@alarmDaysBefore": {"placeholders": {"n": {"type": "int"}}},
+  "@alarmDaysBefore": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "calendarOnPhone": "Kalender ist am Handy eingerichtet",
   "calendarOnPhoneHint": "Dann erinnert das Handy an Termine. Ist das aus, schickt der Hub eine Mitteilung, sobald eine Termin-Erinnerung fällig ist.",
   "customiseToday": "Heute anpassen",
@@ -1432,5 +1450,324 @@
   "saveAsFamilyDefault": "Als Familien-Standard speichern",
   "removeFamilyDefault": "Familien-Standard entfernen",
   "familyTodayLayoutSaved": "Familien-Standard gespeichert",
-  "familyTodayLayoutRemoved": "Familien-Standard entfernt"
+  "familyTodayLayoutRemoved": "Familien-Standard entfernt",
+  "templates": "Vorlagen",
+  "templatesEmpty": "Noch keine Vorlagen. Lege z. B. eine Packliste oder den Wocheneinkauf an.",
+  "templateNew": "Neue Vorlage",
+  "templateEdit": "Vorlage bearbeiten",
+  "templateItemName": "Eintrag",
+  "templateItemNote": "Menge / Notiz (optional)",
+  "templateAddItem": "Eintrag hinzufügen",
+  "templateRemoveItem": "Eintrag entfernen",
+  "templateItemCount": "{count, plural, =0{Keine Einträge} =1{1 Eintrag} other{{count} Einträge}}",
+  "@templateItemCount": {"placeholders": {"count": {"type": "int"}}},
+  "templateDeleteQuestion": "Vorlage „{name}“ löschen?",
+  "@templateDeleteQuestion": {"placeholders": {"name": {"type": "String"}}},
+  "templatePickItems": "Einträge auswählen",
+  "templateApplyShopping": "Auf die Einkaufsliste",
+  "templateApplyTasks": "Als Aufgaben anlegen",
+  "templateFamilyList": "Auf der Familienliste anlegen",
+  "templateSaveShopping": "Einkaufsliste als Vorlage speichern",
+  "templateSaved": "Vorlage gespeichert",
+  "templateAppliedShopping": "{added} hinzugefügt, {skipped} standen schon auf der Liste",
+  "@templateAppliedShopping": {"placeholders": {"added": {"type": "int"}, "skipped": {"type": "int"}}},
+  "templateAppliedTasks": "{created} Aufgaben angelegt",
+  "@templateAppliedTasks": {"placeholders": {"created": {"type": "int"}}},
+  "templateAppliedPartial": "{failed} Einträge konnten nicht übernommen werden",
+  "@templateAppliedPartial": {"placeholders": {"failed": {"type": "int"}}},
+  "templateListUnavailable": "Die Einkaufsliste ist gerade nicht erreichbar",
+  "templateNothingSelected": "Wähle mindestens einen Eintrag",
+  "importFromLink": "Von Link importieren",
+  "importLinkLabel": "Link zur Rezeptseite",
+  "importFetch": "Rezept lesen",
+  "importPreviewHint": "Prüfe das Rezept und passe es an, bevor du es speicherst.",
+  "importNoRecipe": "Auf dieser Seite wurden keine Rezeptdaten gefunden. Es wurde nichts gespeichert.",
+  "importBlocked": "Diese Adresse darf der Hub nicht abrufen.",
+  "importUnreachable": "Die Seite konnte nicht geladen werden.",
+  "importTooLarge": "Die Seite ist zu groß.",
+  "importInvalid": "Das ist kein gültiger Link. Er muss mit http:// oder https:// beginnen.",
+  "birthdays": "Geburtstage",
+  "birthdaysHint": "Geburtstage, Jahrestage und Geschenkideen",
+  "birthdaysEmpty": "Noch keine Einträge. Lege Geburtstage und Jahrestage an, damit der Hub rechtzeitig erinnert.",
+  "addBirthday": "Geburtstag oder Jahrestag anlegen",
+  "editBirthday": "Eintrag bearbeiten",
+  "birthdayName": "Name",
+  "birthdayKindBirthday": "Geburtstag",
+  "birthdayKindAnniversary": "Jahrestag",
+  "birthdayDay": "Tag",
+  "birthdayMonth": "Monat",
+  "birthdayYear": "Jahr (optional)",
+  "birthdayLeapHint": "29. Februar: in Jahren ohne Schalttag wird am 28. Februar erinnert.",
+  "birthdayInvalidDate": "Dieses Datum gibt es nicht.",
+  "birthdayLinkedUser": "Gehört zu einem Konto im Hub",
+  "birthdayNoUser": "Keins",
+  "birthdayLinkedHint": "Diese Person sieht die Geschenkideen nicht.",
+  "birthdayRemind": "Erinnerung",
+  "birthdayRemindNone": "Keine Erinnerung",
+  "birthdayRemindDays": "{days, plural, =0{Am Tag selbst} =1{1 Tag vorher} other{{days} Tage vorher}}",
+  "@birthdayRemindDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayDeleteQuestion": "Eintrag löschen?",
+  "birthdayDeleteHint": "Auch die Geschenkideen dazu werden gelöscht.",
+  "birthdayWhenBirthday": "{name} hat {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}} Geburtstag",
+  "@birthdayWhenBirthday": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenTurns": "{name} wird {age} {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversary": "{name}: Jahrestag {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenAnniversary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversaryYears": "{name}: {years}. Jahrestag {days, plural, =0{heute} =1{morgen} other{in {days} Tagen}}",
+  "@birthdayWhenAnniversaryYears": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "years": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeas": "Geschenkideen",
+  "giftIdeaCount": "{count, plural, =1{1 Geschenkidee} other{{count} Geschenkideen}}",
+  "@giftIdeaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeaText": "Geschenkidee",
+  "giftIdeaLink": "Link (optional)",
+  "giftIdeasEmpty": "Noch keine Ideen. Sammle sie übers Jahr.",
+  "giftIdeaDone": "Schon besorgt",
+  "giftIdeaInvalidLink": "Der Link muss mit http:// oder https:// beginnen.",
+  "timetable": "Stundenplan",
+  "timetableHint": "Unterricht, Sport, Musik und Vereine der Kinder",
+  "timetableHolidays": "Schulferien",
+  "timetableSchoolUntil": "Schule bis {time}",
+  "@timetableSchoolUntil": {"placeholders": {"time": {}}},
+  "timetableNoChildren": "Noch kein Kinderkonto. Lege ein Konto mit der Rolle Kind an, dann erscheint hier der Stundenplan.",
+  "timetableEmptyDay": "Nichts eingetragen",
+  "timetableAddEntry": "Eintrag hinzufügen",
+  "timetableEditEntry": "Eintrag bearbeiten",
+  "timetableKindSchool": "Schule",
+  "timetableKindSport": "Sport",
+  "timetableKindMusic": "Musik",
+  "timetableKindClub": "Verein",
+  "timetableKindOther": "Sonstiges",
+  "timetableStart": "Beginn",
+  "timetableEnd": "Ende",
+  "timetableLocationOptional": "Ort (optional)",
+  "timetableWeekAll": "Jede Woche",
+  "timetableWeekA": "A-Woche",
+  "timetableWeekB": "B-Woche",
+  "timetableDay": "Tag",
+  "timetableCopyDay": "Tag kopieren",
+  "timetableCopyDayTo": "{day} kopieren nach",
+  "@timetableCopyDayTo": {"placeholders": {"day": {}}},
+  "timetableCopyReplaces": "Vorhandene Einträge an diesen Tagen werden ersetzt.",
+  "timetableCopyWeek": "{src} nach {dst} kopieren",
+  "@timetableCopyWeek": {"placeholders": {"src": {}, "dst": {}}},
+  "timetableCopied": "{count, plural, =1{1 Eintrag kopiert} other{{count} Einträge kopiert}}",
+  "@timetableCopied": {"placeholders": {"count": {"type": "int"}}},
+  "timetableSettings": "Einstellungen",
+  "timetableAbWeeks": "A/B-Wochen",
+  "timetableAbWeeksHelp": "Für Stundenpläne, die jede zweite Woche wechseln. Wähle eine Woche, die eine A-Woche ist.",
+  "timetableAbReference": "A-Woche: {date}",
+  "@timetableAbReference": {"placeholders": {"date": {}}},
+  "timetableAbOff": "Aus",
+  "timetablePickWeek": "Woche wählen",
+  "timetableHolidayFeed": "Ferienkalender",
+  "timetableHolidayFeedHelp": "Ein Kalender-Abo (Administration, Kalender-Abos), dessen Termine Schulferien sind. An diesen Tagen entfällt der Unterricht.",
+  "timetableHolidayFeedNone": "Keiner",
+  "timetableHolidayNow": "Schulferien bis {date}: Unterricht ausgeblendet",
+  "@timetableHolidayNow": {"placeholders": {"date": {}}},
+  "timetableHolidayNext": "Nächste Ferien: {title} ab {date}",
+  "@timetableHolidayNext": {"placeholders": {"title": {}, "date": {}}},
+  "timetableThisWeek": "Diese Woche: {week}",
+  "@timetableThisWeek": {"placeholders": {"week": {}}},
+  "timetableEndAfterStart": "Das Ende muss nach dem Beginn liegen",
+  "starsTitle": "Sterne",
+  "starsHint": "Sterne sammeln, Belohnungen holen",
+  "starsCount": "{n} Sterne",
+  "@starsCount": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsAvailable": "{n} verfügbar",
+  "@starsAvailable": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsReserved": "{n} für Wünsche reserviert",
+  "@starsReserved": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "nextReward": "Nächste Belohnung",
+  "starsMissing": "noch {n} Sterne",
+  "@starsMissing": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "rewardWithinReach": "Du kannst sie dir wünschen!",
+  "rewards": "Belohnungen",
+  "starsNoRewards": "Noch keine Belohnungen.",
+  "rewardRequest": "Wünschen",
+  "rewardRequested": "Wunsch gesendet",
+  "rewardStatusPending": "Wartet auf Zustimmung",
+  "rewardStatusApproved": "Bewilligt",
+  "rewardStatusDeclined": "Abgelehnt",
+  "rewardStatusCancelled": "Zurückgezogen",
+  "rewardWithdraw": "Zurückziehen",
+  "starsHistory": "Verlauf",
+  "starsNoHistory": "Noch nichts passiert.",
+  "starsAwaiting": "Wartet auf Bestätigung",
+  "starsRejected": "Nicht bestätigt",
+  "starsToDecide": "Zu entscheiden",
+  "starsApprove": "Bewilligen",
+  "starsDecline": "Ablehnen",
+  "starsConfirm": "Bestätigen",
+  "starsChildren": "Kinder",
+  "starsBonus": "Bonus oder Abzug",
+  "starsAmount": "Anzahl (negativ = Abzug)",
+  "starsReason": "Grund (optional)",
+  "addReward": "Belohnung hinzufügen",
+  "rewardTitle": "Belohnung",
+  "rewardPrice": "Preis in Sternen",
+  "rewardHide": "Ausblenden",
+  "rewardShow": "Einblenden",
+  "rewardHidden": "ausgeblendet",
+  "starsConfirmTasks": "Erledigte Aufgaben bestätigen",
+  "starsConfirmTasksHint": "Sterne zählen erst, wenn ein Elternteil bestätigt hat.",
+  "taskStars": "Sterne für diese Aufgabe",
+  "starsWaitingForYou": "{n} warten auf dich",
+  "@starsWaitingForYou": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsNotEnough": "Dafür fehlen noch Sterne.",
+  "catStars": "Sterne und Belohnungen",
+  "backupTitle": "Backup",
+  "backupHint": "Sichern und wiederherstellen",
+  "backupLastLine": "Letztes Backup: {date}",
+  "@backupLastLine": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupNoneYet": "Noch kein Backup",
+  "backupLastFailed": "Das letzte Backup ist fehlgeschlagen",
+  "backupDownload": "Backup herunterladen",
+  "backupDownloadHint": "Enthält die Datenbank, die Einstellungen (Zugangsdaten bleiben verschlüsselt) und die Schlüssel des Hubs. Bewahre die Datei wie ein Passwort auf.",
+  "backupCreateOnHub": "Backup auf dem Hub ablegen",
+  "backupCreated": "Backup erstellt",
+  "backupStored": "Gespeicherte Backups",
+  "backupNoneStored": "Noch keine Backups im Datenordner des Hubs",
+  "backupAuto": "Nächtliches Backup",
+  "backupAutoHint": "Jede Nacht ab {time} Uhr in den Datenordner des Hubs",
+  "@backupAutoHint": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "backupKeep": "Letzte Backups behalten: {count}",
+  "@backupKeep": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "backupRestore": "Wiederherstellen",
+  "backupRestoreTitle": "Backup wiederherstellen?",
+  "backupRestoreWarning": "ACHTUNG: Alle aktuellen Daten des Hubs werden durch dieses Backup ersetzt (Stand {date}). Davor wird der jetzige Stand automatisch als Backup abgelegt. Danach muss der Hub neu gestartet werden.",
+  "@backupRestoreWarning": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupRestoreConfirm": "Alles ersetzen",
+  "backupRestoreDone": "Wiederhergestellt",
+  "backupRestartNeeded": "Bitte den Hub jetzt neu starten (docker compose restart familienhub), damit alles neu geladen wird.",
+  "backupWarnSecretEnv": "SECRET_KEY ist in der Umgebung gesetzt und bleibt unverändert. Stimmt er nicht mit dem Backup überein, müssen gespeicherte Zugangsdaten neu eingetragen werden.",
+  "backupUploadHint": "Eine heruntergeladene Datei lässt sich im Datenordner des Hubs unter backups/ ablegen (docker compose cp datei.zip familienhub:/app/data/backups/); danach erscheint sie hier.",
+  "backupDeleteQuestion": "Dieses Backup löschen?",
+  "backupDownloadStarted": "Download gestartet",
+  "backupKindManual": "Manuell",
+  "backupKindAuto": "Nächtlich",
+  "backupKindSafety": "Vor Wiederherstellung",
+  "backupKindUploaded": "Hochgeladen",
+  "backupErrNewer": "Dieses Backup stammt von einer neueren Familienhub-Version. Bitte zuerst den Hub aktualisieren.",
+  "backupErrOlder": "Dieses Backup stammt von einer älteren Datenbankstruktur. Mit der damaligen Version wiederherstellen und danach aktualisieren.",
+  "backupErrInvalid": "Das ist kein gültiges Familienhub-Backup.",
+  "backupErrBusy": "Es läuft schon ein Backup oder eine Wiederherstellung.",
+  "backupErrDir": "Der Datenordner ist nicht beschreibbar. Bitte ein Volume unter /app/data einbinden.",
+  "backupErrSafety": "Der jetzige Stand konnte nicht vorher gesichert werden, deshalb wurde nichts wiederhergestellt.",
+  "backupErrFailed": "Das hat nicht geklappt. Details stehen im Protokoll des Hubs.",
+  "updateTitle": "Updates",
+  "updateHint": "Hinweis auf neue Versionen",
+  "updateAvailable": "Version {version} ist verfügbar",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCurrent": "Installiert: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateUpToDate": "Der Hub ist auf dem neuesten Stand",
+  "updateReleaseNotes": "Versionshinweise ansehen",
+  "updateCommand": "Update-Befehl auf dem Server",
+  "updatePrerelease": "Vorabversion",
+  "updateCheckSwitch": "Auf neue Versionen prüfen",
+  "updateCheckHint": "Der Hub fragt ein paar Mal am Tag bei GitHub nach. Es werden keine Daten gesendet.",
+  "updateRepo": "GitHub-Repository (Besitzer/Name)",
+  "updateOff": "Die Prüfung ist ausgeschaltet",
+  "updateUnavailable": "GitHub ist gerade nicht erreichbar",
+  "updateUnknownVersion": "Entwicklungsversion: kein Vergleich möglich",
+  "updateBadRepo": "Bitte das Repository als Besitzer/Name angeben"
 }

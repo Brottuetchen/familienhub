@@ -128,7 +128,7 @@ void main() {
     await tester.pumpAndSettle();
     final sent = bodyOf(b.sent('PUT', '/api/me/today-layout').single)['cards'] as List;
     final ids = [for (final c in sent) (c as Map)['id']];
-    expect(ids.toSet(), {'tasks', 'shopping', 'events', 'meals', 'reminders', 'house'});
+    expect(ids.toSet(), {'tasks', 'shopping', 'events', 'meals', 'reminders', 'house', 'birthdays', 'timetable', 'stars'});
     expect(ids.first, isNot('tasks'), reason: 'tasks was dragged down');
     expect((sent.firstWhere((c) => (c as Map)['id'] == 'meals') as Map)['visible'], isFalse);
     expect(find.byKey(const Key('today-layout-save')), findsNothing, reason: 'editor closed');

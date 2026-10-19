@@ -25,6 +25,9 @@ BUILTIN: List[dict] = [
     {"id": "meals", "visible": True, "size": "full"},
     {"id": "reminders", "visible": True, "size": "full"},
     {"id": "house", "visible": True, "size": "full"},
+    {"id": "birthdays", "visible": True, "size": "full"},
+    {"id": "timetable", "visible": True, "size": "full"},
+    {"id": "stars", "visible": True, "size": "full"},  # kids mode; the app hides it for people without stars use
 ]
 KNOWN = {c["id"] for c in BUILTIN}
 

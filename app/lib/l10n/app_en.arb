@@ -789,5 +789,294 @@
   "saveAsFamilyDefault": "Save as family default",
   "removeFamilyDefault": "Remove family default",
   "familyTodayLayoutSaved": "Family default saved",
-  "familyTodayLayoutRemoved": "Family default removed"
+  "familyTodayLayoutRemoved": "Family default removed",
+  "templates": "Templates",
+  "templatesEmpty": "No templates yet. Create a packing list or the weekly shopping, for example.",
+  "templateNew": "New template",
+  "templateEdit": "Edit template",
+  "templateItemName": "Item",
+  "templateItemNote": "Quantity / note (optional)",
+  "templateAddItem": "Add item",
+  "templateRemoveItem": "Remove item",
+  "templateItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
+  "templateDeleteQuestion": "Delete template “{name}”?",
+  "templatePickItems": "Choose items",
+  "templateApplyShopping": "Add to the shopping list",
+  "templateApplyTasks": "Create as tasks",
+  "templateFamilyList": "Create on the family list",
+  "templateSaveShopping": "Save shopping list as template",
+  "templateSaved": "Template saved",
+  "templateAppliedShopping": "{added} added, {skipped} were already on the list",
+  "templateAppliedTasks": "{created} tasks created",
+  "templateAppliedPartial": "{failed} items could not be applied",
+  "templateListUnavailable": "The shopping list is not reachable right now",
+  "templateNothingSelected": "Choose at least one item",
+  "importFromLink": "Import from link",
+  "importLinkLabel": "Link to the recipe page",
+  "importFetch": "Read recipe",
+  "importPreviewHint": "Check the recipe and edit it before you save it.",
+  "importNoRecipe": "No recipe data was found on this page. Nothing was saved.",
+  "importBlocked": "The hub is not allowed to open this address.",
+  "importUnreachable": "The page could not be loaded.",
+  "importTooLarge": "The page is too large.",
+  "importInvalid": "This is not a valid link. It must start with http:// or https://.",
+  "birthdays": "Birthdays",
+  "birthdaysHint": "Birthdays, anniversaries and gift ideas",
+  "birthdaysEmpty": "Nothing here yet. Add birthdays and anniversaries so the hub can remind you in time.",
+  "addBirthday": "Add birthday or anniversary",
+  "editBirthday": "Edit entry",
+  "birthdayName": "Name",
+  "birthdayKindBirthday": "Birthday",
+  "birthdayKindAnniversary": "Anniversary",
+  "birthdayDay": "Day",
+  "birthdayMonth": "Month",
+  "birthdayYear": "Year (optional)",
+  "birthdayLeapHint": "29 February: in years without a leap day the hub uses 28 February.",
+  "birthdayInvalidDate": "That date does not exist.",
+  "birthdayLinkedUser": "Belongs to a hub account",
+  "birthdayNoUser": "None",
+  "birthdayLinkedHint": "This person cannot see the gift ideas.",
+  "birthdayRemind": "Reminder",
+  "birthdayRemindNone": "No reminder",
+  "birthdayRemindDays": "{days, plural, =0{On the day} =1{1 day before} other{{days} days before}}",
+  "@birthdayRemindDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayDeleteQuestion": "Delete entry?",
+  "birthdayDeleteHint": "Its gift ideas are deleted as well.",
+  "birthdayWhenBirthday": "{name}’s birthday is {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenBirthday": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenTurns": "{name} turns {age} {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenTurns": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversary": "{name}: anniversary {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenAnniversary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "birthdayWhenAnniversaryYears": "{name}: {years} years {days, plural, =0{today} =1{tomorrow} other{in {days} days}}",
+  "@birthdayWhenAnniversaryYears": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "years": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeas": "Gift ideas",
+  "giftIdeaCount": "{count, plural, =1{1 gift idea} other{{count} gift ideas}}",
+  "@giftIdeaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftIdeaText": "Gift idea",
+  "giftIdeaLink": "Link (optional)",
+  "giftIdeasEmpty": "No ideas yet. Collect them over the year.",
+  "giftIdeaDone": "Already bought",
+  "giftIdeaInvalidLink": "The link must start with http:// or https://.",
+  "timetable": "Timetable",
+  "timetableHint": "Lessons, sports, music and clubs of the children",
+  "timetableHolidays": "School holidays",
+  "timetableSchoolUntil": "School until {time}",
+  "@timetableSchoolUntil": {"placeholders": {"time": {}}},
+  "timetableNoChildren": "No child account yet. Create an account with the Child role and the timetable appears here.",
+  "timetableEmptyDay": "Nothing entered",
+  "timetableAddEntry": "Add entry",
+  "timetableEditEntry": "Edit entry",
+  "timetableKindSchool": "School",
+  "timetableKindSport": "Sports",
+  "timetableKindMusic": "Music",
+  "timetableKindClub": "Club",
+  "timetableKindOther": "Other",
+  "timetableStart": "Start",
+  "timetableEnd": "End",
+  "timetableLocationOptional": "Place (optional)",
+  "timetableWeekAll": "Every week",
+  "timetableWeekA": "Week A",
+  "timetableWeekB": "Week B",
+  "timetableDay": "Day",
+  "timetableCopyDay": "Copy day",
+  "timetableCopyDayTo": "Copy {day} to",
+  "@timetableCopyDayTo": {"placeholders": {"day": {}}},
+  "timetableCopyReplaces": "Existing entries on these days are replaced.",
+  "timetableCopyWeek": "Copy {src} to {dst}",
+  "@timetableCopyWeek": {"placeholders": {"src": {}, "dst": {}}},
+  "timetableCopied": "{count, plural, =1{1 entry copied} other{{count} entries copied}}",
+  "@timetableCopied": {"placeholders": {"count": {"type": "int"}}},
+  "timetableSettings": "Settings",
+  "timetableAbWeeks": "A/B weeks",
+  "timetableAbWeeksHelp": "For timetables that alternate every other week. Pick any week that is an A week.",
+  "timetableAbReference": "Week A: {date}",
+  "@timetableAbReference": {"placeholders": {"date": {}}},
+  "timetableAbOff": "Off",
+  "timetablePickWeek": "Pick week",
+  "timetableHolidayFeed": "Holiday calendar",
+  "timetableHolidayFeedHelp": "A calendar subscription (Administration, calendar subscriptions) whose events are school holidays. Lessons are hidden on those days.",
+  "timetableHolidayFeedNone": "None",
+  "timetableHolidayNow": "School holidays until {date}: lessons hidden",
+  "@timetableHolidayNow": {"placeholders": {"date": {}}},
+  "timetableHolidayNext": "Next holidays: {title} from {date}",
+  "@timetableHolidayNext": {"placeholders": {"title": {}, "date": {}}},
+  "timetableThisWeek": "This week: {week}",
+  "@timetableThisWeek": {"placeholders": {"week": {}}},
+  "timetableEndAfterStart": "The end must be after the start",
+  "starsTitle": "Stars",
+  "starsHint": "Collect stars, claim rewards",
+  "starsCount": "{n} stars",
+  "starsAvailable": "{n} available",
+  "starsReserved": "{n} reserved for requests",
+  "nextReward": "Next reward",
+  "starsMissing": "{n} more stars to go",
+  "rewardWithinReach": "You can ask for it!",
+  "rewards": "Rewards",
+  "starsNoRewards": "No rewards yet.",
+  "rewardRequest": "Request",
+  "rewardRequested": "Request sent",
+  "rewardStatusPending": "Waiting for approval",
+  "rewardStatusApproved": "Approved",
+  "rewardStatusDeclined": "Declined",
+  "rewardStatusCancelled": "Withdrawn",
+  "rewardWithdraw": "Withdraw",
+  "starsHistory": "History",
+  "starsNoHistory": "Nothing yet.",
+  "starsAwaiting": "Waiting for confirmation",
+  "starsRejected": "Not confirmed",
+  "starsToDecide": "To decide",
+  "starsApprove": "Approve",
+  "starsDecline": "Decline",
+  "starsConfirm": "Confirm",
+  "starsChildren": "Children",
+  "starsBonus": "Bonus or deduction",
+  "starsAmount": "Amount (negative = deduction)",
+  "starsReason": "Reason (optional)",
+  "addReward": "Add reward",
+  "rewardTitle": "Reward",
+  "rewardPrice": "Price in stars",
+  "rewardHide": "Hide",
+  "rewardShow": "Show",
+  "rewardHidden": "hidden",
+  "starsConfirmTasks": "Confirm completed tasks",
+  "starsConfirmTasksHint": "Stars only count once a parent has confirmed.",
+  "taskStars": "Stars for this task",
+  "starsWaitingForYou": "{n} waiting for you",
+  "starsNotEnough": "Not enough stars yet.",
+  "catStars": "Stars and rewards",
+  "backupTitle": "Backup",
+  "backupHint": "Back up and restore",
+  "backupLastLine": "Last backup: {date}",
+  "@backupLastLine": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupNoneYet": "No backup yet",
+  "backupLastFailed": "The last backup failed",
+  "backupDownload": "Download backup",
+  "backupDownloadHint": "Contains the database, the settings (credentials stay encrypted) and the hub's keys. Keep the file like a password.",
+  "backupCreateOnHub": "Store a backup on the hub",
+  "backupCreated": "Backup created",
+  "backupStored": "Stored backups",
+  "backupNoneStored": "No backups in the hub's data folder yet",
+  "backupAuto": "Nightly backup",
+  "backupAutoHint": "Every night from {time} into the hub's data folder",
+  "@backupAutoHint": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "backupKeep": "Keep the last backups: {count}",
+  "@backupKeep": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "backupRestore": "Restore",
+  "backupRestoreTitle": "Restore this backup?",
+  "backupRestoreWarning": "WARNING: All current data of the hub is replaced by this backup (from {date}). The current state is stored as a backup first. The hub must be restarted afterwards.",
+  "@backupRestoreWarning": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupRestoreConfirm": "Replace everything",
+  "backupRestoreDone": "Restored",
+  "backupRestartNeeded": "Please restart the hub now (docker compose restart familienhub) so everything reloads.",
+  "backupWarnSecretEnv": "SECRET_KEY is set in the environment and stays unchanged. If it differs from the backup's, stored credentials have to be entered again.",
+  "backupUploadHint": "A downloaded file can be placed in the hub's data folder under backups/ (docker compose cp file.zip familienhub:/app/data/backups/); it then shows up here.",
+  "backupDeleteQuestion": "Delete this backup?",
+  "backupDownloadStarted": "Download started",
+  "backupKindManual": "Manual",
+  "backupKindAuto": "Nightly",
+  "backupKindSafety": "Before a restore",
+  "backupKindUploaded": "Uploaded",
+  "backupErrNewer": "This backup was made by a newer Familienhub. Please update the hub first.",
+  "backupErrOlder": "This backup is from an older database layout. Restore it with the version that made it, then update.",
+  "backupErrInvalid": "This is not a valid Familienhub backup.",
+  "backupErrBusy": "A backup or restore is already running.",
+  "backupErrDir": "The data folder is not writable. Please mount a volume at /app/data.",
+  "backupErrSafety": "The current state could not be backed up first, so nothing was restored.",
+  "backupErrFailed": "That did not work. See the hub's log for details.",
+  "updateTitle": "Updates",
+  "updateHint": "Notice about new versions",
+  "updateAvailable": "Version {version} is available",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCurrent": "Installed: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateUpToDate": "The hub is up to date",
+  "updateReleaseNotes": "View release notes",
+  "updateCommand": "Update command on the server",
+  "updatePrerelease": "Pre-release",
+  "updateCheckSwitch": "Check for new versions",
+  "updateCheckHint": "The hub asks GitHub a few times a day. No data is sent.",
+  "updateRepo": "GitHub repository (owner/name)",
+  "updateOff": "The check is switched off",
+  "updateUnavailable": "GitHub is not reachable right now",
+  "updateUnknownVersion": "Development build: nothing to compare",
+  "updateBadRepo": "Please enter the repository as owner/name"
 }

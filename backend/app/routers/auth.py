@@ -8,7 +8,7 @@ import hmac
 import re
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -604,6 +604,8 @@ async def oidc_exchange(data: OIDCExchangeRequest, request: Request, db: Session
 
 class ApiTokenCreate(BaseModel):
     name: str
+    # None = unrestricted (as before). Otherwise scope names or the preset "voice"; such keys only reach /api/voice.
+    scopes: Optional[List[str]] = None
 
 
 def _token_payload(t) -> dict:
@@ -613,6 +615,7 @@ def _token_payload(t) -> dict:
         "hint": t.hint,
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "last_used_at": t.last_used_at.isoformat() if t.last_used_at else None,
+        "scopes": t.scope_list,
     }
 
 
@@ -638,8 +641,19 @@ async def create_api_token(data: ApiTokenCreate, db: Session = Depends(get_db), 
     name = data.name.strip()[:60]
     if not name:
         raise HTTPException(status_code=400, detail="Name fehlt")
+    scopes = None
+    if data.scopes is not None:
+        from app.models.api_token import SCOPE_PRESETS, VOICE_SCOPES
+
+        wanted = []
+        for s in data.scopes:
+            wanted.extend(SCOPE_PRESETS.get(s, (s,)))
+        unknown = [s for s in wanted if s not in VOICE_SCOPES]
+        if unknown or not wanted:
+            raise HTTPException(status_code=400, detail=f"Unknown scope: {', '.join(unknown) or '(none)'}")
+        scopes = " ".join(dict.fromkeys(wanted))
     raw = ApiToken.generate()
-    token = ApiToken(user_id=current_user.id, name=name, token_hash=ApiToken.hash(raw), hint=raw[:8])
+    token = ApiToken(user_id=current_user.id, name=name, token_hash=ApiToken.hash(raw), hint=raw[:8], scopes=scopes)
     db.add(token)
     db.commit()
     db.refresh(token)

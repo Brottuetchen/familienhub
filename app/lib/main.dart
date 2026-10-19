@@ -98,6 +98,8 @@ class _AuthGateState extends ConsumerState<AuthGate> {
           _handleLink(Uri(scheme: 'familienhub', host: 'auth', queryParameters: {'code': q['oidc_code']!}));
         }
         if (q['route'] != null) openRoute(ref, q['route']!);
+        final shared = extractSharedUrl([q['share_url'], q['share_text'], q['share_title']]);
+        if (shared != null) ref.read(shareImportUrlProvider.notifier).state = shared;
       });
       return;
     }

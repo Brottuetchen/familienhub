@@ -6,7 +6,7 @@
 
 Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
 
-[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
+[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Birthdays](docs/birthdays.md) · [Timetable](docs/timetable.md) · [Kids mode](docs/kids-mode.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
@@ -40,8 +40,10 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 - **Today:** greeting, tasks (mine / for me / family), shopping, events, meal plan, reminders and house tiles on one screen
 - **Calendar:** list, week and month views, colours and filter per calendar, new events land in exactly the chosen calendar (family first), edit and delete; the same CalDAV calendars and reminders on iPhone and Android, see [calendar & phone](docs/calendar.md)
+- **Timetable for children:** weekly lessons, sports, music and clubs per child with optional A/B weeks and school holidays from a calendar subscription, a Today card, copy day / week; parents edit, children view, see [timetable](docs/timetable.md)
 - **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side. A task for someone lands in the recipient's own place (set in the profile), not where the creator works
-- **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo
+- **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo; reusable [template lists](docs/templates.md) (packing list, weekly shopping) for the shopping list and tasks; import a recipe from a link ([docs](docs/recipe-import.md))
+- **Birthdays and anniversaries:** yearly, with age, in the calendar and on Today, reminders days before and gift ideas the birthday person cannot see, see [birthdays](docs/birthdays.md)
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
 - **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
 - **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books, and discover books available in German
@@ -115,7 +117,9 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 | [Getting started](docs/getting-started.md) | install, reach it, apps, people and sign-in, backup |
 | [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
 | [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
+| [Voice assistant](docs/voice-assistant.md) | Home Assistant Assist: shopping, tasks, meals, events, reminders by voice |
 | [Plugins](docs/plugins.md) | what ships, install a plugin from a GitHub link, write and share one; [plugin template](examples/plugin-template/) |
+| [Kids mode](docs/kids-mode.md) | stars for tasks, rewards, requests and confirmations |
 | [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
 | [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
 | [Roadmap](docs/roadmap.md) | what's done, next and later |

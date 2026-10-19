@@ -5,14 +5,17 @@ import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/account.dart';
+import '../models/birthday.dart';
 import '../models/calendar_event.dart';
 import '../models/common.dart';
 import '../models/meals.dart';
 import '../models/modules.dart';
 import '../models/pending.dart';
 import '../models/shopping.dart';
+import '../models/stars.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/timetable.dart';
 import '../models/today_layout.dart';
 import '../services/api_client.dart';
 import 'cached_read.dart';
@@ -200,6 +203,18 @@ final canEditProvider = Provider<bool>((ref) => ref.watch(roleLevelProvider) >= 
 enum AppTab { today, calendar, tasks, shopping, meals, more }
 
 final tabProvider = StateProvider<AppTab>((ref) => AppTab.today);
+
+/// A link shared into the app (PWA share target): the main screen opens "Import from link" with it.
+final shareImportUrlProvider = StateProvider<String?>((ref) => null);
+
+/// First http(s) link in shared text (browsers often put the link into the text field), or null.
+String? extractSharedUrl(Iterable<String?> parts) {
+  for (final part in parts) {
+    final m = RegExp(r'https?://[^\s<>"]+', caseSensitive: false).firstMatch(part ?? '');
+    if (m != null) return m.group(0);
+  }
+  return null;
+}
 final taskViewProvider = StateProvider<TaskView>((ref) => TaskView.mine);
 
 /// Ziel aus einer Push-Mitteilung (`data.route`), z. B. `/tasks?view=for_me`.
@@ -264,6 +279,10 @@ final todayProvider = StateNotifierProvider<CachedRead<TodayData>, AsyncValue<Ap
 final todayLayoutProvider = StateNotifierProvider<CachedRead<TodayLayout>, AsyncValue<ApiResult<TodayLayout>>>(
   (ref) => _cachedRead(ref, 'layout:today', TodayLayout.fromJson, (api) => api.todayLayout()));
 
+/// Own stars for the Today card and the stars screen (errors fall back to "no stars feature").
+final starsProvider = StateNotifierProvider<CachedRead<StarsSummary>, AsyncValue<ApiResult<StarsSummary>>>(
+  (ref) => _cachedRead(ref, 'stars:me', StarsSummary.fromJson, (api) => api.starsMe()));
+
 final tasksProvider = StateNotifierProvider.family<CachedRead<SourceResult<Task>>, AsyncValue<ApiResult<SourceResult<Task>>>, TaskView>(
   (ref, view) => _cachedRead(ref, 'tasks:${view.apiName}',
     (j) => SourceResult.fromJson(j as Map<String, dynamic>, Task.fromJson),
@@ -296,8 +315,20 @@ final eventsRangeProvider = StateNotifierProvider.family<CachedRead<List<Calenda
         (api) => api.eventsRange(DateTime.parse(parts[0]), int.parse(parts[1])));
   });
 
+final timetableChildrenProvider = FutureProvider.autoDispose<List<TimetableChild>>(
+    (ref) => ref.watch(apiClientProvider).timetableChildren());
+
+final timetableProvider = FutureProvider.autoDispose.family<TimetableData, int>(
+    (ref, childId) => ref.watch(apiClientProvider).timetable(childId));
+
 final remindersProvider = FutureProvider.autoDispose<List<Reminder>>(
     (ref) => ref.watch(apiClientProvider).reminders());
+
+final birthdaysProvider = FutureProvider.autoDispose<List<Birthday>>(
+    (ref) => ref.watch(apiClientProvider).birthdays());
+
+final giftIdeasProvider = FutureProvider.autoDispose.family<List<GiftIdea>, int>(
+    (ref, birthdayId) => ref.watch(apiClientProvider).giftIdeas(birthdayId));
 
 final devicesProvider = FutureProvider.autoDispose<List<Device>>(
     (ref) => ref.watch(apiClientProvider).devices());

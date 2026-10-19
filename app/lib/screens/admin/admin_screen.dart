@@ -8,9 +8,11 @@ import '../more/appearance_screen.dart';
 import '../more/plugins_admin_screen.dart';
 import '../more/service_keys_screen.dart';
 import '../setup/setup_wizard_screen.dart';
+import 'admin_backup_screen.dart';
 import 'admin_feedback_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
+import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
 import '../../l10n/l10n.dart';
 import 'sources_screen.dart';
@@ -28,8 +30,10 @@ class AdminScreen extends ConsumerWidget {
     void open(Widget page) async {
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
       ref.invalidate(adminOverviewProvider);
+      ref.invalidate(updateInfoProvider);
     }
 
+    final update = ref.watch(updateInfoProvider).valueOrNull; // a failed check just shows nothing
     return Scaffold(
       appBar: AppBar(title: Text(l10n.administration)),
       body: HubRefresh(
@@ -46,6 +50,21 @@ class AdminScreen extends ConsumerWidget {
                 data: (o) => _OverviewCard(overview: o),
               ),
             ),
+            if (update != null && update.available)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Card(
+                  key: const Key('admin-update-banner'),
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: ListTile(
+                    leading: const Icon(Icons.system_update_alt),
+                    title: Text(l10n.updateAvailable(update.latest ?? '?')),
+                    subtitle: Text(l10n.updateReleaseNotes),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => open(const AdminUpdateScreen()),
+                  ),
+                ),
+              ),
             _Area(
               key: const Key('admin-wizard'),
               icon: Icons.auto_fix_high_outlined,
@@ -99,6 +118,24 @@ class AdminScreen extends ConsumerWidget {
               title: l10n.feedback,
               subtitle: l10n.feedbackAdminHint,
               onTap: () => open(const AdminFeedbackScreen()),
+            ),
+            _Area(
+              key: const Key('admin-backup'),
+              icon: Icons.backup_outlined,
+              title: l10n.backupTitle,
+              subtitle: overview.valueOrNull == null
+                  ? l10n.backupHint
+                  : overview.value!.lastBackup == null
+                      ? l10n.backupNoneYet
+                      : l10n.backupLastLine(backupDate(overview.value!.lastBackup!)),
+              onTap: () => open(const AdminBackupScreen()),
+            ),
+            _Area(
+              key: const Key('admin-updates'),
+              icon: Icons.system_update_alt,
+              title: l10n.updateTitle,
+              subtitle: update == null ? l10n.updateHint : updateStatusText(update),
+              onTap: () => open(const AdminUpdateScreen()),
             ),
             _Area(
               key: const Key('admin-log'),

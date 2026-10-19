@@ -8,6 +8,7 @@ import '../../models/shopping.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
+import '../templates/templates_screen.dart';
 
 /// Zuletzt eingegebene Artikel als Vorschläge (lokal, weil `/api/shopping/recent` noch leer ist).
 class RecentItems {
@@ -118,6 +119,17 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
             tooltip: _showDone ? l10n.hideDone : l10n.showDone,
             icon: Icon(_showDone ? Icons.visibility_off_outlined : Icons.visibility_outlined),
             onPressed: () => setState(() => _showDone = !_showDone),
+          ),
+          PopupMenuButton<String>(
+            key: const Key('shopping-menu'),
+            onSelected: (v) => v == 'save'
+                ? saveShoppingAsTemplate(context, ref)
+                : Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => const TemplatesScreen(target: TemplateTarget.shopping))),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'templates', child: Text(l10n.templates)),
+              if (ref.read(canEditProvider)) PopupMenuItem(value: 'save', child: Text(l10n.templateSaveShopping)),
+            ],
           ),
         ],
       ),

@@ -14,7 +14,10 @@ import 'appearance_screen.dart';
 import 'profile_screen.dart';
 import 'caldav_account_screen.dart';
 import 'notification_settings_screen.dart';
+import 'birthdays_screen.dart';
 import 'reminders_screen.dart';
+import '../timetable/timetable_screen.dart';
+import '../stars/stars_screen.dart';
 import 'task_lists_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -65,6 +68,29 @@ class MoreScreen extends ConsumerWidget {
             title: Text(l10n.reminders),
             onTap: () => open(const RemindersScreen()),
           ),
+          if (canAct)
+            ListTile(
+              leading: const Icon(Icons.cake_outlined),
+              title: Text(l10n.birthdays),
+              subtitle: Text(l10n.birthdaysHint),
+              onTap: () => open(const BirthdaysScreen()),
+            ),
+          if (canAct)
+            ListTile(
+              key: const Key('more-timetable'),
+              leading: const Icon(Icons.calendar_view_week_outlined),
+              title: Text(l10n.timetable),
+              subtitle: Text(l10n.timetableHint),
+              onTap: () => open(const TimetableScreen()),
+            ),
+          if (canAct)
+            ListTile(
+              key: const Key('more-stars'),
+              leading: const Icon(Icons.star_outline_rounded),
+              title: Text(l10n.starsTitle),
+              subtitle: Text(l10n.starsHint),
+              onTap: () => open(const StarsScreen()),
+            ),
           if (modules.has('documents'))
             ListTile(
               leading: const Icon(Icons.description_outlined),

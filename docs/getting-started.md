@@ -94,7 +94,30 @@ Everyone arranges their own "Today" screen with the sliders icon in its header: 
 
 ## 7. Backup
 
-Back up the PostgreSQL volume (`familienhub_db`), the data volume (`familienhub_data`, holds the generated secret key; without it stored plugin credentials cannot be decrypted) and `.env` if you have one. Tasks, shopping lists, documents and the like live in the connected services.
+**In the app:** *Administration → Backup* (admins only).
+
+- **Download backup** saves one ZIP file through your browser. It contains the whole database (people, settings, themes, installed-plugin records, profile pictures and so on), and the hub's keys (`secret_key`, `vapid.json`). Stored plugin credentials stay encrypted exactly as they are in the database; the secret key in the file is what makes them readable again on a new machine. **Keep the file like a password**, anyone with it can read your credentials.
+- **Store a backup on the hub** writes the same file to `/app/data/backups` (the `familienhub_data` volume).
+- **Nightly backup** (off by default): from 03:30 (hub time zone) the hub stores a backup there every night and keeps the last N (1 to 30, default 7). `BACKUP_AUTO` and `BACKUP_KEEP` in `.env` set the defaults.
+- *Administration* shows the date of the last backup. A failed backup is reported there and in the hub log; it never stops the hub.
+- Documents, tasks, shopping lists and the like live in the connected services (Paperless, Nextcloud, ...) and are not part of this backup.
+- The installed plugins' code is not in the file. The hub keeps their records; after a restore onto an empty volume, reinstall them under *Plugins & access* if they are missing.
+
+The backup is a logical dump, so it works the same for the bundled PostgreSQL and for SQLite (which is copied with SQLite's online backup first, never as a live file). A backup from one can be restored into the other.
+
+**Restoring:** click *Restore* next to a stored backup. The hub checks the file first and shows a warning: **all current data is replaced.** Before it replaces anything, the hub stores the current state as a backup of its own (`familienhub-prerestore-...`, the last three are kept). Afterwards **restart the hub** (`docker compose restart familienhub`), because settings and keys are loaded at start. People who are not in the backup are signed out.
+
+- A backup from a **newer** Familienhub version is refused. So is a backup with a different database layout (an older version): run that version, restore, then update.
+- To restore a downloaded file onto a hub (for example a new installation), copy it into the data volume, and it shows up in the list:
+
+  ```bash
+  docker compose cp familienhub-backup-20261018-120000.zip familienhub:/app/data/backups/
+  ```
+
+  Or upload it through the API (admin token needed): `curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/octet-stream" --data-binary @file.zip https://<hub>/api/admin/backup/upload`.
+- If `SECRET_KEY` is set explicitly in the environment, a restore leaves it alone; credentials in the backup then only work if it is the same key.
+
+Not covered by the app: the backup lives next to the data it protects. Copy the files from `/app/data/backups` somewhere else (another disk, another machine) regularly. Also keep your `.env` if you have one.
 
 ## 8. Update
 
@@ -103,3 +126,5 @@ docker compose pull && docker compose up -d
 ```
 
 To pin a version, set `FAMILIENHUB_VERSION` in `.env` (default `latest`). If you build from source: `git pull` and then the build command from above.
+
+**Update notice:** the hub checks the GitHub releases of `Brottuetchen/familienhub` a few times a day (cached, nothing but the request itself is sent). When a newer release exists, *Administration* shows a notice with the version, a link to the release notes and the update command. Pre-releases (`-beta.N`) are only offered while you run a pre-release yourself; then the command pins the version, because `latest` never points at a pre-release. Under *Administration → Updates* you can switch the check off, or point it to a fork (`UPDATE_CHECK=false`, `UPDATE_CHECK_REPO=owner/name` in `.env`). If GitHub is not reachable nothing is shown. Development builds (no version number) skip the check. Make a backup before you update.

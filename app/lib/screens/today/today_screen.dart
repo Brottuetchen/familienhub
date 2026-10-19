@@ -9,6 +9,9 @@ import '../../models/today_layout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../main_shell.dart';
+import '../more/birthdays_screen.dart';
+import '../timetable/timetable_screen.dart';
+import '../stars/stars_screen.dart';
 import 'house_controls.dart';
 import 'today_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -121,8 +124,18 @@ class TodayScreen extends ConsumerWidget {
         .toList();
     final tasksOk = filter == null ? data.tasks.isOk : (filtered?.isOk ?? true);
     final nextEvent = data.events.isEmpty ? null : data.events.first;
+    final stars = ref.watch(starsProvider).valueOrNull?.data;
 
     return {
+      // Kids mode: only for people who use stars (the server decides), so everyone else sees no card
+      if (stars != null && stars.enabled)
+        'stars': SectionCard(
+          key: const Key('today-stars'),
+          icon: Icons.star_rounded,
+          title: l10n.starsTitle,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StarsScreen())),
+          child: StarsTile(summary: stars),
+        ),
       if (modules.has('calendar'))
         'events': SectionCard(
           key: const Key('today-events'),
@@ -191,6 +204,39 @@ class TodayScreen extends ConsumerWidget {
           onTap: () => go(AppTab.shopping),
           child: ShoppingQuick(openCount: data.shoppingOpen, online: online),
         ),
+      if (data.birthdays.isNotEmpty)
+        'birthdays': SectionCard(
+          key: const Key('today-birthdays'),
+          icon: Icons.cake_outlined,
+          title: l10n.birthdays,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const BirthdaysScreen())),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final b in data.birthdays) _Line(leading: '', text: b.whenText, wide: true),
+            ],
+          ),
+        ),
+      if (data.timetable.isNotEmpty)
+        'timetable': SectionCard(
+          key: const Key('today-timetable'),
+          icon: Icons.calendar_view_week_outlined,
+          title: l10n.timetable,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TimetableScreen())),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final c in data.timetable)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text.rich(TextSpan(children: [
+                    TextSpan(text: '${c.name}: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    TextSpan(text: c.summary),
+                  ])),
+                ),
+            ],
+          ),
+        ),
       if (data.reminders.isNotEmpty)
         'reminders': SectionCard(
           key: const Key('today-reminders'),
@@ -211,7 +257,8 @@ class _Line extends StatelessWidget {
   final String leading;
   final Color? leadingColor;
   final String text;
-  const _Line({required this.leading, required this.text, this.leadingColor});
+  final bool wide; // no leading column: the text takes the whole line
+  const _Line({required this.leading, required this.text, this.leadingColor, this.wide = false});
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +268,7 @@ class _Line extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!wide)
           SizedBox(
             width: 92,
             child: Text(

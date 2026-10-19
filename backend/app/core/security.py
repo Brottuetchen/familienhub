@@ -159,7 +159,7 @@ def log_login_attempt(username: str, ip_address: str, success: bool, db: Session
 
 # === Dependencies ===
 
-def _user_from_api_token(raw: str, db: Session, unauthorized: HTTPException) -> User:
+def _user_from_api_token(raw: str, db: Session, unauthorized: HTTPException, request: Optional[Request] = None) -> User:
     from app.models.api_token import ApiToken
 
     token = (
@@ -177,7 +177,26 @@ def _user_from_api_token(raw: str, db: Session, unauthorized: HTTPException) -> 
     if not token.last_used_at or (now - token.last_used_at).total_seconds() > 60:
         token.last_used_at = now
         db.commit()
+    if request is not None:
+        scopes = token.scope_list
+        request.state.api_token_scopes = scopes
+        # A scoped key (e.g. for a voice assistant) never reaches the normal API, only /api/voice
+        if scopes is not None and not request.url.path.startswith("/api/voice/"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail="This access key is limited to voice assistant use")
     return user
+
+
+def require_scope(scope: str):
+    """Dependency-Factory: an API token with scopes needs ``scope``; sessions and unrestricted keys pass."""
+
+    async def _dep(request: Request, current_user: User = Depends(get_current_user)) -> User:
+        scopes = getattr(request.state, "api_token_scopes", None)
+        if scopes is not None and scope not in scopes:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Access key lacks scope: {scope}")
+        return current_user
+
+    return _dep
 
 
 async def get_current_user(
@@ -195,7 +214,7 @@ async def get_current_user(
 
     # Persönlicher Zugangsschlüssel (z. B. Sprachassistenten)
     if credentials.credentials.startswith(TOKEN_PREFIX):
-        return _user_from_api_token(credentials.credentials, db, credentials_exception)
+        return _user_from_api_token(credentials.credentials, db, credentials_exception, request)
 
     payload = verify_token(credentials.credentials, token_type="access")
     if not payload:

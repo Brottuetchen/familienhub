@@ -23,6 +23,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
 - **Books:** "Discover" with German-language sources *(done 18.10.: Open Library shelves, German titles)*
 - **Customisable home screen:** each person arranges "Today" (show or hide cards, order, size), with defaults set by the admin *(done 19.10.)*
+- **Kids mode:** stars for tasks and rewards parents define, requests parents approve, optional confirmation of completed tasks, a stars card on the child's Today, see [kids mode](kids-mode.md) *(done 19.10.)*
 - **iOS widgets** (WidgetKit extension)
 
 ## Later

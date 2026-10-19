@@ -25,6 +25,25 @@ DEFAULT = "de"
 
 EN: Dict[str, str] = {
     "Zeitüberschreitung": "Timed out",
+    # --- birthdays ---
+    "Geburtstage sind für Gäste nicht sichtbar": "Birthdays are not visible to guests",
+    "Geschenkidee nicht gefunden": "Gift idea not found",
+    "Ungültiges Datum": "Invalid date",
+    "Link muss mit http:// oder https:// beginnen": "The link must start with http:// or https://",
+    "Nur eigene Geschenkideen ändern": "You can only change your own gift ideas",
+    "Nur eigene Geschenkideen löschen": "You can only delete your own gift ideas",
+    "Geburtstag heute": "Birthday today",
+    "Geburtstag morgen": "Birthday tomorrow",
+    "Geburtstag in {days} Tagen": "Birthday in {days} days",
+    "Jahrestag heute": "Anniversary today",
+    "Jahrestag morgen": "Anniversary tomorrow",
+    "Jahrestag in {days} Tagen": "Anniversary in {days} days",
+    "Geburtstag heute · wird {age}": "Birthday today · turns {age}",
+    "Geburtstag morgen · wird {age}": "Birthday tomorrow · turns {age}",
+    "Geburtstag in {days} Tagen · wird {age}": "Birthday in {days} days · turns {age}",
+    "Jahrestag heute · {age}. Jahrestag": "Anniversary today · {age} years",
+    "Jahrestag morgen · {age}. Jahrestag": "Anniversary tomorrow · {age} years",
+    "Jahrestag in {days} Tagen · {age}. Jahrestag": "Anniversary in {days} days · {age} years",
     # --- week shopping list ---
     "Keine Rezepte im Zeitraum geplant.": "No recipes planned in this period.",
     "Einkaufsliste aktualisiert.": "Shopping list updated.",
@@ -133,6 +152,12 @@ EN: Dict[str, str] = {
     "Einladungscode ungültig oder abgelaufen – bitte um einen neuen": "Invite code invalid or expired – please ask for a new one",
     "Einrichtungscode stimmt nicht (steht im Server-Log)": "Wrong setup code (it is in the server log)",
     "Eintrag nicht gefunden": "Entry not found",
+    "Vorlage nicht gefunden": "Template not found",
+    "Name der Vorlage fehlt": "The template needs a name",
+    "Keine Einträge ausgewählt": "No items selected",
+    "Einkaufsliste nicht verfügbar": "The shopping list is not available",
+    "Die Einkaufsliste ist leer": "The shopping list is empty",
+    "Ungültige Liste": "Invalid list",
     "Ende liegt vor dem Start": "The end is before the start",
     "Entität nicht zum Schreiben freigegeben": "This entity is not enabled for writing",
     "Erinnerung beim Heimkommen hat keine Uhrzeit": "A when-I-get-home reminder has no time",
@@ -499,6 +524,24 @@ EN: Dict[str, str] = {
     "Manifest: hosts ist eine Liste von Hostnamen ohne https://, höchstens 20":
         "Manifest: hosts is a list of host names without https://, at most 20",
     "Manifest: capabilities erlaubt nur {names}": "Manifest: capabilities only allows {names}",
+    # --- kids mode: stars and rewards ---
+    "Eintrag nicht gefunden": "Entry not found",
+    "Eigene Sterne kannst du nicht selbst bestätigen": "You cannot confirm your own stars",
+    "Dieser Eintrag wurde bereits entschieden": "This entry has already been decided",
+    "Ungültige Anzahl Sterne": "Invalid number of stars",
+    "Nicht genug Sterne": "Not enough stars",
+    "Belohnung nicht gefunden": "Reward not found",
+    "Anfrage nicht gefunden": "Request not found",
+    "Diese Anfrage wurde bereits entschieden": "This request has already been decided",
+    "Eigene Anfragen kannst du nicht selbst entscheiden": "You cannot decide on your own requests",
+    "Habitica vergibt eigene Belohnungen": "Habitica hands out its own rewards",
+    "Nur der Verlauf der eigenen Sterne ist sichtbar": "Only the history of your own stars is visible",
+    "Eigene Sterne kannst du nicht selbst ändern": "You cannot change your own stars",
+    "Belohnung gewünscht": "Reward requested",
+    "Belohnung bewilligt": "Reward approved",
+    "Belohnung abgelehnt": "Reward declined",
+    "Sterne bestätigen": "Confirm stars",
+    "Sterne bestätigt": "Stars confirmed",
 }
 
 # Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)

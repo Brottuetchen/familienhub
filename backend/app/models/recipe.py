@@ -22,6 +22,7 @@ class Recipe(Base):
     prep_minutes = Column(Integer, nullable=True)
     tags = Column(String, nullable=True)  # kommagetrennt
     source_url = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)  # link to the picture (not copied; see docs)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -46,6 +46,9 @@ class Task {
   final String recurrence;
   final List<int> rotation;
 
+  /// Kids mode: stars for completing the task (0 = none).
+  final int stars;
+
   /// Task the person gave to someone else; it lives in the recipient's own place ([via]) and only shows its status.
   final bool readOnly;
   final String? via;
@@ -70,6 +73,7 @@ class Task {
     this.assignee,
     this.recurrence = 'none',
     this.rotation = const [],
+    this.stars = 0,
     this.readOnly = false,
     this.via,
     this.stale = false,
@@ -101,6 +105,7 @@ class Task {
       assignee: parseInt(json['assignee']),
       recurrence: (json['recurrence'] as String?) ?? 'none',
       rotation: ((json['rotation'] as List?) ?? const []).map(parseInt).whereType<int>().toList(),
+      stars: parseInt(json['stars']) ?? 0,
       readOnly: json['read_only'] == true,
       via: json['via'] as String?,
       stale: json['stale'] == true,

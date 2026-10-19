@@ -46,7 +46,12 @@ def _core_settings():
                     help="merge = Zutaten auf unsere Einkaufsliste zusammenführen (Standard); "
                          "source = Zutaten von Cookidoo/Mealie in der Liste der Rezeptquelle lassen"),
             Setting("TASKS_SOURCES", "Aufgaben aus", required=False),
-            Setting("CALENDAR_SOURCES", "Termine aus", required=False))
+            Setting("CALENDAR_SOURCES", "Termine aus", required=False),
+            # Backups and update notice (Administration → Backup / Updates)
+            Setting("BACKUP_AUTO", "Nightly backup", required=False),
+            Setting("BACKUP_KEEP", "Backups to keep", required=False),
+            Setting("UPDATE_CHECK", "Update notice", required=False),
+            Setting("UPDATE_CHECK_REPO", "Repository for the update notice", required=False))
 
 
 def _specs():

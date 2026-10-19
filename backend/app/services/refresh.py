@@ -115,6 +115,9 @@ def schedule_refresh(scope: str) -> None:
 # Pfad-Präfix → Bereich. Nur Änderungen an Daten, die Widgets/Heute zeigen.
 PATH_SCOPES = (
     ("/api/shopping", "shopping"),
+    ("/api/voice/shopping", "shopping"),
+    ("/api/voice/tasks", "tasks"),
+    ("/api/voice/reminders", "reminders"),
     ("/api/tasks", "tasks"),
     ("/api/meals", "meals"),
     ("/api/cookidoo/plan", "meals"),

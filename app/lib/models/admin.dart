@@ -46,6 +46,7 @@ class AdminOverview {
   final int fcmDevices;
   final int webpushDevices;
   final int activeUsers;
+  final DateTime? lastBackup;
 
   const AdminOverview({
     required this.version,
@@ -55,6 +56,7 @@ class AdminOverview {
     this.fcmDevices = 0,
     this.webpushDevices = 0,
     this.activeUsers = 0,
+    this.lastBackup,
   });
 
   int get problems => plugins.where((p) => p.status == 'error').length;
@@ -73,6 +75,7 @@ class AdminOverview {
       fcmDevices: (devices['fcm'] as int?) ?? 0,
       webpushDevices: (devices['webpush'] as int?) ?? 0,
       activeUsers: ((j['users'] as Map?)?['active'] as int?) ?? 0,
+      lastBackup: DateTime.tryParse(((j['backup'] as Map?)?['last_at'] as String?) ?? ''),
     );
   }
 }

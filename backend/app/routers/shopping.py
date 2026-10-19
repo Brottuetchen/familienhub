@@ -2,7 +2,7 @@
 
 import logging
 
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
@@ -338,3 +338,21 @@ async def recipes_to_shopping(service, recipe_ids, user_id: Optional[int] = None
     if native:
         count += await service.ingredients_to_shopping(native)
     return count
+
+
+async def open_shopping_summaries() -> Optional[List[str]]:
+    """Texts of the open entries of the active shopping list; None when there is no list or it cannot be read."""
+    source = _hub_source()
+    try:
+        if source is not None:
+            if hasattr(source, "open_items"):
+                return [str(r["summary"]) for r in await source.open_items()]
+            groups = (await source.groups()).get("groups", [])
+            return [i["summary"] for g in groups for i in g["items"] if i.get("status") == "needs_action"]
+        ha = _ha()
+        if ha is None:
+            return None
+        return [i["summary"] for i in await ha.get_todo_items(settings.ha_shopping_todo) if i.get("summary")]
+    except Exception as exc:  # noqa: BLE001 - fail softly, the caller decides what to do without the list
+        logger.warning("Open shopping entries not read: %s", type(exc).__name__)
+        return None

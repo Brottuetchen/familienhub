@@ -10,6 +10,7 @@ import 'habitica_tasks.dart';
 import '../main_shell.dart';
 import '../more/caldav_account_screen.dart';
 import '../../l10n/l10n.dart';
+import '../templates/templates_screen.dart';
 
 /// „überfällig“, „heute“, „morgen“, „Fr, 17.10.“ oder leer.
 String taskDueLabel(Task t, {DateTime? now}) {
@@ -116,7 +117,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
             await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProtectedReadModal(
               provider: tasksProvider(TaskView.mine), child: const HabiticaAccountScreen())));
             ref.invalidate(taskAccountsProvider); await refreshTasks(ref);
-          })],
+          }),
+          PopupMenuButton<String>(
+            key: const Key('tasks-menu'),
+            onSelected: (_) => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => const TemplatesScreen(target: TemplateTarget.tasks))),
+            itemBuilder: (_) => [PopupMenuItem(value: 'templates', child: Text(l10n.templates))],
+          )],
         bottom: TabBar(
           controller: _tabs,
           isScrollable: !wide,
@@ -355,6 +362,7 @@ class _TaskListState extends ConsumerState<_TaskList> {
       if (t.isHabitica) habiticaLabel(t),
       if (t.isHabitica && t.native['type'] == 'reward') '${t.native['value']} GP',
       if (t.rotation.isNotEmpty) reminderRecurrences[t.recurrence] ?? t.recurrence,
+      if (t.stars > 0) l10n.starsCount(t.stars),
     ];
     return parts.isEmpty ? null : Text(parts.join(' · '));
   }
@@ -494,6 +502,7 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
   num _difficulty = 1;
   String? _attribute;
   int _priority = 0;
+  int _stars = 0;
   final _tags = <String>{};
   List<Map<String, dynamic>>? _habiticaTags;
 
@@ -604,6 +613,16 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
         onChanged: _saving ? null : (v) => setState(() => _priority = v ?? 0),
       ));
     }
+    if (place != 'habitica') {
+      fields.add(DropdownButtonFormField<int>(
+        key: const Key('task-field-stars'),
+        isExpanded: true,
+        initialValue: _stars,
+        decoration: InputDecoration(labelText: l10n.taskStars),
+        items: [for (final n in _starOptions) DropdownMenuItem(value: n, child: Text('$n'))],
+        onChanged: _saving ? null : (v) => setState(() => _stars = v ?? 0),
+      ));
+    }
     return [for (final (i, w) in fields.indexed) ...[if (i > 0) const SizedBox(height: 12), w]];
   }
 
@@ -629,6 +648,7 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
             rotation: _household ? List.of(_rotation) : const [],
             meId: meId,
             priority: place != null && place != 'habitica' && _priority > 0 ? _priority : null,
+            stars: place != 'habitica' ? _stars : null,
             native: place == 'habitica'
                 ? {
                     'type': 'todo',
@@ -783,6 +803,9 @@ class _TaskCreateSheetState extends ConsumerState<TaskCreateSheet> {
 }
 
 
+/// Star values offered for a task (kids mode); 0 = none.
+const _starOptions = [0, 1, 2, 3, 5, 8, 10, 15, 20];
+
 class TaskEditSheet extends ConsumerStatefulWidget {
   final Task task;
   const TaskEditSheet({super.key, required this.task});
@@ -794,6 +817,7 @@ class _TaskEditState extends ConsumerState<TaskEditSheet> {
   late final TextEditingController _title, _notes;
   late DateTime? _due;
   late int? _priority;
+  late int _stars = widget.task.stars;
   bool _busy = false;
   @override
   void initState() { super.initState(); _title = TextEditingController(text: widget.task.title); _notes = TextEditingController(text: widget.task.notes); _due = widget.task.due; _priority = widget.task.priority; }
@@ -801,7 +825,7 @@ class _TaskEditState extends ConsumerState<TaskEditSheet> {
   void dispose() { _title.dispose(); _notes.dispose(); super.dispose(); }
   Future<void> _save() async {
     setState(() => _busy = true);
-    final ok = await runAction(context, () => ref.read(apiClientProvider).updateTask(widget.task, title: _title.text, notes: _notes.text, due: _due, priority: _priority));
+    final ok = await runAction(context, () => ref.read(apiClientProvider).updateTask(widget.task, title: _title.text, notes: _notes.text, due: _due, priority: _priority, stars: widget.task.isHabitica ? null : _stars));
     if (!mounted) return;
     setState(() => _busy = false);
     if (ok) Navigator.pop(context, true);
@@ -835,6 +859,17 @@ class _TaskEditState extends ConsumerState<TaskEditSheet> {
             items: [for (final p in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) DropdownMenuItem(value: p, child: Text('$p'))],
             onChanged: _busy ? null : (v) => setState(() => _priority = v),
           ),
+          if (!widget.task.isHabitica) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<int>(
+              key: const Key('edit-stars'),
+              isExpanded: true,
+              initialValue: _stars,
+              decoration: InputDecoration(labelText: l10n.taskStars),
+              items: [for (final n in {..._starOptions, _stars}.toList()..sort()) DropdownMenuItem(value: n, child: Text('$n'))],
+              onChanged: _busy ? null : (v) => setState(() => _stars = v ?? 0),
+            ),
+          ],
           const SizedBox(height: 8),
           ListTile(
             key: const Key('edit-due'),

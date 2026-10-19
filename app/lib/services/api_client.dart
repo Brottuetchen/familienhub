@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/account.dart';
 import '../models/admin.dart';
+import '../models/backup.dart';
+import '../models/birthday.dart';
 import '../models/books.dart';
 import '../models/calendar_event.dart';
 import '../models/common.dart';
@@ -18,11 +20,14 @@ import '../models/meals.dart';
 import '../models/modules.dart';
 import '../models/plugin_install.dart';
 import '../models/pending.dart';
+import '../models/list_template.dart';
 import '../models/shopping.dart';
 import '../models/themes.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/timetable.dart';
 import '../models/today_layout.dart';
+import '../models/stars.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
 import '../l10n/l10n.dart';
@@ -380,8 +385,10 @@ class ApiClient {
 
   Future<void> _invalidateMutation(String path) async {
     final prefixes = <String>[];
-    if (path.startsWith('/api/tasks')) {
-      prefixes.addAll(['tasks:', 'today']);
+    if (path.startsWith('/api/stars')) {
+      prefixes.addAll(['stars', 'tasks:']);
+    } else if (path.startsWith('/api/tasks')) {
+      prefixes.addAll(['tasks:', 'today', 'stars']);
       if (path.endsWith('/caldav')) prefixes.add('events:');
     } else if (path.startsWith('/api/habitica')) {
       prefixes.addAll(['tasks:', 'today']);
@@ -389,9 +396,13 @@ class ApiClient {
       prefixes.addAll(['events:', 'today']);
     } else if (path.startsWith('/api/shopping')) {
       prefixes.addAll(['shopping', 'today']);
+    } else if (path.startsWith('/api/templates/') && path.contains('/apply/')) {
+      prefixes.addAll(path.endsWith('/shopping') ? ['shopping', 'today'] : ['tasks:', 'today']);
     } else if (path.startsWith('/api/meals') || path.startsWith('/api/cookidoo/')) {
       prefixes.addAll(['meals:', 'today']);
       if (path.contains('shopping')) prefixes.add('shopping');
+    } else if (path.startsWith('/api/birthdays')) {
+      prefixes.addAll(['events:', 'today']);
     } else if (path.startsWith('/api/me/today-layout') || path.startsWith('/api/admin/today-layout')) {
       prefixes.add('layout:today');
     } else if (path.startsWith('/api/house/')) {
@@ -672,6 +683,39 @@ class ApiClient {
   Future<ApiResult<TodayData>> today() => _cachedGet(
       '/api/today', 'today', (j) => TodayData.fromJson(j as Map<String, dynamic>));
 
+  // ── Timetable of children ──────────────────────────────────────────────────
+
+  Future<List<TimetableChild>> timetableChildren() async =>
+      TimetableChild.list(await _send('GET', '/api/timetable/children'));
+
+  Future<TimetableData> timetable(int childId) async => TimetableData.fromJson(
+      (await _send('GET', '/api/timetable?child_id=$childId')) as Map<String, dynamic>);
+
+  Future<void> saveTimetableEntry(Map<String, dynamic> body, {int? id}) =>
+      id == null ? _send('POST', '/api/timetable', body: body) : _send('PATCH', '/api/timetable/$id', body: body);
+
+  Future<void> deleteTimetableEntry(int id) => _send('DELETE', '/api/timetable/$id');
+
+  /// Returns how many entries were created.
+  Future<int> copyTimetableDay(int childId, {required String week, required int from, required List<int> to}) async =>
+      (((await _send('POST', '/api/timetable/copy-day',
+              body: {'child_id': childId, 'week': week, 'from_weekday': from, 'to_weekdays': to})) as Map)['copied'] as num)
+          .toInt();
+
+  Future<int> copyTimetableWeek(int childId, {required String from, required String to}) async =>
+      (((await _send('POST', '/api/timetable/copy-week',
+              body: {'child_id': childId, 'from_week': from, 'to_week': to})) as Map)['copied'] as num)
+          .toInt();
+
+  /// [abReference]: any day inside an A week (null = no A/B weeks); [holidayFeed]: calendar subscription id.
+  Future<void> saveTimetableSettings({DateTime? abReference, String? holidayFeed}) =>
+      _send('PUT', '/api/timetable/settings', body: {
+        'ab_reference': abReference == null
+            ? null
+            : '${abReference.year.toString().padLeft(4, '0')}-${abReference.month.toString().padLeft(2, '0')}-${abReference.day.toString().padLeft(2, '0')}',
+        'holiday_feed': holidayFeed,
+      });
+
   // ── Layout von Heute ───────────────────────────────────────────────────────
 
   Future<ApiResult<TodayLayout>> todayLayout() =>
@@ -688,6 +732,61 @@ class ApiClient {
       _send('PUT', '/api/admin/today-layout', body: layout.toJson());
 
   Future<void> resetFamilyTodayLayout() => _send('DELETE', '/api/admin/today-layout');
+
+  // ── Sterne und Belohnungen (Kindermodus) ───────────────────────────────────
+
+  Future<ApiResult<StarsSummary>> starsMe() => _cachedGet('/api/stars/me', 'stars:me', StarsSummary.fromJson);
+
+  /// Everything the stars screen shows. Parents also get the open decisions and the children's balances.
+  Future<StarsOverview> starsOverview({required bool parent}) async {
+    final me = StarsSummary.fromJson(await _send('GET', '/api/stars/me'));
+    final rewards = _maps((await _send('GET', '/api/stars/rewards'))['items']).map(StarReward.fromJson).toList();
+    final settings = await _send('GET', '/api/stars/settings');
+    final confirm = settings is Map && settings['confirm_tasks'] == true;
+    if (!parent) {
+      final requests = _maps((await _send('GET', '/api/stars/requests'))['items']).map(StarRequest.fromJson).toList();
+      final ledger = _maps((await _send('GET', '/api/stars/ledger'))['items']).map(StarEntry.fromJson).toList();
+      return StarsOverview(me: me, rewards: rewards, requests: requests, history: ledger, confirmTasks: confirm);
+    }
+    final pending = await _send('GET', '/api/stars/pending') as Map<String, dynamic>;
+    final people = _maps((await _send('GET', '/api/stars/people'))['items']).map(StarPerson.fromJson).toList();
+    return StarsOverview(
+      me: me,
+      rewards: rewards,
+      requests: _maps(pending['requests']).map(StarRequest.fromJson).toList(),
+      awards: _maps(pending['awards']).map(StarEntry.fromJson).toList(),
+      people: people,
+      confirmTasks: confirm,
+    );
+  }
+
+  Future<List<StarEntry>> starsHistory(int userId) async =>
+      _maps((await _send('GET', '/api/stars/ledger?user_id=$userId'))['items']).map(StarEntry.fromJson).toList();
+
+  Future<void> requestReward(int rewardId) =>
+      _send('POST', '/api/stars/requests', replayOn401: false, body: {'reward_id': rewardId});
+
+  Future<void> cancelRewardRequest(int id) => _send('POST', '/api/stars/requests/$id/cancel', replayOn401: false);
+
+  Future<void> decideRewardRequest(int id, {required bool approve}) =>
+      _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+
+  Future<void> decideStarEntry(int id, {required bool confirm}) =>
+      _send('POST', '/api/stars/ledger/$id/${confirm ? 'confirm' : 'reject'}', replayOn401: false);
+
+  Future<void> saveReward({int? id, required String title, required int price, bool? active}) => id == null
+      ? _send('POST', '/api/stars/rewards', replayOn401: false, body: {'title': title, 'price': price})
+      : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false,
+          body: {'title': title, 'price': price, if (active != null) 'active': active});
+
+  Future<void> setRewardActive(int id, bool active) =>
+      _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {'active': active});
+
+  Future<void> adjustStars(int userId, int delta, String title) => _send('POST', '/api/stars/adjust',
+      replayOn401: false, body: {'user_id': userId, 'delta': delta, 'title': title});
+
+  Future<void> setConfirmTasks(bool value) =>
+      _send('PUT', '/api/stars/settings', replayOn401: false, body: {'confirm_tasks': value});
 
   // Steuerfreigaben niemals im ResponseCache speichern oder daraus lesen.
   Future<SourceResult<HouseControl>> houseControls() async {
@@ -757,10 +856,12 @@ class ApiClient {
     List<int> rotation = const [],
     int? meId,
     int? priority,
+    int? stars,
     Map<String, dynamic>? native,
   }) async {
     final path = _taskPath('', provider, account);
     final body = {
+      if (stars != null && stars > 0) 'stars': stars,
       'title': title,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       if (due != null) 'due': _dateOnly(due),
@@ -838,8 +939,9 @@ class ApiClient {
   Future<List<TaskProviderInfo>> taskProviders() async =>
     _maps((await _send('GET', '/api/tasks/providers'))['items']).map(TaskProviderInfo.fromJson).toList();
 
-  Future<void> updateTask(Task task, {required String title, required String notes, DateTime? due, int? priority}) =>
+  Future<void> updateTask(Task task, {required String title, required String notes, DateTime? due, int? priority, int? stars}) =>
     _send('PATCH', _taskPath('/${Uri.encodeComponent(task.uid)}', task.provider, task.account), replayOn401: false, body: {
+      if (stars != null && stars != task.stars) 'stars': stars,
       if (title != task.title) 'title': title,
       if (notes != task.notes) 'notes': notes,
       if (due != task.due) 'due': due == null ? null : _dateOnly(due),
@@ -1060,6 +1162,33 @@ class ApiClient {
       path: '/api/shopping/${Uri.encodeComponent(uid)}', target: uid,
       label: l10n.deletedTitle(name ?? l10n.item), created: DateTime.now()));
 
+  // ── Vorlagen (template lists) ──────────────────────────────────────────────
+
+  Future<List<ListTemplate>> templates() async {
+    final json = await _send('GET', '/api/templates') as Map<String, dynamic>;
+    return ((json['items'] as List?) ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(ListTemplate.fromJson)
+        .toList();
+  }
+
+  /// Creates ([id] null) or replaces a template.
+  Future<void> saveTemplate(int? id, String name, List<TemplateItem> items) => _send(
+      id == null ? 'POST' : 'PUT', id == null ? '/api/templates' : '/api/templates/$id',
+      body: {'name': name, 'items': [for (final i in items) i.toJson()]});
+
+  Future<void> deleteTemplate(int id) => _send('DELETE', '/api/templates/$id');
+
+  Future<void> templateFromShopping(String name) => _send('POST', '/api/templates/from-shopping', body: {'name': name});
+
+  /// [itemIds] null = all items.
+  Future<TemplateApplied> applyTemplateToShopping(int id, {List<int>? itemIds}) async => TemplateApplied.fromJson(
+      await _send('POST', '/api/templates/$id/apply/shopping', body: {'item_ids': itemIds}) as Map<String, dynamic>);
+
+  Future<TemplateApplied> applyTemplateToTasks(int id, {List<int>? itemIds, bool family = false}) async =>
+      TemplateApplied.fromJson(await _send('POST', '/api/templates/$id/apply/tasks',
+          body: {'item_ids': itemIds, if (family) 'list': 'family'}) as Map<String, dynamic>);
+
   // ── Essen ──────────────────────────────────────────────────────────────────
 
   Future<ApiResult<MealWeek>> meals(String isoWeek) => _cachedGet(
@@ -1109,6 +1238,10 @@ class ApiClient {
       : _send('PUT', '/api/recipes/${r.id}', body: r.toJson())) as Map<String, dynamic>);
 
   Future<void> deleteRecipe(int id) => _send('DELETE', '/api/recipes/$id');
+
+  /// Reads the recipe on a web page (server side) into a draft; nothing is saved until [saveRecipe].
+  Future<RecipeImportResult> importRecipePreview(String url) async => RecipeImportResult.fromJson(
+      await _send('POST', '/api/recipes/import/preview', body: {'url': url}) as Map<String, dynamic>);
 
   Future<void> planRecipe(DateTime day, int recipeId) => _send('POST', '/api/meals/plan',
       body: {'date': _dateOnly(day), 'recipe_id': recipeId, 'meal_type': 'dinner'});
@@ -1185,6 +1318,49 @@ class ApiClient {
   Future<void> snoozeReminder(int id, int minutes) =>
       _send('POST', '/api/reminders/$id/snooze', body: {'minutes': minutes});
 
+  // ── Geburtstage und Jahrestage ─────────────────────────────────────────────
+
+  Future<List<Birthday>> birthdays() async =>
+      _maps(await _send('GET', '/api/birthdays')).map(Birthday.fromJson).toList();
+
+  Map<String, dynamic> _birthdayBody(String name, String kind, int month, int day, int? year, int? userId,
+          int? remindDaysBefore) =>
+      {
+        'name': name,
+        'kind': kind,
+        'month': month,
+        'day': day,
+        'year': year,
+        'user_id': userId,
+        'remind_days_before': remindDaysBefore,
+      };
+
+  Future<void> saveBirthday({
+    int? id,
+    required String name,
+    required String kind,
+    required int month,
+    required int day,
+    int? year,
+    int? userId,
+    int? remindDaysBefore,
+  }) =>
+      _send(id == null ? 'POST' : 'PUT', id == null ? '/api/birthdays' : '/api/birthdays/$id',
+          body: _birthdayBody(name, kind, month, day, year, userId, remindDaysBefore));
+
+  Future<void> deleteBirthday(int id) => _send('DELETE', '/api/birthdays/$id');
+
+  Future<List<GiftIdea>> giftIdeas(int birthdayId) async =>
+      _maps(await _send('GET', '/api/birthdays/$birthdayId/gifts')).map(GiftIdea.fromJson).toList();
+
+  Future<void> addGiftIdea(int birthdayId, String text, {String? link}) => _send('POST', '/api/birthdays/$birthdayId/gifts',
+      body: {'text': text, if (link != null && link.isNotEmpty) 'link': link});
+
+  Future<void> setGiftIdeaDone(int birthdayId, int giftId, bool done) =>
+      _send('PATCH', '/api/birthdays/$birthdayId/gifts/$giftId', body: {'done': done});
+
+  Future<void> deleteGiftIdea(int birthdayId, int giftId) => _send('DELETE', '/api/birthdays/$birthdayId/gifts/$giftId');
+
   // ── Mitteilungen ───────────────────────────────────────────────────────────
 
   Future<NotificationInbox> notifications({int limit = 100}) async => NotificationInbox.fromJson(
@@ -1211,8 +1387,10 @@ class ApiClient {
       _maps(await _send('GET', '/api/auth/api-tokens')).map(ApiTokenInfo.fromJson).toList();
 
   /// Liefert den Schlüssel inklusive Klartext (nur dieses eine Mal).
-  Future<ApiTokenInfo> createApiToken(String name) async => ApiTokenInfo.fromJson(
-      await _send('POST', '/api/auth/api-tokens', body: {'name': name}) as Map<String, dynamic>);
+  /// [scopes] limits the key to the given scopes or presets (`voice`); without it the key is unrestricted.
+  Future<ApiTokenInfo> createApiToken(String name, {List<String>? scopes}) async => ApiTokenInfo.fromJson(
+      await _send('POST', '/api/auth/api-tokens', body: {'name': name, if (scopes != null) 'scopes': scopes})
+          as Map<String, dynamic>);
 
   Future<void> revokeApiToken(int id) => _send('DELETE', '/api/auth/api-tokens/$id');
 
@@ -1394,6 +1572,43 @@ class ApiClient {
       .whereType<Map<String, dynamic>>()
       .map(LogEntry.fromJson)
       .toList();
+
+  // ── Admin: backup and update notice ────────────────────────────────────────
+
+  Future<BackupInfo> backupInfo() async =>
+      BackupInfo.fromJson(await _send('GET', '/api/admin/backup') as Map<String, dynamic>);
+
+  Future<BackupResult> createBackup() async => BackupResult.fromJson(
+      await _send('POST', '/api/admin/backup', body: {'include_keys': true}, timeout: const Duration(minutes: 5))
+          as Map<String, dynamic>);
+
+  Future<BackupInfo> saveBackupSettings({required bool auto, required int keep}) async => BackupInfo.fromJson(
+      await _send('PUT', '/api/admin/backup/settings', body: {'auto': auto, 'keep': keep}) as Map<String, dynamic>);
+
+  Future<BackupResult> deleteBackup(String name) async => BackupResult.fromJson(
+      await _send('DELETE', '/api/admin/backup/${Uri.encodeComponent(name)}') as Map<String, dynamic>);
+
+  /// Single-use, short-lived address of a fresh backup file; open it in the browser to save it.
+  Future<Uri> backupDownloadUri() async {
+    final j = await _send('POST', '/api/admin/backup/download-link', body: {'include_keys': true})
+        as Map<String, dynamic>;
+    return _uri(j['path'] as String);
+  }
+
+  Future<BackupResult> inspectBackup(String name) async => BackupResult.fromJson(
+      await _send('POST', '/api/admin/backup/${Uri.encodeComponent(name)}/inspect') as Map<String, dynamic>);
+
+  Future<BackupResult> restoreBackup(String name) async => BackupResult.fromJson(await _send(
+          'POST', '/api/admin/backup/${Uri.encodeComponent(name)}/restore',
+          body: {'confirm': true}, timeout: const Duration(minutes: 10))
+      as Map<String, dynamic>);
+
+  Future<UpdateInfo> updateInfo() async =>
+      UpdateInfo.fromJson(await _send('GET', '/api/admin/update') as Map<String, dynamic>);
+
+  Future<UpdateInfo> saveUpdateSettings({required bool enabled, required String repo}) async => UpdateInfo.fromJson(
+      await _send('PUT', '/api/admin/update/settings', body: {'enabled': enabled, 'repo': repo})
+          as Map<String, dynamic>);
 
   // ── Filme & Serien (Seerr) ─────────────────────────────────────────────────
 
