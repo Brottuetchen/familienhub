@@ -24,7 +24,11 @@ class Card(BaseModel):
     @field_validator("id")
     @classmethod
     def _known(cls, v):
-        if not svc.is_valid_id(v):
+        # A well-formed card of a plugin that is off (e.g. an app with a stale cache) is accepted here and
+        # dropped by normalize(); only unknown built-in ids and malformed plugin ids are rejected.
+        from app.plugins.hooks import is_plugin_card_id_format
+
+        if not (svc.is_valid_id(v) or is_plugin_card_id_format(v)):
             raise ValueError("unknown card id")
         return v
 

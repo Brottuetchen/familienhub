@@ -38,6 +38,7 @@ MAX_CARDS_PER_PLUGIN = 5
 MAX_LINES = 6
 MAX_TITLE, MAX_LINE, MAX_BADGE, MAX_LINK, MAX_IMAGE = 60, 160, 16, 500, 300
 CARD_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
+PLUGIN_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
 PLUGIN_CARD_PREFIX = "plugin:"
 
 
@@ -141,13 +142,19 @@ async def collect_today_cards(user, db) -> List[Dict[str, Any]]:
     return [card for cards in results for card in cards]
 
 
-def is_plugin_card_id(card_id: Any) -> bool:
-    """``plugin:<plugin id>:<card id>`` of an active plugin (what a saved Today layout may contain)."""
+def is_plugin_card_id_format(card_id: Any) -> bool:
+    """``plugin:<plugin id>:<card id>`` with valid parts, whether or not the plugin is active."""
     if not isinstance(card_id, str) or not card_id.startswith(PLUGIN_CARD_PREFIX):
         return False
     parts = card_id.split(":")
-    if len(parts) != 3 or not CARD_ID_RE.match(parts[2]):
+    return len(parts) == 3 and bool(PLUGIN_ID_RE.match(parts[1])) and bool(CARD_ID_RE.match(parts[2]))
+
+
+def is_plugin_card_id(card_id: Any) -> bool:
+    """``plugin:<plugin id>:<card id>`` of an active plugin (what a saved Today layout may contain)."""
+    if not is_plugin_card_id_format(card_id):
         return False
+    parts = card_id.split(":")
     from app.plugins.registry import plugin_registry
 
     plugin = plugin_registry.get(parts[1])

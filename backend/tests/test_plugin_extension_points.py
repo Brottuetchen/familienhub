@@ -213,10 +213,16 @@ def test_layout_accepts_cards_of_active_plugins_only(client, auth, make_plugin, 
     assert ok.status_code == 200
     ids = [c["id"] for c in ok.json()["cards"]]
     assert ids[:2] == ["plugin:ext_demo:weather", "tasks"] and "stars" in ids  # built-in cards still appended
-    for bad in ("plugin:nobody:weather", "plugin:ext_demo", "plugin:ext_demo:a:b", "plugin::x", "plugin:ext_demo:bad id",
-                "plugin:ext_demo:"):
+    for bad in ("plugin:ext_demo", "plugin:ext_demo:a:b", "plugin::x", "plugin:ext_demo:bad id", "plugin:ext_demo:",
+                "plugin:Bad:x"):
         r = client.put(ME, headers=headers, json={"cards": _cards(bad)})
         assert r.status_code == 422, bad
+    # A card of a plugin that is not (or no longer) active, e.g. from an app's stale cache: saved without error,
+    # the card itself is dropped
+    r = client.put(ME, headers=headers, json={"cards": _cards("plugin:nobody:weather", "plugin:ext_demo:weather")})
+    assert r.status_code == 200
+    ids = [c["id"] for c in r.json()["cards"]]
+    assert "plugin:nobody:weather" not in ids and ids[0] == "plugin:ext_demo:weather"
     # Switching the plugin off drops its card from the stored layout when it is read
     monkeypatch.setattr(settings, "plugins_disabled", "ext_demo")
     assert "plugin:ext_demo:weather" not in [c["id"] for c in client.get(ME, headers=headers).json()["cards"]]
