@@ -1,7 +1,7 @@
 """meal plan: recipes of external plugins (plugin id, the plugin's recipe id, display data)
 
 Revision ID: c0a1d2e3f4b5
-Revises: f8a9b0c1d2e3
+Revises: b0a1c2d3e4f5
 Create Date: 2026-10-19 12:00:00
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "c0a1d2e3f4b5"
-down_revision: Union[str, None] = "f8a9b0c1d2e3"
+down_revision: Union[str, None] = "b0a1c2d3e4f5"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
