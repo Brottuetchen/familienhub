@@ -49,7 +49,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
 - **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
 - **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
-- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (ten in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
+- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (eleven in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
 
 <details>
 <summary>More screenshots</summary>
@@ -60,7 +60,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 ## Themes
 
-Make Familienhub look and feel like your family. The [Familienhub Themes gallery](https://github.com/Brottuetchen/familienhub-themes) currently offers ten ready-made themes, each with light and dark variants:
+Make Familienhub look and feel like your family. The [Familienhub Themes gallery](https://github.com/Brottuetchen/familienhub-themes) currently offers eleven ready-made themes, each with light and dark variants:
 
 - **Candy Pop** — bright pastels and rounded cards
 - **Cyberpunk** — neon yellow and cyan on near-black
@@ -68,6 +68,7 @@ Make Familienhub look and feel like your family. The [Familienhub Themes gallery
 - **8-Bit Gameboy** — classic handheld greens and pixel-style titles
 - **Matcha Zen** — soft greens and warm latte tones
 - **Nordic Fjord** — glacier blue and violet glass effects
+- **Präzision** — warm paper, signal red-orange, square panels and technical mono labels
 - **Midnight OLED** — true black with emerald and indigo accents
 - **Retro Synthwave** — 80s neon pink and cyan
 - **Solarized Paper** — warm paper tones and forest colours
