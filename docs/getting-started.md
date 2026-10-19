@@ -7,10 +7,11 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-docker compose up -d
+# Current public beta; :latest is reserved for stable releases.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
-This pulls the prebuilt image and needs no configuration (Docker Compose v2.24 or newer). The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
+This pulls the prebuilt image and needs no configuration beyond pinning the current beta (Docker Compose v2.24 or newer). For anonymous pulls, the GitHub Container Registry package must be public. The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
 
 Open `http://<host>:8000` in a browser, or enter that address in the app. A new hub shows **Set up**:
 1. The first person to open the hub creates the admin account. No code is needed, and this works only while no admin exists. **If the hub is reachable from the internet before you have done this, set `SETUP_REQUIRE_CODE=true` in `.env` first:** the hub then logs a setup code (`docker compose logs familienhub | grep -i code`) that is valid only while no admin exists and changes on every restart and after ten wrong attempts. Alternative without a code: `docker compose exec familienhub python -m scripts.create_admin`.
