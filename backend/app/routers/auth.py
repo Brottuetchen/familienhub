@@ -223,6 +223,7 @@ async def list_users(db: Session = Depends(get_db), current_user: User = Depends
 async def create_user(data: CreateUserRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin_user)):
     if data.role not in VALID_ROLES:
         raise HTTPException(status_code=400, detail=f"Invalid role. Valid: {', '.join(sorted(VALID_ROLES))}")
+    data.username = data.username.strip().lower()  # stored lowercase like setup and invites; sign-in compares exactly
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status_code=400, detail="Username already registered")
     if db.query(User).filter(User.email == data.email).first():

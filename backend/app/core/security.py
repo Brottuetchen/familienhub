@@ -16,6 +16,7 @@ from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 from jwt import PyJWTError as JWTError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -127,7 +128,9 @@ def revoke_refresh_token(token: str, db: Session) -> bool:
 # === Authentifizierung ===
 
 def authenticate_user(username: str, password: str, db: Session) -> Optional[User]:
-    user = db.query(User).filter(User.username == username).first()
+    # Usernames are stored lowercase; "Allie" signs in as "allie" (also matches older mixed-case rows)
+    name = (username or "").strip().lower()
+    user = db.query(User).filter(func.lower(User.username) == name).first()
     if not user or not verify_password(password, user.hashed_password) or not user.is_active:
         return None
     user.last_login = datetime.utcnow()

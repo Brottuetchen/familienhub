@@ -492,6 +492,7 @@
   "userLine": "{username} · {last} · {count} devices",
   "createPerson": "Create person",
   "usernameHint": "lowercase, no spaces",
+  "usernameInvalid": "Only letters, digits and . _ - (2–40 characters)",
   "name": "Name",
   "email": "Email",
   "initialPassword": "Initial password",

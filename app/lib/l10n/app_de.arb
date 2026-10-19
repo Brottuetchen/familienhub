@@ -854,6 +854,7 @@
   },
   "createPerson": "Person anlegen",
   "usernameHint": "klein, ohne Leerzeichen",
+  "usernameInvalid": "Nur Kleinbuchstaben, Ziffern und . _ - (2–40 Zeichen)",
   "name": "Name",
   "email": "E-Mail",
   "initialPassword": "Start-Passwort",

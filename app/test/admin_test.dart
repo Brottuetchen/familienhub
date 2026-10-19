@@ -112,6 +112,46 @@ void main() {
         {'username': 'oma', 'email': 'oma@example.org', 'password': 'lang-genug-123', 'role': 'partner'});
   });
 
+  testWidgets('Create person: capitals in the username are lowered, invalid ones explained', (tester) async {
+    await setScreenSize(tester, const Size(420, 1600));
+    final b = _backend();
+    await tester.pumpWidget(appWith(b.api(), const AdminUsersScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('admin-user-add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('new-user-username')), 'Al lie');
+    await tester.pump();
+    expect(find.textContaining('Nur Kleinbuchstaben'), findsOneWidget, reason: 'the reason is shown, not just a grey button');
+    await tester.enterText(find.byKey(const Key('new-user-username')), 'Allie');
+    await tester.enterText(find.byKey(const Key('new-user-email')), 'allie@example.org');
+    await tester.enterText(find.byKey(const Key('new-user-password')), 'lang-genug-123');
+    await tester.pump();
+    expect(find.textContaining('Nur Kleinbuchstaben'), findsNothing);
+    await tester.tap(find.byKey(const Key('new-user-save')));
+    await tester.pumpAndSettle();
+    expect(bodyOf(b.sent('POST', '/api/auth/users').single)['username'], 'allie');
+  });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('Create person dialog: fields do not overlap at text scale $scale (360 dp)', (tester) async {
+      await setScreenSize(tester, const Size(360, 800));
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final b = _backend();
+      await tester.pumpWidget(appWith(b.api(), const AdminUsersScreen()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('admin-user-add')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final fields = [
+        for (final k in ['new-user-username', 'new-user-email', 'new-user-password']) tester.getRect(find.byKey(Key(k))),
+      ];
+      for (var i = 1; i < fields.length; i++) {
+        expect(fields[i].top, greaterThanOrEqualTo(fields[i - 1].bottom), reason: 'field $i starts below field ${i - 1}');
+      }
+    });
+  }
+
   testWidgets('Haus: Geräte per Auswahl statt IDs, Suche lokal, speichern', (tester) async {
     await setScreenSize(tester, const Size(420, 1800));
     final b = _backend();
