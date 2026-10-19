@@ -240,7 +240,8 @@ def _log(uid):
         return db.query(NotificationLog).filter(NotificationLog.user_id == uid).order_by(NotificationLog.id).all()
 
 
-def test_notify_reaches_people_and_roles_in_category_plugins(client, make_plugin):
+def test_notify_reaches_people_and_roles_in_category_plugins(client, make_plugin, monkeypatch):
+    monkeypatch.setattr(plugin_api, "MAX_RECIPIENTS", 10000)  # the suite creates many partners
     make_plugin()
     _, mom = _person(client, "ext_n_mom")
     _, kid = _person(client, "ext_n_kid", "child")
@@ -255,6 +256,14 @@ def test_notify_reaches_people_and_roles_in_category_plugins(client, make_plugin
     r = asyncio.run(plugin_api.notify("ext_demo", roles=["partner"], title="For parents"))
     assert r["sent"] and r["recipients"] >= 1
     assert _log(mom)[-1].title == "For parents" and _log(kid)[-1].title == "Bus is late"
+
+
+def test_notify_caps_the_number_of_recipients(client, make_plugin, monkeypatch):
+    make_plugin()
+    for i in range(3):
+        _person(client, f"ext_cap{i}")
+    monkeypatch.setattr(plugin_api, "MAX_RECIPIENTS", 2)
+    assert asyncio.run(plugin_api.notify("ext_demo", roles=["all"], title="Broadcast"))["recipients"] == 2
 
 
 def test_notify_respects_the_persons_category_setting(client, make_plugin):
