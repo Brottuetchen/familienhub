@@ -19,6 +19,7 @@ Open `http://<host>:8000` in a browser, or enter that address in the app. A new 
    1. **Basics:** name and time zone
    2. **Areas:** where tasks, the shopping list and the calendar live, in the hub and/or a service
    3. **Services:** the ones you chose come first, with *Test connection*; calendar subscriptions (school holidays, bins …) as a list with a check
+      Tick what you want to use. Unticked services, also weather and CalDAV that work without settings, are switched off at the end; you can turn them on later under *Administration → Plugins & access*.
    4. **Family:** invite people
 
    Without any service, tasks, shopping list and family calendar are stored in the hub. You can rerun the wizard under *More → Administration*.

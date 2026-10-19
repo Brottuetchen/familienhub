@@ -78,6 +78,12 @@ class Plugin:
         """Standard: alle Pflicht-Einstellungen haben einen Wert."""
         return all(get_setting(s.key) not in (None, "") for s in self.settings if s.required)
 
+    def is_set_up(self) -> bool:
+        """Set up by the admin, not only usable through built-in defaults. Plugins that work without any
+        settings (weather, CalDAV with accounts per person) override this, so the setup wizard does not show
+        them as set up and preselected."""
+        return self.is_configured()
+
     def health_url(self) -> Optional[str]:
         """Adresse für die Erreichbarkeitsprüfung in der Verwaltung; Standard: erste gesetzte *_URL."""
         for s in self.settings:
@@ -108,6 +114,7 @@ class Plugin:
             "fallback": self.fallback,
             "capabilities": sorted(self.capabilities),
             "configured": configured,
+            "set_up": self.is_set_up(),
             "disabled": disabled,
             "active": configured and not disabled,
             "missing_settings": self.missing_settings(),

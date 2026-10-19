@@ -1,4 +1,4 @@
-from app.plugins.base import Plugin, Setting
+from app.plugins.base import Plugin, Setting, get_setting
 
 
 class NextcloudPlugin(Plugin):
@@ -24,6 +24,10 @@ class NextcloudPlugin(Plugin):
 
     def is_configured(self) -> bool:
         return True  # Konten pro Person; ohne Konto zeigt die App einen Hinweis
+
+    def is_set_up(self) -> bool:
+        """Set up for the wizard once a shared calendar is stored; personal accounts come later in the app."""
+        return bool(get_setting("CALDAV_URL"))
 
     def task_connector(self, user_id, db):
         from app.connectors.nextcloud_tasks_connector import NextcloudTasksConnector

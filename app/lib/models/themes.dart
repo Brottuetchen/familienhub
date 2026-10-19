@@ -90,6 +90,9 @@ class AdminPlugin {
   final bool configured;
   final bool disabled;
   final bool active;
+
+  /// Set up by the admin, not only working through built-in defaults (weather, CalDAV). Older servers: [configured].
+  final bool setUp;
   final List<AdminField> fields;
 
   const AdminPlugin({
@@ -99,8 +102,9 @@ class AdminPlugin {
     this.configured = false,
     this.disabled = false,
     this.active = false,
+    bool? setUp,
     this.fields = const [],
-  });
+  }) : setUp = setUp ?? configured;
 
   factory AdminPlugin.fromJson(Map<String, dynamic> json) => AdminPlugin(
         id: (json['id'] as String?) ?? '',
@@ -109,6 +113,7 @@ class AdminPlugin {
         configured: json['configured'] == true,
         disabled: json['disabled'] == true,
         active: json['active'] == true,
+        setUp: json['set_up'] is bool ? json['set_up'] as bool : json['configured'] == true,
         fields: ((json['fields'] as List?) ?? const [])
             .whereType<Map<String, dynamic>>()
             .map(AdminField.fromJson)
