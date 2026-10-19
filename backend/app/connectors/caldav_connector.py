@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from app.config import settings
 from app.connectors.base import BaseConnector
+from app.services import caldav_cache
 
 
 class CalDAVConnector(BaseConnector):
@@ -70,11 +71,24 @@ class CalDAVConnector(BaseConnector):
             return []
         start = start or datetime.now()
         end = start + timedelta(days=days_ahead)
+        # "From now" moves every second; the cache key uses the minute (the cache lives 45 s anyway)
+        key = ("events", self._account_key(), start.replace(second=0, microsecond=0).isoformat(), days_ahead)
+        hit = caldav_cache.read_get(key)
+        if hit is not None:
+            return hit
         try:
-            return await asyncio.to_thread(self._fetch_events_sync, start, end)
+            events = await asyncio.to_thread(self._fetch_events_sync, start, end)
         except Exception as exc:  # noqa: BLE001
             self.logger.warning("caldav get_events failed: %s", exc)
-            return []
+            return []  # failures are never cached
+        caldav_cache.read_put(key, events)
+        return events
+
+    def _account_key(self) -> str:
+        return caldav_cache.account_key(self.url, self.username, self.password)
+
+    def _calendars(self):
+        return caldav_cache.calendars(self.url, self.username, self.password)
 
     async def list_calendars(self) -> List[Dict[str, Any]]:
         """Calendars of this account that hold events: id, name, colour, url."""
@@ -87,18 +101,12 @@ class CalDAVConnector(BaseConnector):
             return []
 
     def _list_calendars_sync(self) -> List[Dict[str, Any]]:
-        import caldav
-
-        client = caldav.DAVClient(url=self.url, username=self.username, password=self.password,
-                                  ssl_verify_cert=settings.verify_tls)
         out = []
-        for cal in client.principal().calendars():
-            components = _safe(lambda: [str(c).upper() for c in cal.get_supported_components()]) or ["VEVENT"]
-            if "VEVENT" not in components:
+        for info in self._calendars():
+            if "VEVENT" not in (info.components or ["VEVENT"]):
                 continue  # task-only lists (VTODO)
-            url = str(cal.url)
-            out.append({"id": calendar_id(url), "name": _safe(lambda: str(cal.name)) or "Kalender",
-                        "color": calendar_color(cal), "url": url})
+            out.append({"id": calendar_id(info.url), "name": info.name or "Kalender",
+                        "color": info.color, "url": info.url})
         return out
 
     async def update_event(self, calendar_url: str, uid: str, changes: Dict[str, Any]) -> bool:
@@ -109,13 +117,10 @@ class CalDAVConnector(BaseConnector):
         return await asyncio.to_thread(self._delete_event_sync, calendar_url, uid)
 
     def _event_by_uid(self, calendar_url: str, uid: str):
-        import caldav
         from caldav.lib.error import NotFoundError
 
-        client = caldav.DAVClient(url=self.url, username=self.username, password=self.password,
-                                  ssl_verify_cert=settings.verify_tls)
         wanted = _normalize_url(calendar_url)
-        cal = next((c for c in client.principal().calendars() if _normalize_url(str(c.url)) == wanted), None)
+        cal = next((i.cal for i in self._calendars() if _normalize_url(i.url) == wanted), None)
         if cal is None:
             return None
         try:
@@ -144,6 +149,7 @@ class CalDAVConnector(BaseConnector):
                 comp.add("dtstart", _local_time(changes["start"]))
                 comp.add("dtend", _local_time(changes["end"]))
         ev.save()
+        caldav_cache.clear_reads()
         return True
 
     def _delete_event_sync(self, calendar_url: str, uid: str) -> bool:
@@ -151,6 +157,7 @@ class CalDAVConnector(BaseConnector):
         if ev is None:
             return False
         ev.delete()
+        caldav_cache.clear_reads()
         return True
 
     async def get_today(self) -> List[Dict[str, Any]]:
@@ -197,24 +204,20 @@ class CalDAVConnector(BaseConnector):
 
     def _fetch_events_sync(self, start: datetime, end: datetime) -> List[Dict[str, Any]]:
         try:
-            import caldav  # lazy import – optionaler Dependency
+            import caldav  # noqa: F401  lazy import – optionaler Dependency
         except ImportError:
             self.logger.warning("python 'caldav' package not installed – calendar disabled")
             return []
 
-        client = caldav.DAVClient(
-            url=self.url,
-            username=self.username,
-            password=self.password,
-            ssl_verify_cert=settings.verify_tls,
-        )
-        principal = client.principal()
         results: List[Dict[str, Any]] = []
 
-        for calendar in principal.calendars():
-            cal_id = calendar_id(str(calendar.url))  # before search(), which rewrites calendar.url
-            cal_name = _safe(lambda: str(calendar.name)) or "Kalender"
-            cal_color = calendar_color(calendar)
+        for info in self._calendars():
+            if info.supports("VEVENT") is False:
+                continue  # task-only list: nothing to ask
+            calendar = info.cal
+            cal_id = calendar_id(info.url)  # as listed; search() rewrites calendar.url
+            cal_name = info.name or "Kalender"
+            cal_color = info.color
             try:
                 found = calendar.search(start=start, end=end, event=True, expand=True)
             except Exception:  # noqa: BLE001
@@ -243,21 +246,14 @@ class CalDAVConnector(BaseConnector):
     ) -> Dict[str, Any]:
         """Erstellt synchron ein Event via CalDAV."""
         try:
-            import caldav
+            import caldav  # noqa: F401
             from icalendar import Calendar, Event
             from uuid import uuid4
         except ImportError:
             self.logger.warning("python 'caldav' or 'icalendar' package not installed")
             raise ValueError("caldav library not available")
 
-        client = caldav.DAVClient(
-            url=self.url,
-            username=self.username,
-            password=self.password,
-            ssl_verify_cert=settings.verify_tls,
-        )
-        principal = client.principal()
-        calendars = principal.calendars()
+        calendars = [i.cal for i in self._calendars()]
 
         if not calendars:
             raise ValueError("No calendar found")
@@ -266,7 +262,7 @@ class CalDAVConnector(BaseConnector):
         target_calendar = calendars[0]
         if calendar_url:
             wanted = _normalize_url(calendar_url)
-            target_calendar = next((c for c in calendars if _normalize_url(str(c.url)) == wanted), None)
+            target_calendar = next((i.cal for i in self._calendars() if _normalize_url(i.url) == wanted), None)
             if target_calendar is None:
                 raise ValueError("Kalender nicht gefunden")
 
@@ -298,6 +294,7 @@ class CalDAVConnector(BaseConnector):
 
         # Event speichern
         target_calendar.save_event(cal.to_ical().decode('utf-8'))
+        caldav_cache.clear_reads()
 
         return {
             "uid": str(event.get('uid')),

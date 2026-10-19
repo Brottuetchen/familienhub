@@ -156,6 +156,22 @@ async def security_headers(request, call_next):
 
 
 @app.middleware("http")
+async def drop_read_caches_after_changes(request, call_next):
+    """Safety net for the short CalDAV read cache: any changing request drops it (connector writes do too).
+
+    Account or list setup changes also forget the cached client and calendar list.
+    """
+    response = await call_next(request)
+    if request.method not in ("GET", "HEAD", "OPTIONS") and request.url.path.startswith("/api/"):
+        from app.services import caldav_cache
+
+        caldav_cache.clear_reads()
+        if request.url.path.endswith(("/me/caldav", "/me/task-lists")) or "/caldav" in request.url.path:
+            caldav_cache.invalidate_account()
+    return response
+
+
+@app.middleware("http")
 async def refresh_after_changes(request, call_next):
     """Nach erfolgreichen Änderungen an Einkauf/Aufgaben/Essen/Erinnerungen: Geräte stumm neu laden lassen."""
     response = await call_next(request)

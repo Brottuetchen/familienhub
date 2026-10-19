@@ -24,6 +24,7 @@ SUPPORTED = ("de", "en")
 DEFAULT = "de"
 
 EN: Dict[str, str] = {
+    "Zeitüberschreitung": "Timed out",
     # --- week shopping list ---
     "Keine Rezepte im Zeitraum geplant.": "No recipes planned in this period.",
     "Einkaufsliste aktualisiert.": "Shopping list updated.",

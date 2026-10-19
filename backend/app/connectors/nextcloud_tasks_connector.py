@@ -26,12 +26,27 @@ from app.connectors.base import BaseConnector
 from app.core.crypto import decrypt
 from app.core.database import SessionLocal
 from app.core.logging_config import get_logger
+from app.services import caldav_cache
 
 logger = get_logger("connector.nextcloud_tasks")
 
 # Alte Habitica→Nextcloud-Spiegel (habitica_nextcloud_sync.py, abgelöst durch das Habitica-Plugin)
 LEGACY_HABITICA_PREFIX = "habitica-"
 
+
+
+def _invalidates(fn):
+    """A write (even a failed one may have changed something): drop the short read cache afterwards."""
+    import functools
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            caldav_cache.clear_reads()
+
+    return wrapper
 
 
 def _url_key(url) -> str:
@@ -80,6 +95,7 @@ class NextcloudTasksConnector(BaseConnector):
         super().__init__()
         self.user_id = user_id
         self._account = None
+        self._partial = False
 
     @property
     def account_ref(self) -> str:
@@ -170,13 +186,21 @@ class NextcloudTasksConnector(BaseConnector):
         if not self.is_configured:
             return {"status": "not_configured", "error": None, "items": []}
 
+        key = ("tasks", self._account_key(), self.user_id, view, bool(include_done))
+        hit = caldav_cache.read_get(key)
+        if hit is not None:
+            return hit
+        self._partial = False
         try:
             tasks = await asyncio.to_thread(
                 self._get_tasks_sync,
                 view=view,
                 include_done=include_done,
             )
-            return {"status": "ok", "error": None, "items": tasks}
+            result = {"status": "ok", "error": None, "items": tasks}
+            if not self._partial:
+                caldav_cache.read_put(key, result)  # only complete, successful reads are kept
+            return result
         except Exception as exc:
             logger.warning("get_tasks failed: %s", exc, exc_info=True)
             return {"status": "unavailable", "error": str(exc), "items": []}
@@ -295,38 +319,31 @@ class NextcloudTasksConnector(BaseConnector):
     # --- Sync-Implementierung (läuft im Thread) ---
 
     def _get_client(self):
-        """Erstellt CalDAV-Client mit Account-Daten."""
-        import caldav
-
+        """The account's shared CalDAV client."""
         account = self._get_account()
         if not account:
             raise ValueError("No CalDAV account configured")
+        return caldav_cache.client_for(account["url"], account["username"], account["password"])
 
-        return caldav.DAVClient(
-            url=account["url"],
-            username=account["username"],
-            password=account["password"],
-            ssl_verify_cert=settings.verify_tls,
-        )
+    def _account_key(self) -> str:
+        account = self._get_account() or {}
+        return caldav_cache.account_key(account.get("url"), account.get("username"), account.get("password"))
 
     def _get_vtodo_calendars(self, failed_urls: Optional[set[str]] = None):
-        """Gibt nur Kalender zurück, die VTODO unterstützen."""
-        client = self._get_client()
-        principal = client.principal()
-        calendars = principal.calendars()
-
+        """Only the calendars that support VTODO (calendar list and components come from the shared cache)."""
+        account = self._get_account()
+        if not account:
+            raise ValueError("No CalDAV account configured")
         vtodo_calendars = []
-        for cal in calendars:
-            try:
-                supported = cal.get_supported_components()
-                if "VTODO" in supported:
-                    vtodo_calendars.append(cal)
-            except Exception as exc:
-                logger.debug("Failed to check calendar components: %s", exc)
+        for info in caldav_cache.calendars(account["url"], account["username"], account["password"]):
+            supported = info.supports("VTODO")
+            if supported is None:
+                logger.debug("Failed to check calendar components for %s", info.url)
                 if failed_urls is not None:
-                    failed_urls.add(_url_key(cal.url))
+                    failed_urls.add(_url_key(info.url))
                 continue
-
+            if supported:
+                vtodo_calendars.append(info.cal)
         return vtodo_calendars
 
     def _get_task_lists_config(self, db: Session) -> List[Any]:
@@ -419,12 +436,14 @@ class NextcloudTasksConnector(BaseConnector):
                             continue
                 except Exception as exc:
                     logger.debug("Failed to fetch todos from calendar: %s", exc)
+                    self._partial = True  # an incomplete answer must not be kept in the read cache
                     continue
 
             return results
         finally:
             db.close()
 
+    @_invalidates
     def _create_task_sync(
         self,
         title: str,
@@ -539,6 +558,7 @@ class NextcloudTasksConnector(BaseConnector):
         finally:
             db.close()
 
+    @_invalidates
     def _update_task_sync(
         self, uid: str, **kwargs
     ) -> Optional[Dict[str, Any]]:
@@ -629,6 +649,7 @@ class NextcloudTasksConnector(BaseConnector):
         finally:
             db.close()
 
+    @_invalidates
     def _complete_task_sync(self, uid: str) -> Optional[Dict[str, Any]]:
         """Markiert Aufgabe als erledigt mit todo.complete()."""
         db = SessionLocal()
@@ -745,6 +766,7 @@ class NextcloudTasksConnector(BaseConnector):
         result["_score"] = task["habitica"]
         return result
 
+    @_invalidates
     def _delete_task_sync(self, uid: str) -> bool:
         """Löscht VTODO."""
         from caldav.lib.error import NotFoundError
