@@ -76,9 +76,11 @@ class HubRecipe {
   final int servings;
   final int? prepMinutes;
   final String? sourceUrl;
+  final String? imageUrl;
+  final String? tags;
 
   const HubRecipe({this.id, required this.title, this.description, this.ingredients = const [], this.instructions,
-      this.servings = 2, this.prepMinutes, this.sourceUrl});
+      this.servings = 2, this.prepMinutes, this.sourceUrl, this.imageUrl, this.tags});
 
   factory HubRecipe.fromJson(Map<String, dynamic> j) => HubRecipe(
         id: parseInt(j['id']),
@@ -89,6 +91,8 @@ class HubRecipe {
         servings: parseInt(j['servings']) ?? 2,
         prepMinutes: parseInt(j['prep_minutes']),
         sourceUrl: j['source_url'] as String?,
+        imageUrl: j['image_url'] as String?,
+        tags: j['tags'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -99,7 +103,22 @@ class HubRecipe {
         'servings': servings,
         if (prepMinutes != null) 'prep_minutes': prepMinutes,
         if (sourceUrl != null) 'source_url': sourceUrl,
+        if (imageUrl != null) 'image_url': imageUrl,
+        if (tags != null) 'tags': tags,
       };
+}
+
+/// Result of reading a recipe page: `ok` carries a draft, every other status says why not
+/// (`no_recipe`, `invalid_url`, `blocked`, `unreachable`, `too_large`).
+class RecipeImportResult {
+  final String status;
+  final HubRecipe? recipe;
+  const RecipeImportResult(this.status, this.recipe);
+
+  factory RecipeImportResult.fromJson(Map<String, dynamic> j) => RecipeImportResult(
+        (j['status'] as String?) ?? 'unreachable',
+        j['recipe'] is Map<String, dynamic> ? HubRecipe.fromJson(j['recipe'] as Map<String, dynamic>) : null,
+      );
 }
 
 /// Treffer der Cookidoo-Rezeptsuche.

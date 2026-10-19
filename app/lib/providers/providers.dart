@@ -200,6 +200,18 @@ final canEditProvider = Provider<bool>((ref) => ref.watch(roleLevelProvider) >= 
 enum AppTab { today, calendar, tasks, shopping, meals, more }
 
 final tabProvider = StateProvider<AppTab>((ref) => AppTab.today);
+
+/// A link shared into the app (PWA share target): the main screen opens "Import from link" with it.
+final shareImportUrlProvider = StateProvider<String?>((ref) => null);
+
+/// First http(s) link in shared text (browsers often put the link into the text field), or null.
+String? extractSharedUrl(Iterable<String?> parts) {
+  for (final part in parts) {
+    final m = RegExp(r'https?://[^\s<>"]+', caseSensitive: false).firstMatch(part ?? '');
+    if (m != null) return m.group(0);
+  }
+  return null;
+}
 final taskViewProvider = StateProvider<TaskView>((ref) => TaskView.mine);
 
 /// Ziel aus einer Push-Mitteilung (`data.route`), z. B. `/tasks?view=for_me`.

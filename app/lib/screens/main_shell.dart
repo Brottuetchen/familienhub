@@ -12,6 +12,7 @@ import '../services/widget_access.dart';
 import '../widgets/hub_background.dart';
 import 'calendar/calendar_screen.dart';
 import 'meals/meals_screen.dart';
+import 'meals/recipe_import_screen.dart';
 import 'more/more_screen.dart';
 import 'shopping/shopping_screen.dart';
 import 'tasks/tasks_screen.dart';
@@ -49,9 +50,20 @@ class _MainShellState extends ConsumerState<MainShell> {
   /// Bereich → Modul aus /api/modules (Heute, Essen, Mehr gibt es immer).
   static const _moduleFor = {AppTab.calendar: 'calendar', AppTab.tasks: 'tasks', AppTab.shopping: 'shopping'};
 
+  void _openSharedLink() {
+    final url = ref.read(shareImportUrlProvider);
+    if (url == null) return;
+    ref.read(shareImportUrlProvider.notifier).state = null;
+    ref.read(tabProvider.notifier).state = AppTab.meals;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => RecipeImportScreen(initialUrl: url)));
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openSharedLink();
+    });
     if (widget.startPush) {
       final push = ref.read(pushServiceProvider);
       _routes = push.routes.listen((route) => openRoute(ref, route));
@@ -94,6 +106,9 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(shareImportUrlProvider, (_, url) {
+      if (url != null) _openSharedLink();
+    });
     final modules = ref.watch(appModulesProvider);
     final destinations = [
       for (final d in _allDestinations)

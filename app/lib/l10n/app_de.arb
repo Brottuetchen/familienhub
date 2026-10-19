@@ -1458,5 +1458,14 @@
   "templateAppliedPartial": "{failed} Einträge konnten nicht übernommen werden",
   "@templateAppliedPartial": {"placeholders": {"failed": {"type": "int"}}},
   "templateListUnavailable": "Die Einkaufsliste ist gerade nicht erreichbar",
-  "templateNothingSelected": "Wähle mindestens einen Eintrag"
+  "templateNothingSelected": "Wähle mindestens einen Eintrag",
+  "importFromLink": "Von Link importieren",
+  "importLinkLabel": "Link zur Rezeptseite",
+  "importFetch": "Rezept lesen",
+  "importPreviewHint": "Prüfe das Rezept und passe es an, bevor du es speicherst.",
+  "importNoRecipe": "Auf dieser Seite wurden keine Rezeptdaten gefunden. Es wurde nichts gespeichert.",
+  "importBlocked": "Diese Adresse darf der Hub nicht abrufen.",
+  "importUnreachable": "Die Seite konnte nicht geladen werden.",
+  "importTooLarge": "Die Seite ist zu groß.",
+  "importInvalid": "Das ist kein gültiger Link. Er muss mit http:// oder https:// beginnen."
 }

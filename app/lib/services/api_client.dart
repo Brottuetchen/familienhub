@@ -1140,6 +1140,10 @@ class ApiClient {
 
   Future<void> deleteRecipe(int id) => _send('DELETE', '/api/recipes/$id');
 
+  /// Reads the recipe on a web page (server side) into a draft; nothing is saved until [saveRecipe].
+  Future<RecipeImportResult> importRecipePreview(String url) async => RecipeImportResult.fromJson(
+      await _send('POST', '/api/recipes/import/preview', body: {'url': url}) as Map<String, dynamic>);
+
   Future<void> planRecipe(DateTime day, int recipeId) => _send('POST', '/api/meals/plan',
       body: {'date': _dateOnly(day), 'recipe_id': recipeId, 'meal_type': 'dinner'});
 

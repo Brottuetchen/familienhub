@@ -810,5 +810,14 @@
   "templateAppliedTasks": "{created} tasks created",
   "templateAppliedPartial": "{failed} items could not be applied",
   "templateListUnavailable": "The shopping list is not reachable right now",
-  "templateNothingSelected": "Choose at least one item"
+  "templateNothingSelected": "Choose at least one item",
+  "importFromLink": "Import from link",
+  "importLinkLabel": "Link to the recipe page",
+  "importFetch": "Read recipe",
+  "importPreviewHint": "Check the recipe and edit it before you save it.",
+  "importNoRecipe": "No recipe data was found on this page. Nothing was saved.",
+  "importBlocked": "The hub is not allowed to open this address.",
+  "importUnreachable": "The page could not be loaded.",
+  "importTooLarge": "The page is too large.",
+  "importInvalid": "This is not a valid link. It must start with http:// or https://."
 }

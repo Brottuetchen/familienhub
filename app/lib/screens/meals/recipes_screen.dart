@@ -6,6 +6,7 @@ import '../../l10n/l10n.dart';
 import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import 'recipe_import_screen.dart';
 import 'recipe_quick_view.dart';
 
 final recipesProvider = FutureProvider.autoDispose.family<List<HubRecipe>, String>(
@@ -55,12 +56,23 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
     if (saved != null) ref.invalidate(recipesProvider);
   }
 
+  Future<void> _import() async {
+    final saved = await Navigator.push<HubRecipe>(context, MaterialPageRoute(builder: (_) => const RecipeImportScreen()));
+    if (saved != null) ref.invalidate(recipesProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final canEdit = ref.watch(canEditProvider);
     final async = ref.watch(recipesProvider(_query));
     return Scaffold(
-      appBar: AppBar(title: Text(widget.pickFor == null ? l10n.recipeBook : l10n.recipeFromBook)),
+      appBar: AppBar(
+        title: Text(widget.pickFor == null ? l10n.recipeBook : l10n.recipeFromBook),
+        actions: [
+          if (canEdit)
+            IconButton(key: const Key('recipe-import'), tooltip: l10n.importFromLink, icon: const Icon(Icons.link), onPressed: _import),
+        ],
+      ),
       floatingActionButton: canEdit
           ? FloatingActionButton.extended(
               key: const Key('recipe-new'),
@@ -185,6 +197,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
               : r == null
                   ? const Center(child: HubLoader())
                   : ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
+                      if (r.imageUrl != null) _RecipeImage(r.imageUrl!),
                       Text(_meta(r), style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                       if (r.description != null && r.description!.isNotEmpty) ...[const SizedBox(height: 8), Text(r.description!)],
                       if (canEdit) ...[
@@ -230,10 +243,30 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   }
 }
 
-/// Create or edit a recipe; closes with the saved recipe.
+/// Picture of a recipe (a link to the source page's image); hidden if it cannot be loaded.
+class _RecipeImage extends StatelessWidget {
+  final String url;
+  const _RecipeImage(this.url);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: Image.network(url, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+          ),
+        ),
+      );
+}
+
+/// Create or edit a recipe; closes with the saved recipe. A [recipe] without id is a draft (e.g. imported
+/// from a link) and is created on save; [hint] is shown above the form.
 class RecipeEditScreen extends ConsumerStatefulWidget {
   final HubRecipe? recipe;
-  const RecipeEditScreen({super.key, this.recipe});
+  final String? hint;
+  const RecipeEditScreen({super.key, this.recipe, this.hint});
 
   @override
   ConsumerState<RecipeEditScreen> createState() => _RecipeEditScreenState();
@@ -270,6 +303,8 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> {
       servings: (int.tryParse(_servings.text.trim()) ?? 2).clamp(1, 50),
       prepMinutes: int.tryParse(_minutes.text.trim()),
       sourceUrl: _link.text.trim().isEmpty ? null : _link.text.trim(),
+      imageUrl: widget.recipe?.imageUrl,
+      tags: widget.recipe?.tags,
     );
     setState(() => _saving = true);
     try {
@@ -286,10 +321,12 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: Text(widget.recipe == null ? l10n.newRecipe : l10n.editRecipe),
+          title: Text(widget.recipe?.id == null ? l10n.newRecipe : l10n.editRecipe),
           actions: [TextButton(key: const Key('recipe-save'), onPressed: _saving ? null : _save, child: Text(l10n.save))],
         ),
         body: ListView(padding: const EdgeInsets.all(16), children: [
+          if (widget.hint != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(widget.hint!, key: const Key('recipe-hint'))),
+          if (widget.recipe?.imageUrl != null) _RecipeImage(widget.recipe!.imageUrl!),
           TextField(key: const Key('recipe-title'), controller: _title, textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: l10n.title)),
           const SizedBox(height: 12),
