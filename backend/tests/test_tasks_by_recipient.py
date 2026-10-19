@@ -276,6 +276,10 @@ def test_von_mir_survives_an_unreachable_recipient_provider(client, world):
 
     def boom(**kw):
         raise ConnectionError("down")
+    from app.services import caldav_cache
+
+    caldav_cache.invalidate_account()  # the outage starts now; cached clients and lists would hide it
+    caldav_cache.clear_reads()
     with patch("caldav.DAVClient", side_effect=boom):
         data = _from_me(client, world.h_creator)
     assert [(t["title"], t["done"], t["stale"]) for t in data["items"]] == [("Müll", False, True)]

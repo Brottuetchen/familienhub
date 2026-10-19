@@ -33,6 +33,16 @@ def _init_db():
     yield
 
 
+@pytest.fixture(autouse=True)
+def _fresh_caldav_cache():
+    """Each test starts without cached CalDAV clients, calendar lists and reads (they are keyed by account)."""
+    from app.services import caldav_cache
+
+    caldav_cache.reset()
+    yield
+    caldav_cache.reset()
+
+
 @pytest.fixture()
 def client():
     with TestClient(app) as c:

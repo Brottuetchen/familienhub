@@ -399,6 +399,9 @@ def test_household_delete_discovery_failure_is_retryable(client, auth_a, user_a,
         "recurrence": "weekly", "rotation": [user_a.id]}).json()
     todo = household.todo_by_uid(task["uid"])
     before = list(household._todos_data)
+    from app.services import caldav_cache
+
+    caldav_cache.invalidate_account()  # discovery fails from now on; a cached calendar list would hide it
     with patch.object(household, "get_supported_components", side_effect=ConnectionError("offline")):
         response = client.delete(f"/api/tasks/{task['uid']}", headers=auth_a)
         assert response.status_code == 503, response.text
@@ -441,6 +444,9 @@ def test_household_delete_healthy_calendar_survives_sibling_discovery_failure(
             db.commit()
     fake = FakeDAVClient("https://cloud.example.com/dav", "a", "secret")
     fake._principal = FakePrincipal([sibling, household])
+    from app.services import caldav_cache
+
+    caldav_cache.invalidate_account()  # a different server layout from now on: forget the cached calendar list
     with patch("caldav.DAVClient", return_value=fake), patch.object(
         sibling, "get_supported_components", side_effect=ConnectionError("offline"),
     ):
