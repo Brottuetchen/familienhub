@@ -11,7 +11,7 @@ Everything is built by GitHub Actions. Nobody needs Flutter, Xcode or Docker on 
 | iOS IPA only | `ios.yml` | push to `main` touching `app/`, or by hand | workflow artifact (14 days) |
 | Tests | `ci.yml` | every push and PR | – |
 
-## First public beta: v1.0.0-beta.1
+## Publishing a beta (e.g. v1.0.0-beta.2)
 
 Before publishing:
 
@@ -19,17 +19,18 @@ Before publishing:
 2. **Required:** configure the Android signing secrets in **Settings → Secrets and variables → Actions** before publishing. The release workflow refuses to build a public APK without them. Without the same permanent signing key on each release, users cannot install APK updates in place. Back up the keystore and its password securely outside GitHub. Do not add them to the repository.
 3. If you need native Firebase push in the public Android app, configure `GOOGLE_SERVICES_JSON` using the same Firebase project as the server; otherwise prefer ntfy/Web Push as documented.
 4. Confirm the GHCR image package is **public** (repository visibility does not guarantee package visibility).
-5. Check that Forgejo and GitHub have the same intended release commit, because this GitHub repository is described as a Forgejo mirror.
+5. Add the version's section to [`CHANGELOG.md`](../CHANGELOG.md) (`## [1.0.0-beta.2]`). The release workflow copies that section into the GitHub release notes.
+6. GitHub is the primary repository. Do not push to it from a mirror: a push mirror with pruning overwrites `main` and deletes branches and tags.
 
 Create a **Git tag**, not a release in the GitHub web UI: the tag-triggered `.github/workflows/release.yml` itself creates the GitHub Release. Manually publishing a Release first can cause an "already exists" error in that workflow.
 
-With a clean local checkout at the intended commit and a Git remote named `github` pointing to this repository:
+With a clean local checkout of `main` at the intended commit:
 
 ```bash
 git status --short
 git remote -v
-git tag -a v1.0.0-beta.1 -m "FamilienHub first public beta"
-git push github v1.0.0-beta.1
+git tag -a v1.0.0-beta.2 -m "Familienhub 1.0.0-beta.2"
+git push origin v1.0.0-beta.2
 ```
 
 The tag must point at a commit whose `app/pubspec.yaml` version is `1.0.0+1` (or another build number with the same `1.0.0` version). After pushing, wait for both the **Release** and **Docker image** GitHub Actions workflows to complete. The release job uploads an Android APK, unsigned iOS IPA, checksums, and a **release-pinned** `docker-compose.yml`.
@@ -37,17 +38,18 @@ The tag must point at a commit whose `app/pubspec.yaml` version is `1.0.0+1` (or
 Verify the image and installation from a clean machine before announcing the beta:
 
 ```bash
-docker pull ghcr.io/brottuetchen/familienhub:1.0.0-beta.1
+docker pull ghcr.io/brottuetchen/familienhub:1.0.0-beta.2
 # Use the docker-compose.yml attached to the GitHub release,
 # or override the default image tag with FAMILIENHUB_VERSION.
-FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
 ```
 
 Important: the iOS IPA is **unsigned** and must be signed by the installer's Apple ID; it is not a TestFlight/App Store build. Without APNs entitlements, use the PWA with Web Push or the ntfy app. Beta users should expect issues and report them via the issue templates.
 
-### After the first beta
+### Afterwards
 
-Ship `v1.0.0-beta.2` only after fixes have been tested and the app and server builds pass again. The stable `v1.0.0` tag should follow real external-installation tests, not just successful CI.
+- Bump the [Home Assistant add-on](https://github.com/Brottuetchen/familienhub-ha-addon) to the new image tag (its README lists the steps).
+- The stable `v1.0.0` tag should follow real external-installation tests, not just successful CI.
 
 ## Make a release
 

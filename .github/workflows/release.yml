@@ -138,4 +138,9 @@ jobs:
           Setup guide: [getting started](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/getting-started.md)
           NOTES
           sed -i 's/^ *//' notes.md
+          # This version's section of CHANGELOG.md, with links made absolute (relative links don't work in releases)
+          BASE="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/"
+          awk -v v="$VER" '/^## \[/ { p = ($0 == "## [" v "]"); next } p' CHANGELOG.md \
+            | sed -E "s#\]\((docs/|\.env\.example)#](${BASE}\1#g" > changes.md
+          if [ -s changes.md ]; then { echo; cat changes.md; } >> notes.md; fi
           gh release create "$GITHUB_REF_NAME" dist/* --title "Familienhub $VER" --notes-file notes.md --generate-notes $PRE
