@@ -46,6 +46,8 @@ void main() {
     expect(b.sent('GET', '/api/recipe-sources/mealie/search').single.url.queryParameters['q'], 'shak');
     await tester.tap(find.text('Shakshuka').last);
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('recipe-plan'))); // the quick view opens first (#68)
+    await tester.pumpAndSettle();
     expect(bodyOf(b.sent('POST', '/api/recipe-sources/mealie/plan').single)['recipe_id'], 'r1');
   });
 

@@ -6,6 +6,7 @@ import '../../l10n/l10n.dart';
 import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import 'recipe_quick_view.dart';
 
 final recipesProvider = FutureProvider.autoDispose.family<List<HubRecipe>, String>(
     (ref, query) => ref.watch(apiClientProvider).recipes(query: query));
@@ -34,13 +35,18 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
 
   Future<void> _tap(HubRecipe r) async {
     final day = widget.pickFor;
-    if (day != null) {
-      if (await runAction(context, () => ref.read(apiClientProvider).planRecipe(day, r.id!)) && mounted) {
-        Navigator.pop(context, true);
-      }
-      return;
+    final result = await showRecipeQuickView(
+      context,
+      RecipeRef(source: 'hub', id: '${r.id}', title: r.title, url: r.sourceUrl, minutes: r.prepMinutes),
+      planDay: day,
+      canEdit: day == null,
+    );
+    if (!mounted) return;
+    if (result == QuickViewResult.changed && day != null) {
+      Navigator.pop(context, true);
+    } else if (result == QuickViewResult.edit) {
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipeId: r.id!)));
     }
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipeId: r.id!)));
     ref.invalidate(recipesProvider);
   }
 
@@ -91,7 +97,7 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
                         leading: const Icon(Icons.restaurant_menu),
                         title: Text(r.title),
                         subtitle: Text(_meta(r)),
-                        trailing: widget.pickFor != null ? const Icon(Icons.event_available) : const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () => _tap(r),
                       ),
                   ]),

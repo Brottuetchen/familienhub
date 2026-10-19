@@ -6,12 +6,16 @@ older app versions.
 
 from __future__ import annotations
 
+import json
+import time
 from datetime import date
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
+from app.core.database import get_db
 from app.core.security import get_current_user, require_min_role
 from app.models.user import ROLE_PARTNER, User
 
@@ -57,6 +61,61 @@ async def search(source_id: str, q: str, _: User = Depends(get_current_user)):
         return {"status": "ok", "error": None, **await service.search(q.strip())}
     except _errors() as exc:
         return {"status": "unavailable", "error": str(exc), "items": [], "total": 0}
+
+
+# Quick view details of external recipes: same recipe, same answer for everybody, so a short shared cache
+# spares the sources (and Cookidoo's login) when the family browses. No personal data is stored.
+_DETAIL_TTL = 3600
+_DETAIL_MAX = 300
+_details: Dict[Tuple[str, str], Tuple[float, Dict[str, Any]]] = {}
+
+
+def _detail(title: Any, image: Any, minutes: Any, servings: Any, ingredients: Any, steps: Any, url: Any, source: str,
+            recipe_id: str) -> Dict[str, Any]:
+    return {"status": "ok", "error": None, "id": recipe_id, "source": source, "title": title or "", "image": image,
+            "minutes": minutes, "servings": servings, "ingredients": [str(i) for i in ingredients or []],
+            "steps": [str(x) for x in steps or []], "url": url}
+
+
+def _failed(source: str, recipe_id: str, error: str) -> Dict[str, Any]:
+    return {**_detail("", None, None, None, [], [], None, source, recipe_id), "status": "unavailable", "error": error}
+
+
+def _hub_recipe(recipe_id: str, db: Session) -> Dict[str, Any]:
+    from app.models.recipe import Recipe
+
+    r = db.query(Recipe).filter(Recipe.id == int(recipe_id)).first() if recipe_id.isdigit() else None
+    if r is None:
+        return _failed("hub", recipe_id, "Rezept nicht gefunden")
+    try:
+        ingredients = json.loads(r.ingredients_json or "[]")
+    except (ValueError, TypeError):
+        ingredients = []
+    steps = [line.strip() for line in (r.instructions or "").splitlines() if line.strip()]
+    return _detail(r.title, None, r.prep_minutes, r.servings, ingredients, steps, r.source_url, "hub", recipe_id)
+
+
+@router.get("/{source_id}/recipes/{recipe_id}")
+async def recipe_details(source_id: str, recipe_id: str, _: User = Depends(get_current_user),
+                         db: Session = Depends(get_db)):
+    """One shape for the app's recipe quick view: hub recipe book, Cookidoo, Mealie. Fails softly."""
+    if source_id == "hub":
+        return _hub_recipe(recipe_id, db)
+    service = _source(source_id)
+    key = (source_id, recipe_id)
+    hit = _details.get(key)
+    if hit and time.monotonic() - hit[0] < _DETAIL_TTL:
+        return hit[1]
+    try:
+        raw = await (service.recipe(recipe_id))
+    except _errors() as exc:
+        return _failed(source_id, recipe_id, str(exc))
+    result = _detail(raw.get("name"), raw.get("image"), raw.get("minutes"), raw.get("servings"), raw.get("ingredients"),
+                     raw.get("steps"), raw.get("url"), source_id, recipe_id)
+    if len(_details) >= _DETAIL_MAX:
+        _details.pop(min(_details, key=lambda k: _details[k][0]))
+    _details[key] = (time.monotonic(), result)
+    return result
 
 
 class PlanIn(BaseModel):

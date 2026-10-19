@@ -750,5 +750,14 @@
   "pluginRemovedRestart": "Plugin removed. Restarting the hub cleans it up completely.",
   "pluginCheckUpdate": "Check for update",
   "pluginFromGithub": "Installed from GitHub · {version}",
-  "pluginsNotLoaded": "Installed but not loaded"
+  "pluginsNotLoaded": "Installed but not loaded",
+  "planOnDate": "Plan for {day}",
+  "@planOnDate": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "recipeNoDetails": "There are no further details for this recipe here.",
+  "recipeDetailsFailed": "The recipe details could not be loaded.",
+  "recipeQuickView": "Recipe"
 }

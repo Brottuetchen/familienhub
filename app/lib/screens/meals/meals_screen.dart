@@ -7,6 +7,7 @@ import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import 'cookidoo_search_screen.dart';
+import 'recipe_quick_view.dart';
 import 'recipes_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -30,9 +31,20 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
 
   bool get _planning => ref.read(appModulesProvider).has('meal_planning');
 
-  Future<void> _openRecipe(int id) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipeId: id)));
-    if (mounted) await _reload();
+  /// Tapping a plan entry with a recipe (hub book, Cookidoo, Mealie) opens the recipe quick view.
+  Future<void> _openRecipe(DateTime day, MealEntry entry) async {
+    final api = ref.read(apiClientProvider);
+    final hub = entry.hubRecipeId != null;
+    final id = hub ? '${entry.hubRecipeId}' : entry.cookidooId!;
+    final result = await showRecipeQuickView(
+      context,
+      RecipeRef(source: entry.source, id: id, title: entry.title, image: entry.image, url: entry.url, minutes: entry.minutes),
+      onRemove: hub
+          ? (entry.id == null ? null : () => api.deleteMeal(entry.id!))
+          : () => entry.isCookidoo ? api.unplanCookidoo(day, id) : api.unplanFromSource(entry.source, day, id),
+    );
+    if (!mounted) return;
+    if (result == QuickViewResult.changed) await _reload();
   }
 
   Future<void> _addMeal(DateTime day) async {
@@ -234,7 +246,7 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
                       onAdd: () => _addMeal(day.date),
                       onDelete: _deleteMeal,
                       onCookidoo: (entry, action) => _cookidooAction(day.date, entry, action),
-                      onOpenRecipe: _openRecipe,
+                      onOpenRecipe: (entry) => _openRecipe(day.date, entry),
                     ),
                   ],
                 ),
@@ -256,7 +268,7 @@ class _DayTile extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<MealEntry> onDelete;
   final void Function(MealEntry entry, String action) onCookidoo;
-  final ValueChanged<int>? onOpenRecipe;
+  final ValueChanged<MealEntry>? onOpenRecipe;
   const _DayTile({
     required this.day,
     required this.planning,
@@ -348,7 +360,7 @@ class _DayTile extends StatelessWidget {
                   title: Text(e.title),
                   subtitle: _subtitle(e),
                   trailing: _trailing(e),
-                  onTap: e.hubRecipeId != null && onOpenRecipe != null ? () => onOpenRecipe!(e.hubRecipeId!) : null,
+                  onTap: (e.hubRecipeId != null || e.cookidooId != null) && onOpenRecipe != null ? () => onOpenRecipe!(e) : null,
                 ),
             ],
           ),

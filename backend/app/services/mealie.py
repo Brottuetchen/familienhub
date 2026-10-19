@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 import httpx
 
@@ -85,6 +86,19 @@ class MealieService:
         items = [{"id": r["id"], "name": r.get("name") or "", "image": self._image(r), "thumbnail": self._image(r),
                   "url": await self._recipe_url(r.get("slug"))} for r in (data or {}).get("items", [])]
         return {"items": items, "total": (data or {}).get("total", len(items))}
+
+    async def recipe(self, recipe_id: str) -> Dict[str, Any]:
+        """Details for the quick view: ingredients and steps as plain text."""
+        r = await self._call("GET", f"/api/recipes/{quote(recipe_id, safe='')}") or {}
+        ingredients = [(i.get("display") or i.get("originalText") or i.get("note") or "").strip()
+                       for i in r.get("recipeIngredient") or [] if isinstance(i, dict)]
+        steps = [" ".join(p for p in ((i.get("title") or "").strip(), (i.get("text") or "").strip()) if p)
+                 for i in r.get("recipeInstructions") or [] if isinstance(i, dict)]
+        servings = r.get("recipeServings") or r.get("recipeYieldQuantity")
+        return {"id": r.get("id") or recipe_id, "name": r.get("name") or "", "image": self._image(r),
+                "url": await self._recipe_url(r.get("slug")), "minutes": _minutes(r),
+                "servings": servings if isinstance(servings, (int, float)) and servings > 0 else None,
+                "ingredients": [i for i in ingredients if i], "steps": [x for x in steps if x]}
 
     async def plan_between(self, start: date, end: date) -> Dict[str, List[Dict[str, Any]]]:
         data = await self._call("GET", "/api/households/mealplans", params={
