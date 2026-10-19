@@ -16,7 +16,7 @@ Everything is built by GitHub Actions. Nobody needs Flutter, Xcode or Docker on 
 Before publishing:
 
 1. Verify that the latest `main` CI and iOS build are green. A successful Docker image workflow on `main` publishes `:edge`, **not** `:latest`.
-2. **Strongly recommended:** configure the Android signing secrets in **Settings → Secrets and variables → Actions** before the first APK is distributed. Without the same permanent signing key on each release, users cannot install APK updates in place. Back up the keystore and its password securely outside GitHub. Do not add them to the repository.
+2. **Required:** configure the Android signing secrets in **Settings → Secrets and variables → Actions** before publishing. The release workflow refuses to build a public APK without them. Without the same permanent signing key on each release, users cannot install APK updates in place. Back up the keystore and its password securely outside GitHub. Do not add them to the repository.
 3. If you need native Firebase push in the public Android app, configure `GOOGLE_SERVICES_JSON` using the same Firebase project as the server; otherwise prefer ntfy/Web Push as documented.
 4. Confirm the GHCR image package is **public** (repository visibility does not guarantee package visibility).
 5. Check that Forgejo and GitHub have the same intended release commit, because this GitHub repository is described as a Forgejo mirror.
