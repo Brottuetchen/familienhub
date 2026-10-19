@@ -88,6 +88,10 @@ Enter credentials for Nextcloud, Home Assistant, Paperless, Seerr, Shelfarr, Coo
 
 With a CalDAV server, set the shared family calendar and connect the phones to the same server, so the iPhone and Android calendar and reminder apps show the same data as the hub: [calendar & phone](calendar.md).
 
+### Customise "Today"
+
+Everyone arranges their own "Today" screen with the sliders icon in its header: drag cards to reorder them, switch them on or off and, in tile themes (see [themes](themes.md)), choose half width so two cards sit side by side. "Reset to default" returns to the family default. Admins can save their arrangement as the family default (shown to everyone without an own layout) in the same editor. Without a family default the classic arrangement applies. The layout is stored on the server (`GET/PUT/DELETE /api/me/today-layout`, admin default under `/api/admin/today-layout`); an older server simply keeps the classic arrangement.
+
 ## 7. Backup
 
 Back up the PostgreSQL volume (`familienhub_db`), the data volume (`familienhub_data`, holds the generated secret key; without it stored plugin credentials cannot be decrypted) and `.env` if you have one. Tasks, shopping lists, documents and the like live in the connected services.

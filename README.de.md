@@ -8,7 +8,7 @@ Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan,
 
 [English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Plugin-Vorlage](examples/plugin-template/) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
-<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
+<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/calendar-light.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/calendar-dark.png" width="23%" alt="Termine, dunkel">
 
 </div>
 
@@ -52,7 +52,11 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 <details>
 <summary>Weitere Screenshots</summary>
 
-<img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/shopping.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/calendar.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
+<img src="docs/screenshots/de/tasks-light.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/tasks-dark.png" width="23%" alt="Aufgaben, dunkel"> <img src="docs/screenshots/de/shopping-light.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/shopping-dark.png" width="23%" alt="Einkauf, dunkel">
+
+<img src="docs/screenshots/de/settings-light.png" width="23%" alt="Einstellungen"> <img src="docs/screenshots/de/settings-dark.png" width="23%" alt="Einstellungen, dunkel"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan">
+
+<img src="docs/screenshots/de/calendar-month.png" width="23%" alt="Monatsansicht"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
 
 </details>
 
@@ -72,6 +76,12 @@ Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen 
 Eigene Plugins gibt es per GitHub-Link direkt in der App (*Verwaltung → Plugins & Zugänge → Plugin installieren*); die Anleitung zum Schreiben und eine Vorlage stehen in [docs/plugins.md](docs/plugins.md) (englisch) und [examples/plugin-template](examples/plugin-template/).
 
 Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *Mehr → Feedback senden → An die Entwickler*. Code, Übersetzungen, Themes und Plugins: siehe [CONTRIBUTING](CONTRIBUTING.md).
+
+## Unterstützen
+
+[![Jahresziel 2026](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrottuetchen%2Ffamilienhub%2Fmain%2F.github%2Ffunding-goal.json)](https://ko-fi.com/brottuetchen)
+
+Familienhub ist kostenlos und entsteht in der Freizeit. Für echte native Apps braucht das Projekt eine Apple-Entwicklerlizenz (99 €/Jahr, für TestFlight, den App Store und Widgets auf dem iPhone, siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9)) und einmalig ein Google-Play-Entwicklerkonto (rund 25 €). Daraus ergibt sich ein Jahresziel von **150 €**. Wenn der Hub eurer Familie hilft, könnt ihr auf [Ko-fi](https://ko-fi.com/brottuetchen) oder über [GitHub Sponsors](https://github.com/sponsors/Brottuetchen) etwas beisteuern.
 
 ## Lizenz
 

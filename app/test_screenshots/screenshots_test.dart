@@ -8,6 +8,7 @@ import 'package:familienhub/l10n/l10n.dart';
 import 'package:familienhub/models/themes.dart';
 import 'package:familienhub/providers/providers.dart';
 import 'package:familienhub/screens/main_shell.dart';
+import 'package:familienhub/services/session_store.dart';
 import 'package:familienhub/screens/more/appearance_screen.dart';
 import 'package:familienhub/widgets/hub_background.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,10 @@ FakeBackend _demo(String lang) {
     {'uid': 't3', 'title': t('Hausaufgaben Mathe', 'Maths homework'), 'done': false, 'assignee': 3},
     {'uid': 't4', 'title': t('Fahrrad zur Werkstatt', 'Bike to the repair shop'), 'done': false, 'due': _d(now.add(const Duration(days: 3)))},
     {'uid': 't5', 'title': t('Pflanzen gießen', 'Water the plants'), 'done': false, 'list': {'name': t('Haushalt', 'Household'), 'kind': 'family'}},
+    {'uid': 't6', 'title': t('Elternabend vorbereiten', 'Prepare for parents\' evening'), 'done': false, 'due': _d(now.add(const Duration(days: 1)))},
+    {'uid': 't7', 'title': t('Schwimmsachen packen', 'Pack the swimming kit'), 'done': false, 'due': _d(now.add(const Duration(days: 2))), 'assignee': 3},
+    {'uid': 't8', 'title': t('Altpapier entsorgen', 'Recycle old paper'), 'done': false, 'due': _d(now.add(const Duration(days: 5)))},
+    {'uid': 't9', 'title': t('Zahnarzttermin ausmachen', 'Book a dentist appointment'), 'done': false},
   ];
   b.json('GET', '/api/today', {
     'date': _d(now),
@@ -133,7 +138,7 @@ FakeBackend _demo(String lang) {
 
 Widget _app(FakeBackend b, ThemeData theme, Widget home, {AppTab tab = AppTab.today}) => ProviderScope(
       overrides: [
-        apiClientProvider.overrideWithValue(b.api()),
+        apiClientProvider.overrideWithValue(b.api(store: MemorySessionStore(url: 'https://hub.example.org', access: 'demo', refresh: 'demo'))),
         tabProvider.overrideWith((ref) => tab),
       ],
       child: MaterialApp(
@@ -154,16 +159,25 @@ void main() {
   });
   tearDown(() => setAppLanguage('de'));
 
+  ThemeData light() => AppTheme.fromSpec(_theme('clean-cards').forBrightness(Brightness.light));
+  ThemeData dark() => AppTheme.fromSpec(_theme('clean-cards').forBrightness(Brightness.dark));
+  const shell = MainShell(startPush: false);
   final shots = <(String, ThemeData Function(), Widget, AppTab)>[
-    ('today-light', () => AppTheme.fromSpec(_theme('clean-cards').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.today),
-    ('today-dark', () => AppTheme.dark, const MainShell(startPush: false), AppTab.today),
-    ('today-pixel', () => AppTheme.fromSpec(_theme('pixel').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.today),
-    ('tasks', () => AppTheme.fromSpec(_theme('warm').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.tasks),
-    ('shopping', () => AppTheme.dark, const MainShell(startPush: false), AppTab.shopping),
-    ('meals', () => AppTheme.fromSpec(_theme('liquid-glass').forBrightness(Brightness.dark)), const MainShell(startPush: false), AppTab.meals),
-    ('calendar', () => AppTheme.fromSpec(_theme('neo-brutalism').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.calendar),
-    ('calendar-month', () => AppTheme.fromSpec(_theme('clean-cards').forBrightness(Brightness.light)), const MainShell(startPush: false), AppTab.calendar),
-    ('themes', () => AppTheme.dark, const AppearanceScreen(), AppTab.more),
+    ('today-light', light, shell, AppTab.today),
+    ('today-dark', dark, shell, AppTab.today),
+    ('calendar-light', light, shell, AppTab.calendar),
+    ('calendar-dark', dark, shell, AppTab.calendar),
+    ('tasks-light', light, shell, AppTab.tasks),
+    ('tasks-dark', dark, shell, AppTab.tasks),
+    ('shopping-light', light, shell, AppTab.shopping),
+    ('shopping-dark', dark, shell, AppTab.shopping),
+    ('settings-light', light, shell, AppTab.more),
+    ('settings-dark', dark, shell, AppTab.more),
+    // Showcase shots
+    ('today-pixel', () => AppTheme.fromSpec(_theme('pixel').forBrightness(Brightness.light)), shell, AppTab.today),
+    ('meals', () => AppTheme.fromSpec(_theme('liquid-glass').forBrightness(Brightness.dark)), shell, AppTab.meals),
+    ('calendar-month', () => AppTheme.fromSpec(_theme('warm').forBrightness(Brightness.light)), shell, AppTab.calendar),
+    ('themes', dark, const AppearanceScreen(), AppTab.more),
   ];
 
   for (final lang in ['en', 'de']) {

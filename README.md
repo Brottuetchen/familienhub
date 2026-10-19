@@ -8,7 +8,7 @@ Today at a glance, tasks for yourself and each other, shopping, meal plan, event
 
 [Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
-<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
+<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
 </div>
 
@@ -53,7 +53,11 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 <details>
 <summary>More screenshots</summary>
 
-<img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/shopping.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/calendar.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
+<img src="docs/screenshots/en/tasks-light.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/tasks-dark.png" width="23%" alt="Tasks, dark"> <img src="docs/screenshots/en/shopping-light.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/shopping-dark.png" width="23%" alt="Shopping, dark">
+
+<img src="docs/screenshots/en/settings-light.png" width="23%" alt="Settings"> <img src="docs/screenshots/en/settings-dark.png" width="23%" alt="Settings, dark"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan">
+
+<img src="docs/screenshots/en/calendar-month.png" width="23%" alt="Month view"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
 
 </details>
 
@@ -120,6 +124,12 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 ## Status
 
 Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome.
+
+## Support
+
+[![Goal 2026](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrottuetchen%2Ffamilienhub%2Fmain%2F.github%2Ffunding-goal.json)](https://ko-fi.com/brottuetchen)
+
+Familienhub is free and built in spare time. To ship real native apps, the project needs an Apple Developer licence (99 €/year, for TestFlight, the App Store and iPhone widgets, see [#9](https://github.com/Brottuetchen/familienhub/issues/9)) and a one-time Google Play developer account (about 25 €). That makes an annual goal of **150 €**. If the hub helps your family, you can chip in on [Ko-fi](https://ko-fi.com/brottuetchen) or via [GitHub Sponsors](https://github.com/sponsors/Brottuetchen).
 
 ## License
 

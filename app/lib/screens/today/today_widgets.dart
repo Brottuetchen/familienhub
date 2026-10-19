@@ -12,6 +12,7 @@ import '../../models/themes.dart' show hexColor;
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../more/notifications_screen.dart';
+import 'today_layout_editor.dart';
 import '../tasks/habitica_tasks.dart';
 import '../tasks/tasks_screen.dart' show taskDueLabel;
 import '../../l10n/l10n.dart';
@@ -128,6 +129,12 @@ class TodayHeader extends ConsumerWidget {
             ),
           ),
           if (status != null) status!,
+          IconButton(
+            key: const Key('today-customise'),
+            tooltip: l10n.customiseToday,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TodayLayoutEditor())),
+            icon: const Icon(Icons.tune),
+          ),
           IconButton(
             key: const Key('today-bell'),
             tooltip: unread == 0 ? l10n.notifications : l10n.unreadNotifications(unread),
@@ -451,8 +458,23 @@ class MealWeekStrip extends ConsumerWidget {
       const gap = 6.0;
       final slot = ((box.maxWidth - gap * (days.length - 1)) / days.length).clamp(36.0, 56.0);
       final tile = slot - 4;
+      final dayStyle = theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800);
+      final titleStyle = theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+      // Height grows with the text size (#8): measure both label lines with the current text scaling
+      final scaler = MediaQuery.textScalerOf(context);
+      double line(TextStyle? style) {
+        final painter = TextPainter(
+          text: TextSpan(text: 'Mo', style: style),
+          textScaler: scaler,
+          maxLines: 1,
+          textDirection: Directionality.of(context),
+        )..layout();
+        final height = painter.height;
+        painter.dispose();
+        return height;
+      }
       return SizedBox(
-        height: tile + 40,
+        height: line(dayStyle) + 4 + tile + 2 + line(titleStyle) + 2,
         child: ListView.separated(
           key: const Key('today-meal-week'),
           scrollDirection: Axis.horizontal,
@@ -471,7 +493,8 @@ class MealWeekStrip extends ConsumerWidget {
                 child: Column(
                   children: [
                     Text(localDate('E').format(d.date).substring(0, 2),
-                        style: theme.textTheme.labelMedium?.copyWith(
+                        maxLines: 1,
+                        style: dayStyle?.copyWith(
                             fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
                             color: isToday ? theme.colorScheme.primary : null)),
                     const SizedBox(height: 4),
@@ -498,10 +521,7 @@ class MealWeekStrip extends ConsumerWidget {
                               size: 20, color: theme.colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 2),
-                    Text(entry?.title ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    Text(entry?.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: titleStyle),
                   ],
                 ),
               ),
