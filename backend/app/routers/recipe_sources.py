@@ -92,7 +92,7 @@ def _hub_recipe(recipe_id: str, db: Session) -> Dict[str, Any]:
     except (ValueError, TypeError):
         ingredients = []
     steps = [line.strip() for line in (r.instructions or "").splitlines() if line.strip()]
-    return _detail(r.title, None, r.prep_minutes, r.servings, ingredients, steps, r.source_url, "hub", recipe_id)
+    return _detail(r.title, r.image_url, r.prep_minutes, r.servings, ingredients, steps, r.source_url, "hub", recipe_id)
 
 
 @router.get("/{source_id}/recipes/{recipe_id}")

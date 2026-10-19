@@ -27,6 +27,7 @@ class RecipeRequest(BaseModel):
     prep_minutes: Optional[int] = Field(default=None, ge=0, le=6000)
     tags: Optional[str] = Field(default=None, max_length=200)
     source_url: Optional[str] = Field(default=None, max_length=500)
+    image_url: Optional[str] = Field(default=None, max_length=500)
 
     @field_validator("title")
     @classmethod
@@ -40,7 +41,7 @@ class RecipeRequest(BaseModel):
     def _ingredients(cls, v: List[str]) -> List[str]:
         return [i.strip()[:200] for i in v if i and i.strip()]
 
-    @field_validator("source_url")
+    @field_validator("source_url", "image_url")
     @classmethod
     def _url(cls, v: Optional[str]) -> Optional[str]:
         v = (v or "").strip()
@@ -66,6 +67,7 @@ def _to_dict(r: Recipe) -> dict:
         "prep_minutes": r.prep_minutes,
         "tags": r.tags,
         "source_url": r.source_url,
+        "image_url": r.image_url,
     }
 
 
@@ -76,6 +78,26 @@ async def list_recipes(q: Optional[str] = None, db: Session = Depends(get_db), c
         like = f"%{q.strip()}%"
         query = query.filter(or_(Recipe.title.ilike(like), Recipe.ingredients_json.ilike(like), Recipe.tags.ilike(like)))
     return [_to_dict(r) for r in query.order_by(Recipe.title.asc()).all()]
+
+
+class ImportRequest(BaseModel):
+    url: str = Field(min_length=1, max_length=2000)
+
+
+@router.post("/import/preview")
+async def import_preview(data: ImportRequest, current_user: User = Depends(require_min_role(ROLE_PARTNER))):
+    """Reads the recipe from a web page and returns it as a draft. Nothing is saved; the app saves the
+    (edited) draft with POST /api/recipes. Fails softly: `status` is `ok`, `no_recipe`, `invalid_url`,
+    `blocked`, `unreachable` or `too_large`, and `recipe` is null unless it is `ok`."""
+    from app.services.recipe_import import parse_recipe
+    from app.services.safe_fetch import FetchError, fetch_text
+
+    try:
+        final_url, page = await fetch_text(data.url)
+    except FetchError as exc:
+        return {"status": exc.reason, "recipe": None}
+    draft = parse_recipe(page, final_url)
+    return {"status": "ok", "recipe": draft} if draft else {"status": "no_recipe", "recipe": None}
 
 
 @router.get("/{recipe_id}")
@@ -97,6 +119,7 @@ async def create_recipe(data: RecipeRequest, db: Session = Depends(get_db), curr
         prep_minutes=data.prep_minutes,
         tags=data.tags,
         source_url=data.source_url,
+        image_url=data.image_url,
     )
     db.add(recipe)
     db.commit()
@@ -113,6 +136,7 @@ async def update_recipe(recipe_id: int, data: RecipeRequest, db: Session = Depen
     r.title, r.description, r.instructions = data.title, data.description, data.instructions
     r.ingredients_json = json.dumps(data.ingredients, ensure_ascii=False)
     r.servings, r.prep_minutes, r.tags, r.source_url = data.servings, data.prep_minutes, data.tags, data.source_url
+    r.image_url = data.image_url
     db.commit()
     db.refresh(r)
     return _to_dict(r)
