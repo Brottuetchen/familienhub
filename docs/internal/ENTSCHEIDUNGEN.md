@@ -135,3 +135,10 @@ Verträge, Single-Writer-Cutover und bewusste Grenzen: `docs/internal/AUFGABENPR
 - **Speicherort:** `<DATA_DIR>/plugins/{src,site,tmp}`; Tabelle `installed_plugins` (Migration `d1e2f3a4b5c6`). **`/app/data` muss ein dauerhaftes Volume sein.** Das Standard-Compose hat `familienhub_data`; die Referenzinstallation (`/opt/stacks/familienhub/compose.yml`) bindet `/app/data` **nicht** ein: dort gehen installierte Plugins bei jedem `up -d --build` verloren (Datensatz bleibt, Fehler in der Liste, gleicher Commit erneut installieren repariert). Vor produktiver Nutzung Volume ergänzen.
 - **Grenzen:** Aktualisieren/Entfernen von Plugins mit kompilierten Erweiterungen braucht einen Neustart (die App sagt es). Installierte Plugins können keine Alembic-Migrationen mitbringen. Lange Installationen (pip) brauchen ein Proxy-Timeout von mindestens 300 s. Kein Katalog, keine Signaturen, keine automatische Update-Prüfung.
 - Anleitung für Plugin-Autoren und Vorlage: `docs/plugins.md`, `examples/plugin-template/` (die Vorlage ist durch `tests/test_plugin_template.py` abgesichert).
+
+
+## Vorlagenlisten (#20)
+
+- Vorlagen gehören der Familie (nicht pro Person). Lesen: alle Rollen. Anlegen/Ändern/Löschen und „Einkaufsliste als Vorlage speichern“: ab Partner.
+- Anwenden auf die Einkaufsliste: jede Rolle (wie `POST /api/shopping`), über die aktive Quelle; offene Einträge werden nicht doppelt angelegt (ohne Groß-/Kleinschreibung und überzählige Leerzeichen). Anwenden auf Aufgaben: ab Partner (wie Aufgabe anlegen), eine Aufgabe je Eintrag über `provider=auto`, weil die Aufgabenquellen keine Listen mit Einträgen kennen. Beschreibung: `docs/templates.md`.
+

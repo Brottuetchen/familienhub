@@ -10,6 +10,7 @@ import 'habitica_tasks.dart';
 import '../main_shell.dart';
 import '../more/caldav_account_screen.dart';
 import '../../l10n/l10n.dart';
+import '../templates/templates_screen.dart';
 
 /// „überfällig“, „heute“, „morgen“, „Fr, 17.10.“ oder leer.
 String taskDueLabel(Task t, {DateTime? now}) {
@@ -116,7 +117,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
             await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProtectedReadModal(
               provider: tasksProvider(TaskView.mine), child: const HabiticaAccountScreen())));
             ref.invalidate(taskAccountsProvider); await refreshTasks(ref);
-          })],
+          }),
+          PopupMenuButton<String>(
+            key: const Key('tasks-menu'),
+            onSelected: (_) => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => const TemplatesScreen(target: TemplateTarget.tasks))),
+            itemBuilder: (_) => [PopupMenuItem(value: 'templates', child: Text(l10n.templates))],
+          )],
         bottom: TabBar(
           controller: _tabs,
           isScrollable: !wide,
