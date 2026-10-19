@@ -8,6 +8,7 @@ The hub shows the calendars and task lists of your CalDAV server (Nextcloud, Rad
 - **Colours and filter:** every calendar keeps its colour from the server. Tap a chip to hide or show a calendar; this is stored per device.
 - **Create in the right calendar:** the new-event sheet asks *which* calendar. The family calendar comes first, then the calendar you used last. Events are written to exactly that calendar, never to a "default" one. Place, notes and repeat (daily, weekly, monthly, yearly) are optional.
 - **Details, edit, delete:** tap an event. You can edit events in your own CalDAV calendars and in the hub's family calendar. Subscriptions (ICS) are read-only. For repeating CalDAV events, only title, place and notes can be changed in the hub.
+- **Birthdays:** a read-only *Birthdays* calendar shows birthdays and anniversaries, see [birthdays](birthdays.md).
 - **Times** are written with the hub's time zone (*Basics* in the setup wizard), so repeating events stay at the same local time across daylight saving changes.
 
 ## Set up the family calendar

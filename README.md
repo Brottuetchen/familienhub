@@ -6,7 +6,7 @@
 
 Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
 
-[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
+[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Birthdays](docs/birthdays.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
@@ -42,6 +42,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Calendar:** list, week and month views, colours and filter per calendar, new events land in exactly the chosen calendar (family first), edit and delete; the same CalDAV calendars and reminders on iPhone and Android, see [calendar & phone](docs/calendar.md)
 - **Tasks:** own, shared and assigned tasks, household rotation; Nextcloud and Habitica side by side. A task for someone lands in the recipient's own place (set in the profile), not where the creator works
 - **Shopping, meals, recipes:** shopping list, weekly meal plan, a recipe book in the hub (ingredients, steps, link); plan recipes onto days and put their ingredients on the list – also from Cookidoo; reusable [template lists](docs/templates.md) (packing list, weekly shopping) for the shopping list and tasks; import a recipe from a link ([docs](docs/recipe-import.md))
+- **Birthdays and anniversaries:** yearly, with age, in the calendar and on Today, reminders days before and gift ideas the birthday person cannot see, see [birthdays](docs/birthdays.md)
 - **Reminders:** at a time, recurring, or *when I get home* (via Home Assistant), with buttons right in the notification
 - **House:** state tiles and lights/switches/scenes from Home Assistant, chosen by the admin
 - **Documents and media:** search Paperless and get deadlines as reminders; request movies, shows and books, and discover books available in German
