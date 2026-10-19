@@ -1,37 +1,70 @@
 # Roadmap
 
-Status: October 2026. Familienhub runs daily in its first household; the first public release is being prepared.
+Status: October 2026. Familienhub is in public beta and runs daily in its first household. Open work is tracked as [issues](https://github.com/Brottuetchen/familienhub/issues); ideas and questions go to [Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 
-## Done (1.0)
-- Today overview, tasks (own, shared, assigned, household rotation), shopping, meal plan, events, reminders (time, recurring, "when I get home")
-- Plugins: Nextcloud, Habitica, Home Assistant (shopping, house tiles with control), Cookidoo, Paperless-ngx, Shelfarr, Seerr, weather, ntfy
-- Android app with widgets and quick actions, web app (PWA), iOS app for sideloading
-- Push through Firebase, Web Push and ntfy, with quiet hours, categories, history and action buttons
-- Install plugins from GitHub with a link in the app, with a [guide and template](plugins.md) for writing them
-- Server texts in German and English: error messages in the app's language, push texts in the recipient's language, plugin names and settings
-- Offline mode with a queue for changes
+## Done
+
+**Everyday**
+- Today overview, customisable per person (order, show/hide, half or full size) with a family default set by the admin
+- Tasks (own, shared, assigned, household rotation), shopping, meal plan, calendar (list, week, month), reminders (time, recurring, "when I get home")
+- Works out of the box: tasks, shopping list and family calendar are stored in the hub, and sources are chosen per area
+- Sources: CalDAV/Nextcloud, Habitica, Home Assistant, Mealie, Cookidoo, calendar subscriptions (ICS)
+- Recipe import from a link, see [recipe import](recipe-import.md) ([#16](https://github.com/Brottuetchen/familienhub/issues/16))
+- Template lists, see [templates](templates.md) ([#20](https://github.com/Brottuetchen/familienhub/issues/20))
+
+**Family**
+- Kids mode: stars for tasks and rewards, see [kids mode](kids-mode.md) ([#17](https://github.com/Brottuetchen/familienhub/issues/17))
+- Birthdays and anniversaries with gift ideas, see [birthdays](birthdays.md) ([#18](https://github.com/Brottuetchen/familienhub/issues/18))
+- Timetable for children, see [timetable](timetable.md) ([#19](https://github.com/Brottuetchen/familienhub/issues/19))
 - Roles (admin, partner, child, guest), invites, OIDC (e.g. Authentik) with optional auto-create
-- Setup wizard, admin panel (health, family, house, plugins, themes, log, feedback)
-- Themes with light/dark variants and fonts, installable from GitHub
-- German and English
+
+**Home and services**
+- Home Assistant: house tiles with control, shopping lists
+- Paperless-ngx, Seerr (with a notice when a requested title is available), Shelfarr and book discovery with German titles, weather
+- Voice assistant via Home Assistant Assist, see [voice assistant](voice-assistant.md) ([#21](https://github.com/Brottuetchen/familienhub/issues/21))
+
+**Admin and safety**
+- Setup wizard and admin panel (health, family, house, plugins, themes, log, feedback)
+- Backup and restore in Administration, with nightly backups, see [getting started](getting-started.md#7-backup) ([#14](https://github.com/Brottuetchen/familienhub/issues/14))
+- Update notice in Administration, see [getting started](getting-started.md#8-update) ([#15](https://github.com/Brottuetchen/familienhub/issues/15))
+- Push through Firebase, Web Push and ntfy, with quiet hours, categories, history and action buttons
 - Feedback from the app to the family admins or as a GitHub issue
 
-## Next: first public release
-- **Works out of the box:** tasks, shopping list and family calendar stored in the hub; sources chosen per area *(done 18.10.)*
-- **More sources:** calendar subscriptions (ICS: school holidays, waste collection, clubs), Mealie (recipes, meal plan, shopping), then Grocy, Vikunja/Todoist, Google and Microsoft
-- **Repository and docs:** English README with screenshots, guides for plugins, themes and notifications, contribution guide
-- **Media requests:** notify when a requested movie or show is available *(done 18.10.: polling, webhook optional)*
-- **Books:** "Discover" with German-language sources *(done 18.10.: Open Library shelves, German titles)*
-- **Customisable home screen:** each person arranges "Today" (show or hide cards, order, size), with defaults set by the admin *(done 19.10.)*
-- **Kids mode:** stars for tasks and rewards parents define, requests parents approve, optional confirmation of completed tasks, a stars card on the child's Today, see [kids mode](kids-mode.md) *(done 19.10.)*
-- **iOS widgets** (WidgetKit extension)
-- **Plugin and theme store:** reviewed index with pinned commits, own sources marked as not reviewed, update badge, see [store](store.md) *(done 19.10.; the store repository still has to be set up)*
+**Make it yours**
+- Plugin and theme store with reviewed entries and pinned commits, see [store](store.md) ([#7](https://github.com/Brottuetchen/familienhub/issues/7)); the index lives in [familienhub-store](https://github.com/Brottuetchen/familienhub-store)
+- Themes with light/dark variants and fonts, installable from GitHub; [theme gallery](https://github.com/Brottuetchen/familienhub-themes)
+- Plugins from GitHub links, with a [guide and template](plugins.md)
+- German and English, including server texts
+
+**Apps**
+- Android app with widgets and quick actions, web app (PWA), iOS app for sideloading, offline queue
+
+**Ecosystem**
+- Home Assistant add-on as an experimental repository ([familienhub-ha-addon](https://github.com/Brottuetchen/familienhub-ha-addon), part of [#23](https://github.com/Brottuetchen/familienhub/issues/23))
+
+## In progress / next
+
+- **Kiosk mode** for a wall tablet: first as the web app with its own account ([#5](https://github.com/Brottuetchen/familienhub/issues/5))
+- **Run under a sub-path** so the Home Assistant add-on can use ingress and the sidebar ([#28](https://github.com/Brottuetchen/familienhub/issues/28))
+- **Public demo instance**, planned on the Oracle Cloud free tier ([#22](https://github.com/Brottuetchen/familienhub/issues/22))
+- **One-click install** beyond the add-on: Unraid, TrueNAS, Proxmox ([#23](https://github.com/Brottuetchen/familienhub/issues/23))
+- **iOS widgets and TestFlight**, which need the Apple Developer licence and are the funding goal ([#9](https://github.com/Brottuetchen/familienhub/issues/9))
+- **Bug:** floating bottom navigation labels wrap with wide fonts ([#29](https://github.com/Brottuetchen/familienhub/issues/29))
 
 ## Later
-- **Kiosk mode** for a wall-mounted tablet: fullscreen, screen stays on, large tiles, exit by PIN, its own restricted device account
+
+- **F-Droid build** without Firebase ([#24](https://github.com/Brottuetchen/familienhub/issues/24))
+- **Documentation website** ([#26](https://github.com/Brottuetchen/familienhub/issues/26))
 - **iOS push via APNs**, once the project has an Apple Developer account (until then: ntfy or the web app)
-- **More languages**: add `app/lib/l10n/app_<code>.arb`
+- **More sources:** Grocy, Vikunja/Todoist, Google and Microsoft
+- **Small follow-ups from the docs:**
+  - an entry for the native Android app in the share sheet for [recipe import](recipe-import.md#share-into-the-app) (the web app already has a share target)
+  - a Home Assistant custom integration on top of the stable `/api/voice` endpoints, see [voice assistant](voice-assistant.md)
+- Passkeys and 2FA are not planned in the hub: use them through your identity provider (Authentik etc.)
 
-## Ideas, not decided
+## Community welcome
 
-Ideas and wishes are welcome as issues, see [CONTRIBUTING](../CONTRIBUTING.md).
+- **More languages** with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)), a good first issue. Until it is set up, add `app/lib/l10n/app_<code>.arb`, see [CONTRIBUTING](../CONTRIBUTING.md).
+- **Themes:** share yours, see [themes](themes.md) and the [gallery](https://github.com/Brottuetchen/familienhub-themes).
+- **Plugins:** start from the [plugin template](../examples/plugin-template/) and propose it for the store.
+- **Docs, bug reports and ideas:** open an issue or start a discussion.
