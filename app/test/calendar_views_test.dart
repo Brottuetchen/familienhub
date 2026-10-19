@@ -111,6 +111,36 @@ void main() {
     expect((await SharedPreferences.getInstance()).getStringList('calendar_hidden'), ['ics:ferien']);
   });
 
+  testWidgets('a calendar from a plugin (unknown source) gets a chip, its colour and is read-only', (tester) async {
+    final b = backend();
+    b.json('GET', '/api/calendar/calendars', [
+      {'id': 'hub', 'name': 'Familie', 'source': 'hub', 'writable': true, 'family': true},
+      {'id': 'openholidays:public', 'name': 'Feiertage', 'source': 'openholidays', 'color': '#E07A5F', 'writable': false, 'family': true},
+    ]);
+    final now = DateTime.now();
+    b.json('GET', '/api/calendar/events', [
+      {'title': 'Tag der Einheit', 'start': d(now), 'end': d(now.add(const Duration(days: 1))), 'all_day': true,
+       'calendar': 'Feiertage', 'calendar_id': 'openholidays:public', 'source': 'openholidays', 'writable': false},
+    ]);
+    await setScreenSize(tester, const Size(420, 1400));
+    await tester.pumpWidget(appWith(b.api(), const CalendarScreen()));
+    await tester.pumpAndSettle();
+    final avatar = tester.widget<FilterChip>(find.byKey(const Key('cal-filter-openholidays:public'))).avatar as CircleAvatar;
+    expect(avatar.backgroundColor, const Color(0xFFE07A5F));
+    expect(find.text('Tag der Einheit'), findsOneWidget);
+
+    await tester.tap(find.text('Tag der Einheit'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('event-edit')), findsNothing); // read-only: no edit, no delete
+    expect(find.byKey(const Key('event-details-delete')), findsNothing);
+
+    await tester.tap(find.byTooltip('Schließen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('cal-filter-openholidays:public')));
+    await tester.pumpAndSettle();
+    expect(find.text('Tag der Einheit'), findsNothing);
+  });
+
   group('calendar colours and filters (server data as the app really gets it)', () {
     // Persönlich has no colour of its own; the server used to stamp every such event with the same purple.
     FakeBackend colourBackend() {

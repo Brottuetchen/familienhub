@@ -129,7 +129,7 @@ The `package` field of the manifest points to the folder with `pyproject.toml` (
 | `author` | required | At most 100 characters. |
 | `homepage` | optional | An `https://` address. |
 | `license` | optional | e.g. an [SPDX](https://spdx.org/licenses/) id such as `MIT`. |
-| `min_hub_version` | optional | The oldest hub version that works, e.g. `1.0.0`. Compared by its numbers; if the hub's own version is not a number (e.g. `dev`), the check is skipped. Installing on an older hub is refused. |
+| `min_hub_version` | optional | The oldest hub version that works, e.g. `1.0.0`. Compared by its numbers, pre-releases included (`1.0.0-beta.2` is older than `1.0.0-beta.3`, which is older than `1.0.0`); edge builds count as newer than the pre-releases of their number. If the hub's own version is not a number (e.g. `dev`), the check is skipped. Installing on an older hub is refused. |
 | `package` | optional | Folder with the `pyproject.toml` (or `setup.py`), relative to the manifest, default `.`. No `..`, no absolute path. |
 | `entry_point` | required | `module:Class`, e.g. `fh_plugin_grocy.plugin:GrocyPlugin`. The class, or a function that returns a `Plugin`. |
 | `settings` | optional | The settings the admin fills in, at most 20, see below. |
@@ -227,7 +227,7 @@ include = ["fh_plugin_grocy*"]
 
 ### Rules
 
-- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Recipe sources (`meal_planning`) appear in the app as "Recipe from <name>" through `/api/recipe-sources` (`backend/app/routers/recipe_sources.py`); a new source adds its service there. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints.
+- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Recipe sources (`meal_planning`) appear in the app as "Recipe from <name>" through `/api/recipe-sources` (`backend/app/routers/recipe_sources.py`); a new source adds its service there. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints. A `calendar` plugin overrides two methods, `calendars(user, db)` and `async calendar_events(start, end, user, db)`, see [Calendar plugins](#calendar-plugins); all active calendar plugins are merged.
 - **Settings** are read only through `get_setting(KEY)`: admin entry > core setting > environment. Fields with `secret` are stored encrypted (Fernet, key derived from the hub's `SECRET_KEY`) and never sent back to the app: the app only learns *set* or *not set*.
 - **Active** means all required settings are set and the id is not in `PLUGINS_DISABLED`. Override `is_configured()` if your plugin works with per-person accounts instead.
 - **Fail softly.** Lists from external systems use `{status: ok | unavailable | not_configured, error, items}`. An external system that is down must never break the app: catch `httpx.HTTPError` and parse errors, set a timeout (6 s is a good default), return `unavailable` plus a short message. An exception in your code becomes an error page for the user, so catch what you can foresee.
@@ -275,6 +275,48 @@ Try it for real before you publish: push to a branch of your repository and inst
 - No token, password or private address in the repository, the tests or the logs.
 - The README says what the plugin reads and writes, whose credentials it uses and which hosts it contacts.
 - Tests pass; the version is raised.
+
+## Calendar plugins
+
+A plugin with the capability `calendar` can show events in the family calendar. It is read-only: the hub never writes to a plugin's calendars. Two methods of `Plugin` are the whole interface:
+
+```python
+from datetime import date, datetime, timedelta
+
+from app.plugins import Plugin, Setting
+
+
+class SchoolTripsPlugin(Plugin):
+    def __init__(self):
+        super().__init__(id="schooltrips", name="School trips", capabilities=frozenset({"calendar"}),
+                         settings=(Setting("SCHOOLTRIPS_CLASS", "Class"),))
+
+    def calendars(self, user, db):
+        # The chips and filters in the app. Ids start with "<plugin id>:", the colour is None or "#RRGGBB".
+        return [{"id": "schooltrips:trips", "name": "School trips", "color": "#E07A5F"}]
+
+    async def calendar_events(self, start: datetime, end: datetime, user, db):
+        # Events in [start, end), local wall time. Fetch with httpx, catch errors, return [] when in doubt.
+        day = date(2026, 11, 12)
+        if not (start.date() <= day < end.date()):
+            return []
+        return [{
+            "title": "Museum visit",
+            "start": day.isoformat(),                         # all-day: a date ...
+            "end": (day + timedelta(days=1)).isoformat(),     # ... and an exclusive end date, like ICS
+            "all_day": True,
+            "calendar": "School trips",                       # display name
+            "calendar_id": "schooltrips:trips",               # must start with "schooltrips:"
+            "location": "Old town",                           # optional, as are "description" and "color"
+        }]
+```
+
+- **Event shape** is the one of calendar subscriptions (ICS): `title`, `start`, `end`, `all_day`, `calendar`, `calendar_id`, optionally `location`, `description`, `color` (`#RRGGBB`). Timed events use ISO date-times in the hub's local time (`2026-11-12T09:30:00`); all-day events use ISO dates with an **exclusive** end.
+- **The hub sets `source` to your plugin id and `writable` to false**, whatever you return. Events whose `calendar_id` does not start with `<plugin id>:` are dropped, so a plugin cannot show up in another calendar. The same prefix rule applies to `calendars()`.
+- **Fail softly.** All calendar plugins are asked at once, each with a limit of about 5 seconds. A plugin that raises, times out or returns something that is not a list is skipped (and logged); the calendar and Today still work. Cache what you fetch: the hub asks on every refresh of the calendar and of Today.
+- Only active plugins that the admin did not exclude under *Sources per area* are asked. The built-in sources (family calendar, CalDAV, calendar subscriptions, birthdays) are read by the hub itself, plugins with these ids are never called.
+- Today shows plugin events like any other. The `/api/calendar/holidays` endpoint (German public holidays, computed in the hub) is not affected.
+- The hook exists since hub **1.0.0-beta.3**. Set `"min_hub_version": "1.0.0-beta.3"` in your store entry and manifest so older hubs refuse the install with a reason.
 
 ## Tasks: where a task lands
 
