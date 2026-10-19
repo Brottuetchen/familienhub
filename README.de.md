@@ -79,7 +79,9 @@ Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *
 
 ## Unterstützen
 
-Familienhub ist kostenlos und entsteht in der Freizeit. Die iOS-App gibt es bisher nur zum Sideloaden: Für TestFlight und Widgets auf dem iPhone braucht es eine Apple-Entwicklerlizenz (99 €/Jahr), siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9). Wenn der Hub eurer Familie hilft, könnt ihr auf [Ko-fi](https://ko-fi.com/brottuetchen) etwas beisteuern.
+[![Jahresziel 2026](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrottuetchen%2Ffamilienhub%2Fmain%2F.github%2Ffunding-goal.json)](https://ko-fi.com/brottuetchen)
+
+Familienhub ist kostenlos und entsteht in der Freizeit. Für echte native Apps braucht das Projekt eine Apple-Entwicklerlizenz (99 €/Jahr, für TestFlight, den App Store und Widgets auf dem iPhone, siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9)) und einmalig ein Google-Play-Entwicklerkonto (rund 25 €). Daraus ergibt sich ein Jahresziel von **150 €**. Wenn der Hub eurer Familie hilft, könnt ihr auf [Ko-fi](https://ko-fi.com/brottuetchen) oder über [GitHub Sponsors](https://github.com/sponsors/Brottuetchen) etwas beisteuern.
 
 ## Lizenz
 
