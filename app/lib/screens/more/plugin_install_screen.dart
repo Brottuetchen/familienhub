@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
 import '../../models/plugin_install.dart';
+import '../../models/store.dart';
 import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api_exceptions.dart';
@@ -17,9 +18,13 @@ enum _Step { link, review, form, done }
 /// Administration → Plugins & access → Install plugin: paste a link, review what the plugin is and what it
 /// needs, fill in the settings the plugin asks for (generated from its manifest), install.
 /// With [initialUrl] (update) the link is checked right away.
+/// With [storeItem] the same review and form run for a store entry at the commit its index pins; the link step
+/// is skipped ([acknowledgedUnverified]: the admin confirmed the warning of an unreviewed source).
 class PluginInstallScreen extends ConsumerStatefulWidget {
   final String? initialUrl;
-  const PluginInstallScreen({super.key, this.initialUrl});
+  final StoreItem? storeItem;
+  final bool acknowledgedUnverified;
+  const PluginInstallScreen({super.key, this.initialUrl, this.storeItem, this.acknowledgedUnverified = false});
 
   @override
   ConsumerState<PluginInstallScreen> createState() => _PluginInstallScreenState();
@@ -41,7 +46,9 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
   void initState() {
     super.initState();
     final url = widget.initialUrl;
-    if (url != null && url.isNotEmpty) {
+    if (widget.storeItem != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _inspect());
+    } else if (url != null && url.isNotEmpty) {
       _url.text = url;
       WidgetsBinding.instance.addPostFrameCallback((_) => _inspect());
     }
@@ -58,13 +65,15 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
 
   Future<void> _inspect() async {
     final url = _url.text.trim();
-    if (url.isEmpty) return;
+    final item = widget.storeItem;
+    if (url.isEmpty && item == null) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      final preview = await ref.read(apiClientProvider).inspectPlugin(url);
+      final api = ref.read(apiClientProvider);
+      final preview = item != null ? await api.storeInspectPlugin(item) : await api.inspectPlugin(url);
       if (!mounted) return;
       for (final c in _text.values) {
         c.dispose();
@@ -123,7 +132,12 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
         s.key: s.type == 'bool' ? ((_flags[s.key] ?? false) ? 'true' : 'false') : (_text[s.key]?.text.trim() ?? ''),
     };
     try {
-      final result = await ref.read(apiClientProvider).installPlugin(p.url, p.sha, values);
+      final api = ref.read(apiClientProvider);
+      final item = widget.storeItem;
+      final result = item != null
+          ? PluginInstallResult.fromJson(await api.storeInstall(item, p.sha,
+              settings: values, acknowledgeUnverified: widget.acknowledgedUnverified))
+          : await api.installPlugin(p.url, p.sha, values);
       if (!mounted) return;
       ref.invalidate(adminPluginsProvider);
       ref.invalidate(installedPluginsProvider);
@@ -150,7 +164,7 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: switch (_step) {
-          _Step.link => _linkStep(context),
+          _Step.link => widget.storeItem != null ? _storeLoadingStep(context) : _linkStep(context),
           _Step.review => _reviewStep(context),
           _Step.form => _formStep(context),
           _Step.done => _doneStep(context),
@@ -179,6 +193,19 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
   }
 
   Widget _busyBar() => const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: HubLoader()));
+
+  /// Store entry: no link to paste; the pinned commit is being read (or reading it failed).
+  List<Widget> _storeLoadingStep(BuildContext context) => [
+        if (_error != null) ...[
+          _errorBox(context),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.tonal(onPressed: _busy ? null : _inspect, child: Text(l10n.retry)),
+          ),
+        ] else
+          _busyBar(),
+      ];
 
   List<Widget> _linkStep(BuildContext context) => [
         Padding(padding: const EdgeInsets.only(top: 8, bottom: 16), child: Text(l10n.pluginLinkHint)),
@@ -300,7 +327,10 @@ class _PluginInstallScreenState extends ConsumerState<PluginInstallScreen> {
         Column(children: [_busyBar(), Text(l10n.pluginInstalling, textAlign: TextAlign.center)])
       else
         Row(children: [
-          TextButton(onPressed: () => setState(() => _step = _Step.link), child: Text(l10n.back)),
+          TextButton(
+              onPressed: () =>
+                  widget.storeItem != null ? Navigator.of(context).maybePop() : setState(() => _step = _Step.link),
+              child: Text(l10n.back)),
           const Spacer(),
           if (!p.installEnabled)
             Flexible(child: Text(l10n.pluginInstallOff, textAlign: TextAlign.end))
