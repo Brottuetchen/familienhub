@@ -200,6 +200,7 @@ EN: Dict[str, str] = {
     "Person nicht gefunden": "Person not found",
     "Plugin nicht gefunden": "Plugin not found",
     "Position muss eine nichtnegative Ganzzahl sein": "The position must be a non-negative whole number",
+    "Rezept nicht gefunden": "Recipe not found",
     "Rezeptzutaten können nicht gelöscht werden": "Recipe ingredients cannot be deleted",
     "Rotation enthält ungültige Personen": "The rotation contains invalid people",
     "Schlüssel nicht gefunden": "Key not found",

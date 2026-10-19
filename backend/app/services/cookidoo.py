@@ -151,6 +151,8 @@ class CookidooService:
             "id": r.id, "name": r.name, "image": r.image, "url": r.url, "minutes": minutes(r.total_time),
             "servings": r.serving_size, "difficulty": r.difficulty,
             "ingredients": [" ".join(p for p in (i.description, i.name) if p) for i in r.ingredients],
+            # cookidoo-api exposes no preparation steps; use them if a newer version does
+            "steps": [str(getattr(x, "description", x)) for x in (getattr(r, "steps", None) or [])],
         }
 
     async def ingredients_to_shopping(self, recipe_ids: List[str]) -> int:

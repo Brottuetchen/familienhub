@@ -65,6 +65,8 @@ void main() {
 
     await tester.tap(find.widgetWithText(ListTile, 'Lasagne'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('recipe-plan'))); // the quick view opens first (#68)
+    await tester.pumpAndSettle();
     final body = bodyOf(backend.sent('POST', '/api/cookidoo/plan').single);
     expect(body, {'date': _day(mondayOf(DateTime.now()).add(const Duration(days: 2))), 'recipe_id': 'r364443'});
     expect(find.byType(MealsScreen), findsOneWidget); // Suche ist wieder zu

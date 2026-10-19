@@ -1054,6 +1054,11 @@ class ApiClient {
       await _send('GET', '/api/recipe-sources/$source/search?q=${Uri.encodeQueryComponent(query)}') as Map<String, dynamic>,
       CookidooRecipe.fromJson);
 
+  /// Details for the recipe quick view; `source` is `hub`, `cookidoo` or `mealie`. The server answers softly
+  /// (`status: unavailable`); only transport errors throw.
+  Future<RecipeDetails> recipeDetails(String source, String id) async => RecipeDetails.fromJson(
+      await _send('GET', '/api/recipe-sources/$source/recipes/${Uri.encodeComponent(id)}') as Map<String, dynamic>);
+
   Future<void> planFromSource(String source, DateTime day, String recipeId) =>
       _send('POST', '/api/recipe-sources/$source/plan', body: {'date': _dateOnly(day), 'recipe_id': recipeId});
 

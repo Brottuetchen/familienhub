@@ -79,6 +79,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Linsencurry'));
     await tester.pumpAndSettle();
+    expect(b.sent('POST', '/api/meals/plan'), isEmpty, reason: 'the quick view opens first (#68)');
+    await tester.tap(find.byKey(const Key('recipe-plan')));
+    await tester.pumpAndSettle();
     expect(bodyOf(b.sent('POST', '/api/meals/plan').single)['recipe_id'], 5);
     expect(find.byType(RecipesScreen), findsNothing); // closed again
   });

@@ -159,3 +159,34 @@ String isoWeekOf(DateTime day) {
 /// Montag der Woche von [day].
 DateTime mondayOf(DateTime day) =>
     DateTime(day.year, day.month, day.day).subtract(Duration(days: day.weekday - 1));
+
+/// Uniform recipe details for the quick view (`/api/recipe-sources/{source}/recipes/{id}`).
+/// [status] is `ok` or `unavailable`; then [error] says why and the other fields are empty.
+class RecipeDetails {
+  final String status;
+  final String? error;
+  final String title;
+  final String? image;
+  final int? minutes;
+  final int? servings;
+  final List<String> ingredients;
+  final List<String> steps;
+  final String? url;
+
+  const RecipeDetails({this.status = 'ok', this.error, this.title = '', this.image, this.minutes, this.servings,
+      this.ingredients = const [], this.steps = const [], this.url});
+
+  bool get isOk => status == 'ok';
+
+  factory RecipeDetails.fromJson(Map<String, dynamic> j) => RecipeDetails(
+        status: (j['status'] as String?) ?? 'ok',
+        error: j['error'] as String?,
+        title: (j['title'] as String?) ?? '',
+        image: j['image'] as String?,
+        minutes: parseInt(j['minutes']),
+        servings: parseInt(j['servings']),
+        ingredients: ((j['ingredients'] as List?) ?? const []).map((e) => '$e').toList(),
+        steps: ((j['steps'] as List?) ?? const []).map((e) => '$e').toList(),
+        url: j['url'] as String?,
+      );
+}

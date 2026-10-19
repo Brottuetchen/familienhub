@@ -1383,5 +1383,14 @@
       "version": {}
     }
   },
-  "pluginsNotLoaded": "Installiert, aber nicht geladen"
+  "pluginsNotLoaded": "Installiert, aber nicht geladen",
+  "planOnDate": "Auf {day} einplanen",
+  "@planOnDate": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "recipeNoDetails": "Zu diesem Rezept gibt es hier keine weiteren Angaben.",
+  "recipeDetailsFailed": "Die Rezeptdetails konnten nicht geladen werden.",
+  "recipeQuickView": "Rezept"
 }

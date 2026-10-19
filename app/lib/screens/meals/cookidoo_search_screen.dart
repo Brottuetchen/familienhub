@@ -8,6 +8,7 @@ import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
+import 'recipe_quick_view.dart';
 
 /// Search a recipe in a source (Cookidoo, Mealie …) and plan it on [day]. Closes with `true` when planned.
 class CookidooSearchScreen extends ConsumerStatefulWidget {
@@ -25,7 +26,6 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
   Timer? _debounce;
   SourceResult<CookidooRecipe>? _result;
   bool _loading = false;
-  String? _planning; // Rezept-ID, die gerade eingeplant wird
 
   @override
   void dispose() {
@@ -57,15 +57,12 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
     }
   }
 
-  Future<void> _plan(CookidooRecipe recipe) async {
-    setState(() => _planning = recipe.id);
-    final api = ref.read(apiClientProvider);
-    final ok = await runAction(context, () => widget.source == 'cookidoo'
-        ? api.planCookidoo(widget.day, recipe.id)
-        : api.planFromSource(widget.source, widget.day, recipe.id));
-    if (!mounted) return;
-    setState(() => _planning = null);
-    if (ok) Navigator.pop(context, true);
+  /// Tapping a result opens the quick view; planning happens there (on the day this search is for).
+  Future<void> _open(CookidooRecipe recipe) async {
+    final result = await showRecipeQuickView(context,
+        RecipeRef(source: widget.source, id: recipe.id, title: recipe.name, image: recipe.thumbnail, url: recipe.url),
+        planDay: widget.day);
+    if (result == QuickViewResult.changed && mounted) Navigator.pop(context, true);
   }
 
   @override
@@ -102,10 +99,8 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
                         ListTile(
                           leading: RecipeThumb(url: r.thumbnail),
                           title: Text(r.name),
-                          trailing: _planning == r.id
-                              ? const HubLoader.small()
-                              : const Icon(Icons.add_circle_outline),
-                          onTap: _planning == null ? () => _plan(r) : null,
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _open(r),
                         ),
                     ],
                   ),
