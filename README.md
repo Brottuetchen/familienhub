@@ -6,7 +6,7 @@
 
 Today at a glance, tasks for yourself and each other, shopping, meal plan, events and reminders, with real push notifications, widgets and offline mode.
 
-[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Birthdays](docs/birthdays.md) · [Timetable](docs/timetable.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
+[Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Birthdays](docs/birthdays.md) · [Timetable](docs/timetable.md) · [Kids mode](docs/kids-mode.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
@@ -119,6 +119,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 | [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
 | [Voice assistant](docs/voice-assistant.md) | Home Assistant Assist: shopping, tasks, meals, events, reminders by voice |
 | [Plugins](docs/plugins.md) | what ships, install a plugin from a GitHub link, write and share one; [plugin template](examples/plugin-template/) |
+| [Kids mode](docs/kids-mode.md) | stars for tasks, rewards, requests and confirmations |
 | [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
 | [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
 | [Roadmap](docs/roadmap.md) | what's done, next and later |
