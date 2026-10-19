@@ -8,7 +8,7 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
 # Current public beta; :latest is reserved for stable releases.
-FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
 ```
 
 This pulls the prebuilt image and needs no configuration beyond pinning the current beta (Docker Compose v2.24 or newer). For anonymous pulls, the GitHub Container Registry package must be public. The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
@@ -46,7 +46,7 @@ Database migrations run automatically on start (Alembic).
 For a pre-release, either download the `docker-compose.yml` **attached to that exact GitHub release**, or set `FAMILIENHUB_VERSION` to the advertised beta version before running Docker Compose. The default `:latest` container tag is published with a stable release, not with a beta.
 
 ```bash
-FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
 ```
 
 Do not use the default `latest`-based quick start from the repository until a stable release exists. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.
