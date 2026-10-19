@@ -5,15 +5,22 @@ notification service: their quiet hours, their devices and their notification se
 notifications share the category ``plugins``, which every person can switch off in the notification settings;
 the history entry names the plugin as its source.
 
+``proxy_image``: show an image that lives on an internal server (a photo library, a camera) without exposing the
+server or its API key to the app. See ``docs/plugins.md``, "Data sources".
+
 A buggy plugin must not flood a family, so every plugin may send a limited number of notifications per hour
 (``RATE_LIMIT_PER_HOUR``, counted per call). Further calls are dropped (and logged) until the hour has passed.
 """
 
 from __future__ import annotations
 
+import hashlib
 import time
 from collections import deque
-from typing import Any, Deque, Dict, Iterable, Optional
+from typing import Any, Deque, Dict, Iterable, Mapping, Optional, Sequence
+
+import httpx
+from fastapi import HTTPException, Request, Response
 
 from app.core.logging_config import get_logger
 from app.plugins.hooks import _clean, valid_link
@@ -138,3 +145,77 @@ async def notify(plugin_id: str, *, user_ids: Optional[Iterable[int]] = None, ro
     except Exception as exc:  # noqa: BLE001 - the API never raises into a plugin's job
         logger.warning("Plugin %s: notify failed: %s", plugin_id, type(exc).__name__)
         return skipped("error")
+
+DEFAULT_IMAGE_TYPES = ("image/jpeg", "image/png", "image/webp")
+
+
+def sniff_image_type(head: bytes) -> Optional[str]:
+    """Media type from the first bytes (magic numbers); the type the server claims is never trusted."""
+    if head.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "image/webp"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    return None
+
+
+async def proxy_image(
+    url: str,
+    headers: Optional[Mapping[str, str]] = None,
+    max_bytes: int = 5_000_000,
+    allowed_types: Sequence[str] = DEFAULT_IMAGE_TYPES,
+    *,
+    request: Optional[Request] = None,
+    timeout: float = 10.0,
+    max_age: int = 86400,
+    verify: bool = True,
+) -> Response:
+    """Fetch an image from ``url`` (with the plugin's own ``headers``, e.g. its API key) and return it as a response.
+
+    Use it inside the plugin's own router (``/api/plugins/<id>/...``), which is authenticated by the hub, and build
+    ``url`` yourself from settings and a path segment you validated. The app only ever sees the hub's address.
+
+    - The type is checked by magic bytes against ``allowed_types``, not by the ``Content-Type`` of the server.
+    - At most ``max_bytes`` are read; larger images are refused (413). Redirects are not followed.
+    - The answer carries ``Cache-Control: private, max-age=<max_age>`` and an ``ETag``; pass ``request`` to answer a
+      matching ``If-None-Match`` with 304.
+    - Failures raise ``HTTPException`` with a short text that never contains the address or the headers:
+      404 (not found there), 413 (too large), 415 (not an allowed image), 502 (unreachable, timeout, other error).
+    """
+    if not url.lower().startswith(("http://", "https://")):
+        raise HTTPException(502, "Bildquelle nicht erreichbar")
+    chunks = []
+    size = 0
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, verify=verify) as client:
+            async with client.stream("GET", url, headers=dict(headers or {})) as upstream:
+                if upstream.status_code == 404:
+                    raise HTTPException(404, "Bild nicht gefunden")
+                if upstream.status_code != 200:
+                    logger.warning("Image proxy: upstream answered HTTP %d", upstream.status_code)
+                    raise HTTPException(502, "Bildquelle nicht erreichbar")
+                declared = upstream.headers.get("content-length")
+                if declared and declared.isdigit() and int(declared) > max_bytes:
+                    raise HTTPException(413, "Bild zu groß")
+                async for chunk in upstream.aiter_bytes():
+                    size += len(chunk)
+                    if size > max_bytes:
+                        raise HTTPException(413, "Bild zu groß")
+                    chunks.append(chunk)
+    except HTTPException:
+        raise
+    except httpx.HTTPError as exc:
+        logger.warning("Image proxy failed: %s", type(exc).__name__)  # never log the address, it may hold a key
+        raise HTTPException(502, "Bildquelle nicht erreichbar") from exc
+    body = b"".join(chunks)
+    media_type = sniff_image_type(body[:16])
+    if media_type is None or media_type not in allowed_types:
+        raise HTTPException(415, "Kein erlaubtes Bildformat")
+    etag = '"' + hashlib.sha1(body).hexdigest()[:24] + '"'  # noqa: S324 - cache validator, not security
+    cache = {"Cache-Control": f"private, max-age={int(max_age)}", "ETag": etag, "X-Content-Type-Options": "nosniff"}
+    if request is not None and request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers=cache)
+    return Response(content=body, media_type=media_type, headers=cache)
