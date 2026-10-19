@@ -8,7 +8,8 @@ Today at a glance, tasks for yourself and each other, shopping, meal plan, event
 
 [Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
-<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
+<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img width="23%" alt="Screenshot_20261019-205235" src="https://github.com/user-attachments/assets/11adbe3b-f6cc-4ce2-b96c-f33653a88b06" />
+ <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
 
 </div>
 
