@@ -5,6 +5,7 @@ Familienhub is organised in **areas** (tasks, shopping, calendar, meal planning,
 - **The hub's own sources** (`hub_tasks`, `hub_shopping`, `hub_calendar`) store data in the hub database. They work without any external service and serve an area whenever nothing else does.
 - **Connected services** replace or add to them: several task sources run side by side, calendar sources are merged, and the shopping list has one source.
 - **Admins choose** under *Administration → Sources per area* (or in the setup wizard). This is stored as `TASKS_SOURCES`, `CALENDAR_SOURCES` and `SHOPPING_SOURCE`. Without a choice, all active sources are used, or the first active one for single-source areas.
+- **Recipe ingredients** (same screen, shopping area; `SHOPPING_RECIPE_INGREDIENTS`): `merge` (default) puts the ingredients of Cookidoo, Mealie and recipe-book recipes onto our shopping list and merges equal ingredients; `source` leaves Cookidoo/Mealie ingredients in the source's own list (Cookidoo's shopping list, where ticking off also counts in Cookidoo; Mealie's recipe import). Recipe-book recipes always go onto our list.
 
 The shipped plugins live in `backend/app/plugins/builtin/`:
 

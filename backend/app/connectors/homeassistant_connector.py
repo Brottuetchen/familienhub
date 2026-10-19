@@ -306,6 +306,20 @@ class HomeAssistantConnector(BaseConnector):
             self.logger.warning("update_todo_item failed: %s", exc)
             return False
 
+    async def rename_todo_item(self, entity_id: str, uid: str, summary: str) -> bool:
+        """Changes the text of an item (used when equal ingredients are merged)."""
+        if not self.is_configured:
+            return False
+        try:
+            async with self._client() as client:
+                resp = await client.post(
+                    "/api/services/todo/update_item", json={"entity_id": entity_id, "item": uid, "rename": summary})
+                resp.raise_for_status()
+                return True
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning("rename_todo_item failed: %s", exc)
+            return False
+
     async def remove_todo_item(self, entity_id: str, item: list[str] | str) -> bool:
         """Entfernt ein oder mehrere Items."""
         if not self.is_configured:

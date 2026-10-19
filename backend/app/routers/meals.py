@@ -316,7 +316,8 @@ async def delete_meal(
     return {"message": "deleted"}
 
 
-def _collect_ingredients(db: Session, days: int, start: Optional[date] = None, end: Optional[date] = None) -> List[str]:
+def _collect_recipes(db: Session, days: int, start: Optional[date] = None, end: Optional[date] = None) -> List[tuple]:
+    """``[(recipe title, [ingredient lines])]`` of the hub recipes planned in the range, each recipe once."""
     start, end = _range(days, start, end)
     entries = (
         db.query(MealPlanEntry)
@@ -330,18 +331,14 @@ def _collect_ingredients(db: Session, days: int, start: Optional[date] = None, e
     recipe_ids = {e.recipe_id for e in entries}
     if not recipe_ids:
         return []
-    recipes = db.query(Recipe).filter(Recipe.id.in_(recipe_ids)).all()
-    seen = set()
-    out: List[str] = []
-    for r in recipes:
+    out: List[tuple] = []
+    for r in db.query(Recipe).filter(Recipe.id.in_(recipe_ids)).all():
         try:
-            for ing in json.loads(r.ingredients_json or "[]"):
-                key = ing.strip().lower()
-                if key and key not in seen:
-                    seen.add(key)
-                    out.append(ing.strip())
+            lines = [i.strip() for i in json.loads(r.ingredients_json or "[]") if isinstance(i, str) and i.strip()]
         except (ValueError, TypeError):
             continue
+        if lines:
+            out.append((r.title, lines))
     return out
 
 
@@ -384,7 +381,7 @@ async def generate_shopping_list(
     One source being down never blocks the others; ``sources`` tells per source what happened.
     """
     from app.plugins.registry import plugin_registry
-    from app.routers.shopping import add_to_shopping
+    from app.routers.shopping import add_recipe_ingredients, recipes_to_shopping
     from app.services.mealie import MealieUnavailable
 
     start_d, end_d = _range(days, start, end)
@@ -395,11 +392,12 @@ async def generate_shopping_list(
                         "status": status, "message": message})
 
     # Hub recipe book: ingredient texts go through the shopping list the hub uses (own list, Mealie or HA)
-    ingredients = _collect_ingredients(db, days, start_d, end_d)
+    hub_recipes = _collect_recipes(db, days, start_d, end_d)
+    ingredients = list(dict.fromkeys(line for _, lines in hub_recipes for line in lines))
     hub_added = 0
     if ingredients:
         try:
-            hub_added = await add_to_shopping(ingredients, current_user.id)
+            hub_added = await add_recipe_ingredients(hub_recipes, current_user.id)
         except Exception as exc:  # noqa: BLE001 – shopping backend down: report, go on
             logger.warning("Hub ingredients not added: %s", exc)
             report("hub", "Hub", len(ingredients), 0, "unavailable", "Hub: Einkaufsliste nicht erreichbar, übersprungen.")
@@ -420,7 +418,7 @@ async def generate_shopping_list(
             ids = await _external_recipes(source, start_d, end_d)
             if not ids:
                 continue
-            added = await service.ingredients_to_shopping(ids)
+            added = await recipes_to_shopping(service, ids, current_user.id)
         except unavailable:
             report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
         except Exception as exc:  # noqa: BLE001 – library errors must not break the other sources

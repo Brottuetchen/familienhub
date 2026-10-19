@@ -148,9 +148,11 @@ async def unplan(source_id: str, day: date, recipe_id: str, _: User = Depends(re
 
 
 @router.post("/{source_id}/shopping")
-async def to_shopping(source_id: str, data: ShoppingIn, _: User = Depends(require_min_role(ROLE_PARTNER))):
+async def to_shopping(source_id: str, data: ShoppingIn, user: User = Depends(require_min_role(ROLE_PARTNER))):
+    from app.routers.shopping import recipes_to_shopping
+
     service = _source(source_id)
     try:
-        return {"added": await service.ingredients_to_shopping(data.recipe_ids)}
+        return {"added": await recipes_to_shopping(service, data.recipe_ids, user.id)}
     except _errors() as exc:
         raise HTTPException(503, str(exc)) from exc

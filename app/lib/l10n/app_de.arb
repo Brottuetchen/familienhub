@@ -1392,5 +1392,21 @@
   },
   "recipeNoDetails": "Zu diesem Rezept gibt es hier keine weiteren Angaben.",
   "recipeDetailsFailed": "Die Rezeptdetails konnten nicht geladen werden.",
-  "recipeQuickView": "Rezept"
+  "recipeQuickView": "Rezept",
+  "shoppingGroupByRecipe": "Nach Rezept gruppieren",
+  "shoppingShowAsList": "Als Liste anzeigen",
+  "shoppingNoRecipe": "Ohne Rezept",
+  "shoppingFromRecipeCount": "aus {count, plural, =1{1 Rezept} other{{count} Rezepten}}",
+  "@shoppingFromRecipeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeIngredientsTitle": "Rezeptzutaten",
+  "recipeIngredientsMerge": "Auf unsere Einkaufsliste zusammenführen",
+  "recipeIngredientsMergeHint": "Zutaten von Cookidoo, Mealie und dem Rezeptbuch landen auf einer Liste, gleiche Zutaten werden zusammengeführt.",
+  "recipeIngredientsSource": "In der Liste der Rezeptquelle lassen",
+  "recipeIngredientsSourceHint": "Cookidoo-Zutaten gehen auf die Cookidoo-Einkaufsliste (abhaken wirkt auch in Cookidoo), Mealie-Rezepte in Mealie. Rezepte aus dem Rezeptbuch landen weiter auf unserer Liste."
 }

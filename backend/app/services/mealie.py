@@ -150,6 +150,16 @@ def _label(item: Dict[str, Any]) -> str:
     return (item.get("display") or item.get("note") or "").strip()
 
 
+def _recipe_names(item: Dict[str, Any]) -> List[str]:
+    """Recipe names Mealie reports for an entry (``recipeReferences``), when it includes them."""
+    names: List[str] = []
+    for ref in item.get("recipeReferences") or []:
+        name = ((ref or {}).get("recipe") or {}).get("name")
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
 class MealieShopping:
     """Mealie shopping list with the same interface as the hub list (``app.services.hub_shopping``)."""
 
@@ -163,7 +173,8 @@ class MealieShopping:
         except MealieUnavailable as exc:
             return {"status": "unavailable", "error": str(exc), "groups": []}
         return {"status": "ok", "error": None, "groups": [{"key": "manual", "entity": "mealie", "items": [
-            {"uid": i["id"], "summary": _label(i), "status": "completed" if i.get("checked") else "needs_action"}
+            {"uid": i["id"], "summary": _label(i), "status": "completed" if i.get("checked") else "needs_action",
+             "recipes": _recipe_names(i)}
             for i in items]}]}
 
     async def add(self, summary: str, user_id: Optional[int]) -> bool:

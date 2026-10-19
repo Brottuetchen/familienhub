@@ -21,8 +21,26 @@ class HubShopping:
     async def groups(self) -> Dict[str, Any]:
         with SessionLocal() as db:
             items = db.query(HubShoppingItem).order_by(HubShoppingItem.done, HubShoppingItem.created_at).all()
-            return {"status": "ok", "error": None,
-                    "groups": [{"key": "manual", "entity": "hub", "items": [_item(i) for i in items]}]}
+            out = [_item(i) for i in items]
+        from app.services import shopping_recipes
+
+        return {"status": "ok", "error": None,
+                "groups": [{"key": "manual", "entity": "hub", "items": shopping_recipes.attach("hub", out)}]}
+
+    async def open_items(self) -> List[Dict[str, Any]]:
+        with SessionLocal() as db:
+            rows = db.query(HubShoppingItem).filter(HubShoppingItem.done == False).order_by(  # noqa: E712
+                HubShoppingItem.created_at).all()
+            return [{"uid": str(i.id), "summary": i.summary} for i in rows]
+
+    async def rename(self, uid: str, summary: str) -> bool:
+        with SessionLocal() as db:
+            item = db.get(HubShoppingItem, _id(uid)) if _id(uid) is not None else None
+            if item is None:
+                return False
+            item.summary = summary.strip()[:200]
+            db.commit()
+        return True
 
     async def add(self, summary: str, user_id: Optional[int]) -> bool:
         summary = summary.strip()[:200]

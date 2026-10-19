@@ -759,5 +759,14 @@
   },
   "recipeNoDetails": "There are no further details for this recipe here.",
   "recipeDetailsFailed": "The recipe details could not be loaded.",
-  "recipeQuickView": "Recipe"
+  "recipeQuickView": "Recipe",
+  "shoppingGroupByRecipe": "Group by recipe",
+  "shoppingShowAsList": "Show as list",
+  "shoppingNoRecipe": "No recipe",
+  "shoppingFromRecipeCount": "for {count, plural, =1{1 recipe} other{{count} recipes}}",
+  "recipeIngredientsTitle": "Recipe ingredients",
+  "recipeIngredientsMerge": "Merge onto our shopping list",
+  "recipeIngredientsMergeHint": "Ingredients from Cookidoo, Mealie and the recipe book go onto one list; equal ingredients are merged.",
+  "recipeIngredientsSource": "Keep them in the recipe source's list",
+  "recipeIngredientsSourceHint": "Cookidoo ingredients go onto the Cookidoo shopping list (ticking off also counts in Cookidoo), Mealie recipes into Mealie. Recipe-book recipes still go onto our list."
 }

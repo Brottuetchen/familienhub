@@ -122,13 +122,13 @@ async def update_recipe(recipe_id: int, data: RecipeRequest, db: Session = Depen
 async def recipe_to_shopping(recipe_id: int, db: Session = Depends(get_db),
                              current_user: User = Depends(require_min_role(ROLE_PARTNER))):
     """Puts the recipe's ingredients on the family's shopping list (hub, Home Assistant or Mealie)."""
-    from app.routers.shopping import add_to_shopping
+    from app.routers.shopping import add_recipe_ingredients
 
     r = db.query(Recipe).filter(Recipe.id == recipe_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="Recipe not found")
     items = _to_dict(r)["ingredients"]
-    return {"added": await add_to_shopping(items, current_user.id), "ingredients": items}
+    return {"added": await add_recipe_ingredients([(r.title, items)], current_user.id), "ingredients": items}
 
 
 @router.delete("/{recipe_id}")
