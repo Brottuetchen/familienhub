@@ -1,7 +1,7 @@
 """Recipes per shopping entry (#69)
 
 Revision ID: c0d1e2f3a4b5
-Revises: b9c0d1e2f3a4
+Revises: d1e2f3a4b5c6
 Create Date: 2026-10-19 09:00:00
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "c0d1e2f3a4b5"
-down_revision: Union[str, None] = "b9c0d1e2f3a4"
+down_revision: Union[str, None] = "d1e2f3a4b5c6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
