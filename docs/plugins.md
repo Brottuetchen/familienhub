@@ -26,7 +26,7 @@ The shipped plugins live in `backend/app/plugins/builtin/`:
 
 Admins switch plugins on and off and enter credentials under **More → Administration → Plugins & access**. The change applies without a restart, secrets are stored encrypted, and *Test connection* checks reachability. Alternatively, set the same keys as environment variables in `.env`.
 
-More plugins come from GitHub: admins install them with a link, see [Install a plugin from GitHub](#install-a-plugin-from-github). To write one, see [Write a plugin](#write-a-plugin) and the ready-to-copy [plugin template](../examples/plugin-template/).
+More plugins come from GitHub: admins install reviewed ones with one click from the [plugin and theme store](store.md), or any plugin with a link, see [Install a plugin from GitHub](#install-a-plugin-from-github). To write one, see [Write a plugin](#write-a-plugin) and the ready-to-copy [plugin template](../examples/plugin-template/).
 
 ## Install a plugin from GitHub
 
@@ -299,6 +299,8 @@ RUN pip install --no-cache-dir familienhub-plugin-grocy==0.1.0
 Then point `docker-compose.yml` at that image and restart. The package must register itself in the entry-point group `familienhub.plugins` (see the `pyproject.toml` above); the hub loads every entry point at start-up. Plugins loaded this way are trusted as part of the image: the manifest and the route rules of the installer do not apply, and their routes may live anywhere. They appear under *Plugins & access* like any other plugin and are managed in the image, not in the app.
 
 ## Share a plugin
+
+To get a plugin into the official store, open a pull request to the store repository that pins the commit to ship, see [store.md](store.md#submitting-an-entry).
 
 - Publish the repository on GitHub with the topic `familienhub-plugin`. Users install it with the repository link. Name the repository `familienhub-plugin-<name>`.
 - Tag releases and say in the README which commit or branch to install; the app installs exactly the commit behind the link (the default branch if the link has no `/tree/…`).

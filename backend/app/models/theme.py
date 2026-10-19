@@ -16,3 +16,8 @@ class Theme(Base):
     data = Column(Text, nullable=False)  # geprüftes JSON: {"name", "colors": {...}}
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Set when the theme was installed from the store (docs/store.md); used to detect updates
+    store_id = Column(String(64), nullable=True)
+    store_source = Column(String(32), nullable=True)
+    store_sha = Column(String(40), nullable=True)
+    store_version = Column(String(32), nullable=True)

@@ -25,6 +25,7 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **Customisable home screen:** each person arranges "Today" (show or hide cards, order, size), with defaults set by the admin *(done 19.10.)*
 - **Kids mode:** stars for tasks and rewards parents define, requests parents approve, optional confirmation of completed tasks, a stars card on the child's Today, see [kids mode](kids-mode.md) *(done 19.10.)*
 - **iOS widgets** (WidgetKit extension)
+- **Plugin and theme store:** reviewed index with pinned commits, own sources marked as not reviewed, update badge, see [store](store.md) *(done 19.10.; the store repository still has to be set up)*
 
 ## Later
 - **Kiosk mode** for a wall-mounted tablet: fullscreen, screen stays on, large tiles, exit by PIN, its own restricted device account
@@ -32,6 +33,5 @@ Status: October 2026. Familienhub runs daily in its first household; the first p
 - **More languages**: add `app/lib/l10n/app_<code>.arb`
 
 ## Ideas, not decided
-- **Plugin and theme store:** a shared catalogue to find plugins and themes (installing from a link already works). Open questions: review, signing, automatic update checks, and the security of code plugins.
 
 Ideas and wishes are welcome as issues, see [CONTRIBUTING](../CONTRIBUTING.md).

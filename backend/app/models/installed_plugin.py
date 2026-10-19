@@ -18,3 +18,4 @@ class InstalledPlugin(Base):
     installed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     installed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     enabled = Column(Boolean, nullable=False, default=True)
+    store_source = Column(String(32), nullable=True)  # "official" / "custom-<id>" if installed from the store

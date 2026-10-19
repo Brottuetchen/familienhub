@@ -19,6 +19,7 @@ import '../models/media.dart';
 import '../models/meals.dart';
 import '../models/modules.dart';
 import '../models/plugin_install.dart';
+import '../models/store.dart';
 import '../models/pending.dart';
 import '../models/list_template.dart';
 import '../models/shopping.dart';
@@ -1661,6 +1662,45 @@ class ApiClient {
   Future<bool> removePlugin(String id) async =>
       ((await _send('DELETE', '/api/plugins/${Uri.encodeComponent(id)}', timeout: const Duration(minutes: 1)))
           as Map<String, dynamic>)['restart_required'] == true;
+
+  // ── Admin: plugin and theme store (docs/store.md) ──────────────────────────
+
+  /// Entries of all store sources; [refresh] skips the server's short cache.
+  Future<StoreListing> storeListing({bool refresh = false}) async => StoreListing.fromJson(
+      await _send('GET', '/api/admin/store${refresh ? '?refresh=true' : ''}', timeout: const Duration(seconds: 45))
+          as Map<String, dynamic>);
+
+  Map<String, dynamic> _storeRef(StoreItem item) => {'source': item.source, 'type': item.type, 'id': item.id};
+
+  /// Plugin entry → the same preview as a pasted link, but at the commit the index pins.
+  Future<PluginPreview> storeInspectPlugin(StoreItem item) async => PluginPreview.fromJson(
+      await _send('POST', '/api/admin/store/inspect', body: _storeRef(item), timeout: const Duration(seconds: 60))
+          as Map<String, dynamic>);
+
+  Future<StoreDetails> storeDetails(StoreItem item) async => StoreDetails.fromJson(
+      await _send('POST', '/api/admin/store/inspect', body: _storeRef(item), timeout: const Duration(seconds: 60))
+          as Map<String, dynamic>);
+
+  /// Install or update exactly the commit [sha] that the admin reviewed.
+  Future<Map<String, dynamic>> storeInstall(StoreItem item, String sha,
+          {Map<String, String> settings = const {}, bool acknowledgeUnverified = false}) async =>
+      await _send('POST', '/api/admin/store/install',
+          body: {
+            ..._storeRef(item),
+            'sha': sha,
+            'settings': settings,
+            'acknowledge_unverified': acknowledgeUnverified,
+          },
+          timeout: const Duration(minutes: 6)) as Map<String, dynamic>;
+
+  Future<StoreSource> addStoreSource(String url) async => StoreSource.fromJson(
+      await _send('POST', '/api/admin/store/sources', body: {'url': url, 'acknowledge': true},
+          timeout: const Duration(seconds: 45)) as Map<String, dynamic>);
+
+  Future<void> removeStoreSource(int id) => _send('DELETE', '/api/admin/store/sources/$id');
+
+  /// Screenshot through the hub (the app never contacts GitHub itself); null if it cannot be loaded.
+  Future<Uint8List?> storeScreenshot(String path) => avatarBytes(path);
 
   // ── Admin: Plugins & Zugänge ───────────────────────────────────────────────
 

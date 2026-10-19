@@ -10,6 +10,7 @@ import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 import '../admin/admin_screen.dart' show adminOverviewProvider;
 import '../admin/ics_feeds_screen.dart';
+import '../admin/store_screen.dart';
 import 'plugin_install_screen.dart';
 
 String _status(AdminPlugin p) => p.disabled
@@ -79,7 +80,17 @@ class PluginsAdminScreen extends ConsumerWidget {
     final shown = {for (final p in async.valueOrNull ?? const <AdminPlugin>[]) p.id};
     final broken = [for (final i in state?.items ?? const <InstalledPluginInfo>[]) if (!shown.contains(i.id)) i];
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.pluginsAccess)),
+      appBar: AppBar(title: Text(l10n.pluginsAccess), actions: [
+        IconButton(
+          key: const Key('plugins-open-store'),
+          tooltip: l10n.store,
+          icon: const Icon(Icons.storefront_outlined),
+          onPressed: () async {
+            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StoreScreen()));
+            _refresh(ref);
+          },
+        ),
+      ]),
       floatingActionButton: state != null && !state.enabled
           ? null
           : FloatingActionButton.extended(

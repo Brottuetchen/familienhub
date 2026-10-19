@@ -242,14 +242,30 @@ async def install_theme(data: InstallRequest, db: Session = Depends(get_db),
         raise HTTPException(422, str(exc)) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(422, "GitHub nicht erreichbar") from exc
-    taken = {t["name"].lower() for t in builtin_themes()} | {t.name.lower() for t in db.query(Theme).all()}
+    return _custom(save_theme(db, user.id, theme, url))
+
+
+def save_theme(db: Session, user_id: Optional[int], theme: Dict[str, Any], url: str,
+               store: Optional[Dict[str, str]] = None) -> Theme:
+    """Store a validated theme. From the store (``store`` = id, source, sha, version) an installed theme of the
+    same store id is updated in place; otherwise a name that is taken is a conflict (409)."""
+    row = None
+    if store:
+        row = db.query(Theme).filter(Theme.store_id == store["id"]).first()
+    taken = {t["name"].lower() for t in builtin_themes()} | {t.name.lower() for t in db.query(Theme).all()
+                                                           if row is None or t.id != row.id}
     if theme["name"].lower() in taken:
         raise HTTPException(409, f"Ein Theme „{theme['name']}“ gibt es schon")
-    row = Theme(name=theme["name"], source_url=url, data=json.dumps(theme), created_by=user.id)
-    db.add(row)
+    if row is None:
+        row = Theme(created_by=user_id)
+        db.add(row)
+    row.name, row.source_url, row.data = theme["name"], url, json.dumps(theme)
+    if store:
+        row.store_id, row.store_source = store["id"], store["source"]
+        row.store_sha, row.store_version = store["sha"], store["version"]
     db.commit()
     db.refresh(row)
-    return _custom(row)
+    return row
 
 
 @router.delete("/{theme_id}")

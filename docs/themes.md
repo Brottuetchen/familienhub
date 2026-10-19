@@ -63,7 +63,7 @@ The server checks every field (`validate_theme` in `backend/app/routers/themes.p
    The hub fetches it from `raw.githubusercontent.com` only, follows no redirects and accepts at most 64 KB.
 3. Installed themes are available to everyone in the family. Admins can remove them again.
 
-A shared catalogue of themes, and of plugins, is an open idea, see the [roadmap](roadmap.md).
+Reviewed themes and plugins can also be installed with one click from the [plugin and theme store](store.md) (**Administration → Store**). To list your theme there, open a pull request to the store repository, see [store.md](store.md#submitting-an-entry).
 
 ## Add a built-in theme
 

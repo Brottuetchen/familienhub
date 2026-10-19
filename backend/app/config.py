@@ -121,6 +121,10 @@ class Settings(BaseSettings):
     plugin_install_enabled: bool = True
     # Extra arguments for pip when a plugin is installed, e.g. "--index-url https://pypi.example.org/simple"
     plugin_pip_args: str = ""
+    # Official plugin and theme store (docs/store.md): an index.json maintained by the project. Empty switches the
+    # official source off (admins can still add their own GitHub repos as extra sources).
+    store_index_url: str = "https://raw.githubusercontent.com/brottuetchen/familienhub-store/main/index.json"
+    store_cache_seconds: int = 300  # how long a fetched index is reused
 
     # --- Security / Auth ---
     # Empty or placeholder: loaded from / generated into <DATA_DIR>/secret_key (see _resolve_secret_key)

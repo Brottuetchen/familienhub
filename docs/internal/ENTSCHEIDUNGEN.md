@@ -142,3 +142,12 @@ Verträge, Single-Writer-Cutover und bewusste Grenzen: `docs/internal/AUFGABENPR
 - Vorlagen gehören der Familie (nicht pro Person). Lesen: alle Rollen. Anlegen/Ändern/Löschen und „Einkaufsliste als Vorlage speichern“: ab Partner.
 - Anwenden auf die Einkaufsliste: jede Rolle (wie `POST /api/shopping`), über die aktive Quelle; offene Einträge werden nicht doppelt angelegt (ohne Groß-/Kleinschreibung und überzählige Leerzeichen). Anwenden auf Aufgaben: ab Partner (wie Aufgabe anlegen), eine Aufgabe je Eintrag über `provider=auto`, weil die Aufgabenquellen keine Listen mit Einträgen kennen. Beschreibung: `docs/templates.md`.
 
+## Plugin- und Theme-Store (#7, Entscheidung des Owners 19.10.)
+
+- **Offizieller Index** = `index.json` im Repo `brottuetchen/familienhub-store` (Branch `main`), einstellbar über `STORE_INDEX_URL` (leer = aus). Aufgenommen wird nur, was die Maintainer geprüft haben (Prüfung = gemergter PR im Store-Repo).
+- **Eigene Quellen:** Admins dürfen zusätzliche GitHub-Repos mit `index.json` im selben Format hinzufügen. Einträge daraus tragen „Nicht geprüft“; Warnung vor dem Hinzufügen und vor jeder Installation, serverseitig erzwungen (`acknowledge`, `acknowledge_unverified`).
+- **Keine Signaturen.** Vertrauen = offizieller Index + jeder Eintrag pinnt einen exakten Commit (`sha`); installiert wird nur dieser. Die App schickt den geprüften Commit mit; weicht der Index inzwischen ab, gibt es 409.
+- **Updates:** „Update verfügbar“, wenn der Index einen anderen Commit pinnt als installiert; Aktualisieren nur per Klick, nie automatisch.
+- **Screenshots** liegen im Store-Repo (`screenshots/<id>/1.png`), relativ zur `index.json` referenziert; der Hub lädt sie (nur erlaubte Hosts, PNG/JPEG/WebP nach Inhalt, höchstens 2 MB) und reicht sie an die App durch, damit Clients GitHub nie direkt kontaktieren.
+- Plugins aus dem Store laufen weiterhin mit vollem Zugriff; dieselbe Warnung und Bestätigung wie beim Link-Installer. Ungültige Einträge werden mit Grund übersprungen, nicht der ganze Index.
+- Speicher: Tabelle `store_sources`, Spalten `installed_plugins.store_source` und `themes.store_*` (Migration `f8a9b0c1d2e3`). Format und Ablauf: `docs/store.md`.

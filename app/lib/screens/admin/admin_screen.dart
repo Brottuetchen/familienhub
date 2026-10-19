@@ -16,6 +16,7 @@ import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
 import '../../l10n/l10n.dart';
 import 'sources_screen.dart';
+import 'store_screen.dart';
 
 final adminOverviewProvider =
     FutureProvider.autoDispose<AdminOverview>((ref) => ref.watch(apiClientProvider).adminOverview());
@@ -99,6 +100,13 @@ class AdminScreen extends ConsumerWidget {
               title: l10n.pluginsAccess,
               subtitle: l10n.pluginsHint,
               onTap: () => open(const PluginsAdminScreen()),
+            ),
+            _Area(
+              key: const Key('admin-store'),
+              icon: Icons.storefront_outlined,
+              title: l10n.store,
+              subtitle: l10n.storeHint,
+              onTap: () => open(const StoreScreen()),
             ),
             _Area(
               icon: Icons.vpn_key_outlined,
