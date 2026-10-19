@@ -35,7 +35,8 @@ Future<bool> confirmUnverified(BuildContext context, String body) async =>
 class StoreDetailScreen extends ConsumerStatefulWidget {
   final StoreItem item;
   final Future<void> Function(Uri url)? openUrl; // tests replace the browser
-  const StoreDetailScreen({super.key, required this.item, this.openUrl});
+  final bool installerEnabled; // PLUGIN_INSTALL_ENABLED; themes stay installable without it
+  const StoreDetailScreen({super.key, required this.item, this.openUrl, this.installerEnabled = true});
 
   @override
   ConsumerState<StoreDetailScreen> createState() => _StoreDetailScreenState();
@@ -116,6 +117,8 @@ class _StoreDetailScreenState extends ConsumerState<StoreDetailScreen> {
     if (_busy) return const Center(child: HubLoader());
     final (String label, IconData icon, bool enabled) = switch (item.state) {
       _ when !item.compatible => (l10n.storeIncompatible(item.minHubVersion), Icons.block, false),
+      StoreState.available || StoreState.update when item.isPlugin && !widget.installerEnabled =>
+        (l10n.pluginInstallOff, Icons.block, false),
       StoreState.available => (l10n.install, Icons.download_outlined, true),
       StoreState.update => (l10n.storeUpdate, Icons.upgrade, true),
       StoreState.installed => (l10n.storeInstalled, Icons.check, false),

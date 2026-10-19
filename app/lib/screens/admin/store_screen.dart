@@ -56,7 +56,9 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
   }
 
   Future<void> _open(StoreItem item) async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => StoreDetailScreen(item: item)));
+    final installer = ref.read(storeProvider).valueOrNull?.installerEnabled ?? true;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => StoreDetailScreen(item: item, installerEnabled: installer)));
     ref.invalidate(storeProvider);
   }
 

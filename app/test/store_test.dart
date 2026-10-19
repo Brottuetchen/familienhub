@@ -312,6 +312,15 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Plugin install button is off when the operator switched the installer off', (tester) async {
+    await setScreenSize(tester, const Size(420, 2400));
+    final backend = _backend(_listing([_plugin]));
+    await tester.pumpWidget(_app(backend, StoreDetailScreen(item: StoreItem.fromJson(_plugin), installerEnabled: false)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(find.byKey(const Key('store-action'))).onPressed, isNull);
+    expect(find.text(l10n.pluginInstallOff), findsOneWidget);
+  });
+
   testWidgets('English texts', (tester) async {
     setAppLanguage('en');
     addTearDown(() => setAppLanguage('de'));
