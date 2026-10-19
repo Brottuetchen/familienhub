@@ -81,7 +81,7 @@ Die ausführliche Doku ist auf Englisch; die Links unten führen dorthin.
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
 # Öffentliche Beta: Version explizit angeben; :latest gibt es erst mit einem stabilen Release.
-FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
 ```
 
 Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen (oder die Adresse in der App eintragen): Wer einen neuen Hub zuerst öffnet, legt das Admin-Konto an, danach führt der Einrichtungs-Assistent durch den Rest. Ist der Hub vor der Einrichtung aus dem Internet erreichbar, `SETUP_REQUIRE_CODE=true` setzen (siehe [Sicherheit](docs/security.md#first-admin-and-secret-key), englisch). Mehr dazu (Reverse-Proxy, Selbst bauen, Sicherung) im [Einstieg](docs/getting-started.md) (englisch).
@@ -149,7 +149,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 ## Status
 
-Familienhub ist in der öffentlichen Beta (`v1.0.0-beta.1`) und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen.
+Familienhub ist in der öffentlichen Beta (`v1.0.0-beta.2`) und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen.
 
 ## Unterstützen
 
