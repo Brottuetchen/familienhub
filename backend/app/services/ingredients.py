@@ -39,6 +39,8 @@ _UNIT_SPELLINGS: Dict[str, Tuple[str, ...]] = {
     "Becher": ("becher",),
     "Glas": ("glas", "gläser", "glaeser"),
     "Zweig": ("zweig", "zweige"),
+    "Stängel": ("stängel", "staengel"),
+    "Stiel": ("stiel", "stiele"),
     "Blatt": ("blatt", "blätter", "blaetter"),
     "Handvoll": ("handvoll", "handvoll"),
     "Tasse": ("tasse", "tassen"),
@@ -428,3 +430,50 @@ def plan_merge(existing: Sequence[OpenItem], new: Sequence[Tuple[str, str]]) -> 
     ops = [s["op"] for s in slots
            if s["op"].uid is None or s["op"].absorbed]
     return ops, handled
+
+
+# --- read-only lists (Cookidoo's own list via Home Assistant) ------------------------------------------------------
+
+MERGED_PREFIX = "m~"  # uid of a merged row: "m~<uid1>~<uid2>…"; ticking it ticks every entry behind it
+
+
+def merged_uids(uid: str) -> List[str]:
+    """The entries behind a merged row (or just ``uid``)."""
+    if uid.startswith(MERGED_PREFIX):
+        return [u for u in uid[len(MERGED_PREFIX):].split("~") if u]
+    return [uid]
+
+
+def merge_open_items(items: Sequence[Dict]) -> List[Dict]:
+    """Show equal open entries of a list we cannot rewrite as one row ("Butter" 50 g + 40 g → "90 g Butter").
+
+    Entries are Home Assistant to-do items (``summary``, ``description`` = amount, ``uid``, ``status``). Done and
+    unparsable entries stay as they are; the merged row lists every uid behind it (see ``merged_uids``).
+    """
+    out: List[Dict] = []
+    groups: Dict[str, Dict] = {}
+    for item in items:
+        if item.get("status") != "needs_action" or not item.get("uid"):
+            out.append(item)
+            continue
+        text = " ".join(x for x in ((item.get("description") or "").strip(), (item.get("summary") or "").strip()) if x)
+        ing = parse_line(text)
+        if ing is None or not ing.key:
+            out.append(item)
+            continue
+        group = groups.get(ing.key)
+        merged = merge(group["ing"], ing) if group else None
+        if group and merged is not None:
+            group["ing"] = merged
+            group["uids"].append(item["uid"])
+            continue
+        if group:  # same name, but cannot be merged: keep it on its own
+            out.append(item)
+            continue
+        groups[ing.key] = {"ing": ing, "uids": [item["uid"]], "row": dict(item)}
+        out.append(groups[ing.key]["row"])
+    for group in groups.values():
+        if len(group["uids"]) > 1:
+            group["row"].update(uid=MERGED_PREFIX + "~".join(group["uids"]), summary=render(group["ing"]),
+                                description=None, merged=len(group["uids"]))
+    return out

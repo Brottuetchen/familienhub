@@ -75,7 +75,10 @@ async def list_items(_: User = Depends(get_current_user)):
     try:
         manual = shopping_recipes.attach(f"ha:{settings.ha_shopping_todo}",
                                          await ha.get_todo_items(settings.ha_shopping_todo))
-        recipe = await ha.get_todo_items(settings.ha_recipe_shopping_todo)
+        from app.services.ingredients import merge_open_items
+
+        # Cookidoo's own list can't be rewritten by us: show equal open entries as one row (ticking ticks all)
+        recipe = merge_open_items(await ha.get_todo_items(settings.ha_recipe_shopping_todo))
         for item in recipe:
             item.setdefault("recipes", [])
 
@@ -141,6 +144,13 @@ async def update_item(uid: str, data: UpdateItemRequest, _: User = Depends(get_c
         raise HTTPException(503, "Home Assistant nicht konfiguriert")
 
     status = "completed" if data.done else "needs_action"
+    from app.services.ingredients import MERGED_PREFIX, merged_uids
+
+    if uid.startswith(MERGED_PREFIX):  # merged row of Cookidoo's list: every entry behind it
+        results = [await ha.update_todo_item(settings.ha_recipe_shopping_todo, u, status) for u in merged_uids(uid)]
+        if not all(results):
+            raise HTTPException(502, "Could not update item")
+        return {"status": "ok"}
     # Versuche erst manual, dann recipes
     if not await ha.update_todo_item(settings.ha_shopping_todo, uid, status):
         if not await ha.update_todo_item(settings.ha_recipe_shopping_todo, uid, status):

@@ -157,3 +157,48 @@ def test_migration_creates_recipe_table(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "database_url", url)
     command.upgrade(_alembic_config(), "head")
     assert "shopping_item_recipes" in inspect(create_engine(url)).get_table_names()
+
+
+COOKIDOO_LIST = [  # shape of Cookidoo's list in Home Assistant: name in summary, amount in description
+    {"uid": "c1", "summary": "Butter", "description": "50 g", "status": "needs_action"},
+    {"uid": "c2", "summary": "Salz", "description": "0.5 TL", "status": "needs_action"},
+    {"uid": "c3", "summary": "Butter", "description": "40 g", "status": "needs_action"},
+    {"uid": "c4", "summary": "Zwiebel", "description": "1", "status": "needs_action"},
+    {"uid": "c5", "summary": "Salz", "description": "2 Prisen", "status": "needs_action"},
+    {"uid": "c6", "summary": "Zwiebel", "description": "2", "status": "needs_action"},
+    {"uid": "c7", "summary": "rote Zwiebeln", "description": "200 g", "status": "needs_action"},
+    {"uid": "c8", "summary": "Butter", "description": "100 g", "status": "completed"},
+    {"uid": "c9", "summary": "Zitrone, unbehandelt", "description": "1", "status": "needs_action"},
+]
+
+
+def test_cookidoo_list_rows_are_merged_for_display():
+    from app.services.ingredients import merge_open_items, merged_uids
+
+    rows = merge_open_items([dict(i) for i in COOKIDOO_LIST])
+    by = {r["summary"]: r for r in rows if r["status"] == "needs_action"}
+    assert by["90 g Butter"]["uid"] == "m~c1~c3" and merged_uids("m~c1~c3") == ["c1", "c3"]
+    assert by["3 Zwiebeln"]["merged"] == 2
+    assert "rote Zwiebeln" in by and by["rote Zwiebeln"]["uid"] == "c7"  # a different ingredient
+    assert any(r["uid"].startswith("m~") and "Salz" in r["summary"] for r in rows)
+    assert {r["uid"] for r in rows if r["status"] == "completed"} == {"c8"}  # done entries untouched
+    assert by["Zitrone, unbehandelt"]["uid"] == "c9" and by["Zitrone, unbehandelt"]["description"] == "1"
+    assert merged_uids("plain") == ["plain"]
+
+
+@respx.mock
+def test_ticking_a_merged_cookidoo_row_ticks_every_entry(client, auth, mock_ha):
+    def get_items(req):
+        import json
+
+        entity = json.loads(req.content)["entity_id"]
+        return _ha_items(entity, COOKIDOO_LIST if entity == "todo.rezepte_merge" else [])
+
+    respx.route(host="ha.test", path="/api/services/todo/get_items").mock(side_effect=get_items)
+    upd = respx.route(host="ha.test", path="/api/services/todo/update_item").mock(return_value=httpx.Response(200, json=[]))
+    rows = {i["summary"]: i for i in _items(client, auth, key="recipes")}
+    butter = rows["90 g Butter"]
+    assert client.patch(f"/api/shopping/{butter['uid']}", headers=auth, json={"done": True}).status_code == 200
+    sent = [_body(c) for c in upd.calls]
+    assert [(b["entity_id"], b["item"], b["status"]) for b in sent] == [
+        ("todo.rezepte_merge", "c1", "completed"), ("todo.rezepte_merge", "c3", "completed")]
