@@ -95,6 +95,36 @@ class Plugin:
         "color": None | "#RRGGBB"}``. Default: none."""
         return []
 
+    # --- Data sources (docs/plugins.md, "Data sources"). Every hook has a safe default; the hub calls them with
+    # a timeout and catches every exception, so a failing plugin never breaks the app. ---
+
+    def shopping_connector(self, db) -> Any:
+        """Capability ``shopping``: the plugin's shopping list as a ``ShoppingConnector`` (``app.plugins.sources``),
+        used when the admin chose this plugin under *Sources per area*. ``None`` = not supported."""
+        return None
+
+    async def recipe_search(self, query: str, limit: int) -> List[Dict[str, Any]]:
+        """Capability ``meal_planning``: search recipes, ``[{id, name, thumbnail, url, minutes}]``."""
+        return []
+
+    async def recipe(self, recipe_id: str) -> Dict[str, Any]:
+        """Capability ``meal_planning``: one recipe, ``{id, name, image, url, servings, minutes, ingredients, steps}``."""
+        return {}
+
+    async def recipe_to_shopping(self, recipe_ids: List[str], user_id: Optional[int] = None) -> Optional[int]:
+        """Optional: put the ingredients on the plugin's own list; return how many recipes went in.
+        ``None`` (default) = not supported, the hub then puts the ingredients on its shopping list."""
+        return None
+
+    async def timetable(self, child: Any, start: Any, end: Any, db) -> List[Dict[str, Any]]:
+        """Provide lessons of a hub child between two dates (inclusive):
+        ``[{date, start "HH:MM", end, title, kind, location, status, note, teacher}]``. Default: nothing."""
+        return []
+
+    async def timetable_people(self) -> List[Dict[str, Any]]:
+        """Optional: people of the plugin's system that a child can be mapped to, ``[{id, name}]``."""
+        return []
+
     def is_configured(self) -> bool:
         """Standard: alle Pflicht-Einstellungen haben einen Wert."""
         return all(get_setting(s.key) not in (None, "") for s in self.settings if s.required)

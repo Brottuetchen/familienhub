@@ -42,11 +42,41 @@ def _hub():
     return HubShopping() if plugin and plugin.active else None
 
 
+_BUILTIN_SOURCES = ("homeassistant", "hub_shopping", "mealie")
+
+
+def _external_plugin(choice: str):
+    """The installed (non built-in) plugin that is the shopping source: chosen by id, or, without a choice and
+    without Home Assistant, the one the admin screen shows as selected. None = a built-in source applies."""
+    from app.plugins.registry import plugin_registry
+
+    if choice:
+        plugin = plugin_registry.get(choice)
+    elif _ha() is None:
+        plugin = plugin_registry.provider("shopping")
+    else:
+        return None
+    if plugin is None or plugin.builtin or plugin.fallback or "shopping" not in plugin.capabilities or not plugin.active:
+        return None
+    return plugin
+
+
 def _hub_source():
-    """Hub list instead of Home Assistant: chosen explicitly (SHOPPING_SOURCE) or because HA is not set up."""
+    """Hub list, Mealie or a plugin's list instead of Home Assistant: chosen explicitly (SHOPPING_SOURCE) or because
+    HA is not set up. All of them share the interface of ``HubShopping``."""
     from app.plugins.base import get_setting
 
     choice = str(get_setting("SHOPPING_SOURCE") or "").strip()
+    if choice not in _BUILTIN_SOURCES:
+        plugin = _external_plugin(choice)
+        if plugin is not None:
+            from app.plugins.sources import shopping_source
+
+            source = shopping_source(plugin)
+            if source is not None:
+                return source
+            logger.warning("Plugin %s has no shopping connector, using the hub list", plugin.id)
+            return _hub()
     if choice == "mealie":
         from app.plugins.registry import plugin_registry
         from app.services.mealie import MealieShopping
@@ -248,7 +278,7 @@ async def add_recipe_ingredients(entries, user_id: Optional[int]) -> int:
     if source is not None:
         from app.services.hub_shopping import HubShopping
 
-        scope = "hub" if isinstance(source, HubShopping) else ""
+        scope = "hub" if isinstance(source, HubShopping) else getattr(source, "scope", "")
     else:
         ha = _ha()
         if ha is None:
@@ -313,13 +343,22 @@ def recipe_ingredients_mode() -> str:
     return "source" if str(get_setting("SHOPPING_RECIPE_INGREDIENTS") or "").strip().lower() == "source" else "merge"
 
 
+async def _native_shopping(service, recipe_ids, user_id: Optional[int]) -> int:
+    """The recipe source's own shopping list. A plugin source falls back to our list itself when it has none."""
+    from app.plugins.sources import PluginRecipes
+
+    if isinstance(service, PluginRecipes):
+        return await service.ingredients_to_shopping(recipe_ids, user_id)
+    return await service.ingredients_to_shopping(recipe_ids)
+
+
 async def recipes_to_shopping(service, recipe_ids, user_id: Optional[int] = None) -> int:
     """Ingredients of Cookidoo/Mealie recipes via ``add_recipe_ingredients`` (merged); a recipe whose details cannot be
     read goes through the service's own shopping list instead. Raises the service's error when that fails too."""
     from app.services.mealie import MealieShopping, mealie_service
 
-    if recipe_ingredients_mode() == "source":
-        return await service.ingredients_to_shopping(list(recipe_ids))
+    if recipe_ingredients_mode() == "source" or getattr(service, "prefers_native_shopping", False):
+        return await _native_shopping(service, list(recipe_ids), user_id)
     entries, native = [], []
     own_list = service is mealie_service and isinstance(_hub_source(), MealieShopping)  # Mealie merges itself
     for rid in recipe_ids:
@@ -336,7 +375,7 @@ async def recipes_to_shopping(service, recipe_ids, user_id: Optional[int] = None
             native.append(rid)
     count = await add_recipe_ingredients(entries, user_id) if entries else 0
     if native:
-        count += await service.ingredients_to_shopping(native)
+        count += await _native_shopping(service, native, user_id)
     return count
 
 
