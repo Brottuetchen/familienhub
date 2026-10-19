@@ -34,6 +34,7 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
         'house' => l10n.house,
         'birthdays' => l10n.birthdays,
         'timetable' => l10n.timetable,
+        'stars' => l10n.starsTitle,
         _ => id,
       };
 
@@ -44,6 +45,7 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
       'tasks' => modules.has('tasks'),
       'shopping' => modules.has('shopping'),
       'events' => modules.has('calendar'),
+      'stars' => ref.read(starsProvider).valueOrNull?.data.enabled ?? false,
       _ => true,
     };
   }

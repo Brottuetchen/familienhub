@@ -26,6 +26,7 @@ import '../models/task.dart';
 import '../models/today.dart';
 import '../models/timetable.dart';
 import '../models/today_layout.dart';
+import '../models/stars.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
 import '../l10n/l10n.dart';
@@ -383,8 +384,10 @@ class ApiClient {
 
   Future<void> _invalidateMutation(String path) async {
     final prefixes = <String>[];
-    if (path.startsWith('/api/tasks')) {
-      prefixes.addAll(['tasks:', 'today']);
+    if (path.startsWith('/api/stars')) {
+      prefixes.addAll(['stars', 'tasks:']);
+    } else if (path.startsWith('/api/tasks')) {
+      prefixes.addAll(['tasks:', 'today', 'stars']);
       if (path.endsWith('/caldav')) prefixes.add('events:');
     } else if (path.startsWith('/api/habitica')) {
       prefixes.addAll(['tasks:', 'today']);
@@ -729,6 +732,61 @@ class ApiClient {
 
   Future<void> resetFamilyTodayLayout() => _send('DELETE', '/api/admin/today-layout');
 
+  // ── Sterne und Belohnungen (Kindermodus) ───────────────────────────────────
+
+  Future<ApiResult<StarsSummary>> starsMe() => _cachedGet('/api/stars/me', 'stars:me', StarsSummary.fromJson);
+
+  /// Everything the stars screen shows. Parents also get the open decisions and the children's balances.
+  Future<StarsOverview> starsOverview({required bool parent}) async {
+    final me = StarsSummary.fromJson(await _send('GET', '/api/stars/me'));
+    final rewards = _maps((await _send('GET', '/api/stars/rewards'))['items']).map(StarReward.fromJson).toList();
+    final settings = await _send('GET', '/api/stars/settings');
+    final confirm = settings is Map && settings['confirm_tasks'] == true;
+    if (!parent) {
+      final requests = _maps((await _send('GET', '/api/stars/requests'))['items']).map(StarRequest.fromJson).toList();
+      final ledger = _maps((await _send('GET', '/api/stars/ledger'))['items']).map(StarEntry.fromJson).toList();
+      return StarsOverview(me: me, rewards: rewards, requests: requests, history: ledger, confirmTasks: confirm);
+    }
+    final pending = await _send('GET', '/api/stars/pending') as Map<String, dynamic>;
+    final people = _maps((await _send('GET', '/api/stars/people'))['items']).map(StarPerson.fromJson).toList();
+    return StarsOverview(
+      me: me,
+      rewards: rewards,
+      requests: _maps(pending['requests']).map(StarRequest.fromJson).toList(),
+      awards: _maps(pending['awards']).map(StarEntry.fromJson).toList(),
+      people: people,
+      confirmTasks: confirm,
+    );
+  }
+
+  Future<List<StarEntry>> starsHistory(int userId) async =>
+      _maps((await _send('GET', '/api/stars/ledger?user_id=$userId'))['items']).map(StarEntry.fromJson).toList();
+
+  Future<void> requestReward(int rewardId) =>
+      _send('POST', '/api/stars/requests', replayOn401: false, body: {'reward_id': rewardId});
+
+  Future<void> cancelRewardRequest(int id) => _send('POST', '/api/stars/requests/$id/cancel', replayOn401: false);
+
+  Future<void> decideRewardRequest(int id, {required bool approve}) =>
+      _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+
+  Future<void> decideStarEntry(int id, {required bool confirm}) =>
+      _send('POST', '/api/stars/ledger/$id/${confirm ? 'confirm' : 'reject'}', replayOn401: false);
+
+  Future<void> saveReward({int? id, required String title, required int price, bool? active}) => id == null
+      ? _send('POST', '/api/stars/rewards', replayOn401: false, body: {'title': title, 'price': price})
+      : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false,
+          body: {'title': title, 'price': price, if (active != null) 'active': active});
+
+  Future<void> setRewardActive(int id, bool active) =>
+      _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {'active': active});
+
+  Future<void> adjustStars(int userId, int delta, String title) => _send('POST', '/api/stars/adjust',
+      replayOn401: false, body: {'user_id': userId, 'delta': delta, 'title': title});
+
+  Future<void> setConfirmTasks(bool value) =>
+      _send('PUT', '/api/stars/settings', replayOn401: false, body: {'confirm_tasks': value});
+
   // Steuerfreigaben niemals im ResponseCache speichern oder daraus lesen.
   Future<SourceResult<HouseControl>> houseControls() async {
     try {
@@ -797,10 +855,12 @@ class ApiClient {
     List<int> rotation = const [],
     int? meId,
     int? priority,
+    int? stars,
     Map<String, dynamic>? native,
   }) async {
     final path = _taskPath('', provider, account);
     final body = {
+      if (stars != null && stars > 0) 'stars': stars,
       'title': title,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       if (due != null) 'due': _dateOnly(due),
@@ -878,8 +938,9 @@ class ApiClient {
   Future<List<TaskProviderInfo>> taskProviders() async =>
     _maps((await _send('GET', '/api/tasks/providers'))['items']).map(TaskProviderInfo.fromJson).toList();
 
-  Future<void> updateTask(Task task, {required String title, required String notes, DateTime? due, int? priority}) =>
+  Future<void> updateTask(Task task, {required String title, required String notes, DateTime? due, int? priority, int? stars}) =>
     _send('PATCH', _taskPath('/${Uri.encodeComponent(task.uid)}', task.provider, task.account), replayOn401: false, body: {
+      if (stars != null && stars != task.stars) 'stars': stars,
       if (title != task.title) 'title': title,
       if (notes != task.notes) 'notes': notes,
       if (due != task.due) 'due': due == null ? null : _dateOnly(due),

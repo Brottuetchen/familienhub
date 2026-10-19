@@ -11,6 +11,7 @@ import '../../widgets/common.dart';
 import '../main_shell.dart';
 import '../more/birthdays_screen.dart';
 import '../timetable/timetable_screen.dart';
+import '../stars/stars_screen.dart';
 import 'house_controls.dart';
 import 'today_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -123,8 +124,18 @@ class TodayScreen extends ConsumerWidget {
         .toList();
     final tasksOk = filter == null ? data.tasks.isOk : (filtered?.isOk ?? true);
     final nextEvent = data.events.isEmpty ? null : data.events.first;
+    final stars = ref.watch(starsProvider).valueOrNull?.data;
 
     return {
+      // Kids mode: only for people who use stars (the server decides), so everyone else sees no card
+      if (stars != null && stars.enabled)
+        'stars': SectionCard(
+          key: const Key('today-stars'),
+          icon: Icons.star_rounded,
+          title: l10n.starsTitle,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StarsScreen())),
+          child: StarsTile(summary: stars),
+        ),
       if (modules.has('calendar'))
         'events': SectionCard(
           key: const Key('today-events'),

@@ -1623,5 +1623,71 @@
   "@timetableHolidayNext": {"placeholders": {"title": {}, "date": {}}},
   "timetableThisWeek": "Diese Woche: {week}",
   "@timetableThisWeek": {"placeholders": {"week": {}}},
-  "timetableEndAfterStart": "Das Ende muss nach dem Beginn liegen"
+  "timetableEndAfterStart": "Das Ende muss nach dem Beginn liegen",
+  "starsTitle": "Sterne",
+  "starsHint": "Sterne sammeln, Belohnungen holen",
+  "starsCount": "{n} Sterne",
+  "@starsCount": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsAvailable": "{n} verfügbar",
+  "@starsAvailable": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsReserved": "{n} für Wünsche reserviert",
+  "@starsReserved": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "nextReward": "Nächste Belohnung",
+  "starsMissing": "noch {n} Sterne",
+  "@starsMissing": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "rewardWithinReach": "Du kannst sie dir wünschen!",
+  "rewards": "Belohnungen",
+  "starsNoRewards": "Noch keine Belohnungen.",
+  "rewardRequest": "Wünschen",
+  "rewardRequested": "Wunsch gesendet",
+  "rewardStatusPending": "Wartet auf Zustimmung",
+  "rewardStatusApproved": "Bewilligt",
+  "rewardStatusDeclined": "Abgelehnt",
+  "rewardStatusCancelled": "Zurückgezogen",
+  "rewardWithdraw": "Zurückziehen",
+  "starsHistory": "Verlauf",
+  "starsNoHistory": "Noch nichts passiert.",
+  "starsAwaiting": "Wartet auf Bestätigung",
+  "starsRejected": "Nicht bestätigt",
+  "starsToDecide": "Zu entscheiden",
+  "starsApprove": "Bewilligen",
+  "starsDecline": "Ablehnen",
+  "starsConfirm": "Bestätigen",
+  "starsChildren": "Kinder",
+  "starsBonus": "Bonus oder Abzug",
+  "starsAmount": "Anzahl (negativ = Abzug)",
+  "starsReason": "Grund (optional)",
+  "addReward": "Belohnung hinzufügen",
+  "rewardTitle": "Belohnung",
+  "rewardPrice": "Preis in Sternen",
+  "rewardHide": "Ausblenden",
+  "rewardShow": "Einblenden",
+  "rewardHidden": "ausgeblendet",
+  "starsConfirmTasks": "Erledigte Aufgaben bestätigen",
+  "starsConfirmTasksHint": "Sterne zählen erst, wenn ein Elternteil bestätigt hat.",
+  "taskStars": "Sterne für diese Aufgabe",
+  "starsWaitingForYou": "{n} warten auf dich",
+  "@starsWaitingForYou": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "starsNotEnough": "Dafür fehlen noch Sterne.",
+  "catStars": "Sterne und Belohnungen"
 }

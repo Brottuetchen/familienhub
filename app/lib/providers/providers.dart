@@ -12,6 +12,7 @@ import '../models/meals.dart';
 import '../models/modules.dart';
 import '../models/pending.dart';
 import '../models/shopping.dart';
+import '../models/stars.dart';
 import '../models/task.dart';
 import '../models/today.dart';
 import '../models/timetable.dart';
@@ -277,6 +278,10 @@ final todayProvider = StateNotifierProvider<CachedRead<TodayData>, AsyncValue<Ap
 /// Own arrangement of Today. Errors (older server, offline) are not shown: callers fall back to the built-in one.
 final todayLayoutProvider = StateNotifierProvider<CachedRead<TodayLayout>, AsyncValue<ApiResult<TodayLayout>>>(
   (ref) => _cachedRead(ref, 'layout:today', TodayLayout.fromJson, (api) => api.todayLayout()));
+
+/// Own stars for the Today card and the stars screen (errors fall back to "no stars feature").
+final starsProvider = StateNotifierProvider<CachedRead<StarsSummary>, AsyncValue<ApiResult<StarsSummary>>>(
+  (ref) => _cachedRead(ref, 'stars:me', StarsSummary.fromJson, (api) => api.starsMe()));
 
 final tasksProvider = StateNotifierProvider.family<CachedRead<SourceResult<Task>>, AsyncValue<ApiResult<SourceResult<Task>>>, TaskView>(
   (ref, view) => _cachedRead(ref, 'tasks:${view.apiName}',

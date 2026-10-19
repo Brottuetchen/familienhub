@@ -222,6 +222,7 @@ Map<String, String> get notificationCategories => <String, String>{
   'house': l10n.catHouse,
   'media': l10n.catMedia,
   'documents': l10n.documents,
+  'stars': l10n.catStars,
   'system': l10n.catSystem,
 };
 
