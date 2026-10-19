@@ -1,13 +1,14 @@
 """Timetable of children: roles, copy day/week, A/B weeks, school holidays, Today card."""
 
 import asyncio
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 import respx
 
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
+from app.core.timeutil import local_tz
 from app.models.timetable import TimetableEntry
 from app.models.user import User
 
@@ -109,7 +110,6 @@ def test_copy_day_and_week(client, auth):
 
 
 def test_ab_weeks(client, auth):
-    from app.services import timetable as svc
 
     kid, _ = _user(client, "tt_ab", "child")
     _, partner = _user(client, "tt_parent", "partner")
@@ -201,9 +201,8 @@ def test_today_card_for_child_and_parent(client, auth):
     ben, _ = _user(client, "tt_today_ben", "child", "Ben")
     _, partner = _user(client, "tt_parent", "partner")
     _, guest = _user(client, "tt_guest", "guest")
-    from app.services import timetable as svc
 
-    today = date.today()
+    today = datetime.now(local_tz()).date()  # the hub counts days in its own time zone
     _add(client, partner, child=mia, weekday=today.weekday(), title="Maths", end="13:15")
     _add(client, partner, child=ben, weekday=today.weekday(), title="Football", kind="sport")
     kids = lambda h: {c["name"]: [e["title"] for e in c["entries"]] for c in client.get("/api/today", headers=h).json()["timetable"]["children"]}  # noqa: E731
@@ -215,4 +214,3 @@ def test_today_card_for_child_and_parent(client, auth):
     with SessionLocal() as db:
         db.query(TimetableEntry).filter(TimetableEntry.child_id.in_([mia, ben])).delete()
         db.commit()
-    assert svc is not None
