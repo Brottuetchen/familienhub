@@ -26,6 +26,7 @@ from app.models.paperless import PaperlessAccount
 from app.models.push_device import PushDevice
 from app.models.user import ROLE_ADMIN, User
 from app.plugins.registry import plugin_registry
+from app.services import backup as backup_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 admin_only = require_min_role(ROLE_ADMIN)
@@ -73,6 +74,7 @@ async def overview(db: Session = Depends(get_db), _: User = Depends(admin_only))
     devices = dict(db.query(PushDevice.kind, func.count(PushDevice.id)).group_by(PushDevice.kind).all())
     return {
         "server": {"version": __version__, "environment": settings.environment},
+        "backup": backup_service.summary(),
         "plugins": [{
             "id": p.id, "name": p.name, "description": p.description,
             "active": p.active, "configured": p.is_configured(), "missing": p.missing_settings(),

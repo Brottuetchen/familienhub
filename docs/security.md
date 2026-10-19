@@ -20,6 +20,7 @@ Run them locally with `.forgejo/ci/security.sh`. A full manual review was done o
   - the secret key is generated on first start (kept in `<DATA_DIR>/secret_key`, mode 0600); production refuses to start with a default or short key if none can be stored
   - CORS same-origin by default
 - **Plugins installed from GitHub run inside the hub with full access.** Only admins can install them, the installer pins one commit, talks only to GitHub, unpacks archives safely and keeps a plugin's routes below `/api/plugins/<id>/` behind the login. That is not a sandbox: install only plugins you trust, see [plugins](plugins.md#security-notes). `PLUGIN_INSTALL_ENABLED=false` turns the installer off.
+- **Backups** (Administration → Backup) are admin only. An archive holds the encrypted settings and, unless left out, the hub's keys (`secret_key`, `vapid.json`), so it is as sensitive as the data volume. A restore validates the archive (fixed member names, size limits, manifest with version and database revision, nothing is extracted to disk by name), refuses newer versions and replaces the data in one transaction after storing the current state as a backup. Downloads use a single-use link that expires after two minutes. Admin actions are logged with an `audit:` prefix.
 - **No secrets and no household data in the repository.**
 
 ## First admin and secret key

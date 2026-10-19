@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/account.dart';
 import '../models/admin.dart';
+import '../models/backup.dart';
 import '../models/birthday.dart';
 import '../models/books.dart';
 import '../models/calendar_event.dart';
@@ -1571,6 +1572,36 @@ class ApiClient {
       .whereType<Map<String, dynamic>>()
       .map(LogEntry.fromJson)
       .toList();
+
+  // ── Admin: backup and update notice ────────────────────────────────────────
+
+  Future<BackupInfo> backupInfo() async =>
+      BackupInfo.fromJson(await _send('GET', '/api/admin/backup') as Map<String, dynamic>);
+
+  Future<BackupResult> createBackup() async => BackupResult.fromJson(
+      await _send('POST', '/api/admin/backup', body: {'include_keys': true}, timeout: const Duration(minutes: 5))
+          as Map<String, dynamic>);
+
+  Future<BackupInfo> saveBackupSettings({required bool auto, required int keep}) async => BackupInfo.fromJson(
+      await _send('PUT', '/api/admin/backup/settings', body: {'auto': auto, 'keep': keep}) as Map<String, dynamic>);
+
+  Future<BackupResult> deleteBackup(String name) async => BackupResult.fromJson(
+      await _send('DELETE', '/api/admin/backup/${Uri.encodeComponent(name)}') as Map<String, dynamic>);
+
+  /// Single-use, short-lived address of a fresh backup file; open it in the browser to save it.
+  Future<Uri> backupDownloadUri() async {
+    final j = await _send('POST', '/api/admin/backup/download-link', body: {'include_keys': true})
+        as Map<String, dynamic>;
+    return _uri(j['path'] as String);
+  }
+
+  Future<BackupResult> inspectBackup(String name) async => BackupResult.fromJson(
+      await _send('POST', '/api/admin/backup/${Uri.encodeComponent(name)}/inspect') as Map<String, dynamic>);
+
+  Future<BackupResult> restoreBackup(String name) async => BackupResult.fromJson(await _send(
+          'POST', '/api/admin/backup/${Uri.encodeComponent(name)}/restore',
+          body: {'confirm': true}, timeout: const Duration(minutes: 10))
+      as Map<String, dynamic>);
 
   // ── Filme & Serien (Seerr) ─────────────────────────────────────────────────
 

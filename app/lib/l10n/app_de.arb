@@ -1689,5 +1689,60 @@
     }
   },
   "starsNotEnough": "Dafür fehlen noch Sterne.",
-  "catStars": "Sterne und Belohnungen"
+  "catStars": "Sterne und Belohnungen",
+  "backupTitle": "Backup",
+  "backupHint": "Sichern und wiederherstellen",
+  "backupLastLine": "Letztes Backup: {date}",
+  "@backupLastLine": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupNoneYet": "Noch kein Backup",
+  "backupLastFailed": "Das letzte Backup ist fehlgeschlagen",
+  "backupDownload": "Backup herunterladen",
+  "backupDownloadHint": "Enthält die Datenbank, die Einstellungen (Zugangsdaten bleiben verschlüsselt) und die Schlüssel des Hubs. Bewahre die Datei wie ein Passwort auf.",
+  "backupCreateOnHub": "Backup auf dem Hub ablegen",
+  "backupCreated": "Backup erstellt",
+  "backupStored": "Gespeicherte Backups",
+  "backupNoneStored": "Noch keine Backups im Datenordner des Hubs",
+  "backupAuto": "Nächtliches Backup",
+  "backupAutoHint": "Jede Nacht ab {time} Uhr in den Datenordner des Hubs",
+  "@backupAutoHint": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "backupKeep": "Letzte Backups behalten: {count}",
+  "@backupKeep": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "backupRestore": "Wiederherstellen",
+  "backupRestoreTitle": "Backup wiederherstellen?",
+  "backupRestoreWarning": "ACHTUNG: Alle aktuellen Daten des Hubs werden durch dieses Backup ersetzt (Stand {date}). Davor wird der jetzige Stand automatisch als Backup abgelegt. Danach muss der Hub neu gestartet werden.",
+  "@backupRestoreWarning": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupRestoreConfirm": "Alles ersetzen",
+  "backupRestoreDone": "Wiederhergestellt",
+  "backupRestartNeeded": "Bitte den Hub jetzt neu starten (docker compose restart familienhub), damit alles neu geladen wird.",
+  "backupWarnSecretEnv": "SECRET_KEY ist in der Umgebung gesetzt und bleibt unverändert. Stimmt er nicht mit dem Backup überein, müssen gespeicherte Zugangsdaten neu eingetragen werden.",
+  "backupUploadHint": "Eine heruntergeladene Datei lässt sich im Datenordner des Hubs unter backups/ ablegen (docker compose cp datei.zip familienhub:/app/data/backups/); danach erscheint sie hier.",
+  "backupDeleteQuestion": "Dieses Backup löschen?",
+  "backupDownloadStarted": "Download gestartet",
+  "backupKindManual": "Manuell",
+  "backupKindAuto": "Nächtlich",
+  "backupKindSafety": "Vor Wiederherstellung",
+  "backupKindUploaded": "Hochgeladen",
+  "backupErrNewer": "Dieses Backup stammt von einer neueren Familienhub-Version. Bitte zuerst den Hub aktualisieren.",
+  "backupErrOlder": "Dieses Backup stammt von einer älteren Datenbankstruktur. Mit der damaligen Version wiederherstellen und danach aktualisieren.",
+  "backupErrInvalid": "Das ist kein gültiges Familienhub-Backup.",
+  "backupErrBusy": "Es läuft schon ein Backup oder eine Wiederherstellung.",
+  "backupErrDir": "Der Datenordner ist nicht beschreibbar. Bitte ein Volume unter /app/data einbinden.",
+  "backupErrSafety": "Der jetzige Stand konnte nicht vorher gesichert werden, deshalb wurde nichts wiederhergestellt.",
+  "backupErrFailed": "Das hat nicht geklappt. Details stehen im Protokoll des Hubs."
 }

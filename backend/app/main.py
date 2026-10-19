@@ -22,6 +22,7 @@ from app.services.scheduler import run_scheduler
 from app.plugins.registry import plugin_registry
 from app.routers import (
     admin,
+    admin_backup,
     admin_panel,
     feedback,
     invites,
@@ -138,6 +139,7 @@ SECURITY_HEADERS = {
 }
 
 
+BACKUP_UPLOAD_PATH = "/api/admin/backup/upload"  # admin only; checks its own size limit
 MAX_BODY_BYTES = 2 * 1024 * 1024  # größte erlaubte Nutzlast: Profilbild 512 KB (Base64 ≈ 700 KB)
 
 
@@ -145,7 +147,7 @@ MAX_BODY_BYTES = 2 * 1024 * 1024  # größte erlaubte Nutzlast: Profilbild 512 K
 async def limit_body_size(request, call_next):
     """Übergroße Anfragen früh ablehnen, bevor sie eingelesen werden (auch an öffentlichen Endpunkten)."""
     length = request.headers.get("content-length")
-    if length and length.isdigit() and int(length) > MAX_BODY_BYTES:
+    if length and length.isdigit() and int(length) > MAX_BODY_BYTES and request.url.path != BACKUP_UPLOAD_PATH:
         from fastapi.responses import JSONResponse
 
         return JSONResponse({"detail": "Anfrage zu groß"}, status_code=413)
@@ -192,7 +194,7 @@ async def refresh_after_changes(request, call_next):
 # Kern-Router; Integrationen bringen ihre Router als Plugin mit
 for module in (health, auth, calendar, birthdays, modules, notifications, today, today_layout, timetable, tasks, reminders, meals, recipes,
                push, themes, profile, admin, admin_panel, feedback, invites, list_templates, setup, ntfy, recipe_sources, plugins_router,
-               voice, stars):
+               voice, stars, admin_backup):
     app.include_router(module.router)
 plugin_registry.include_routers(app)
 

@@ -8,6 +8,7 @@ import '../more/appearance_screen.dart';
 import '../more/plugins_admin_screen.dart';
 import '../more/service_keys_screen.dart';
 import '../setup/setup_wizard_screen.dart';
+import 'admin_backup_screen.dart';
 import 'admin_feedback_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
@@ -99,6 +100,17 @@ class AdminScreen extends ConsumerWidget {
               title: l10n.feedback,
               subtitle: l10n.feedbackAdminHint,
               onTap: () => open(const AdminFeedbackScreen()),
+            ),
+            _Area(
+              key: const Key('admin-backup'),
+              icon: Icons.backup_outlined,
+              title: l10n.backupTitle,
+              subtitle: overview.valueOrNull == null
+                  ? l10n.backupHint
+                  : overview.value!.lastBackup == null
+                      ? l10n.backupNoneYet
+                      : l10n.backupLastLine(backupDate(overview.value!.lastBackup!)),
+              onTap: () => open(const AdminBackupScreen()),
             ),
             _Area(
               key: const Key('admin-log'),

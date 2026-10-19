@@ -998,5 +998,60 @@
   "taskStars": "Stars for this task",
   "starsWaitingForYou": "{n} waiting for you",
   "starsNotEnough": "Not enough stars yet.",
-  "catStars": "Stars and rewards"
+  "catStars": "Stars and rewards",
+  "backupTitle": "Backup",
+  "backupHint": "Back up and restore",
+  "backupLastLine": "Last backup: {date}",
+  "@backupLastLine": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupNoneYet": "No backup yet",
+  "backupLastFailed": "The last backup failed",
+  "backupDownload": "Download backup",
+  "backupDownloadHint": "Contains the database, the settings (credentials stay encrypted) and the hub's keys. Keep the file like a password.",
+  "backupCreateOnHub": "Store a backup on the hub",
+  "backupCreated": "Backup created",
+  "backupStored": "Stored backups",
+  "backupNoneStored": "No backups in the hub's data folder yet",
+  "backupAuto": "Nightly backup",
+  "backupAutoHint": "Every night from {time} into the hub's data folder",
+  "@backupAutoHint": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "backupKeep": "Keep the last backups: {count}",
+  "@backupKeep": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "backupRestore": "Restore",
+  "backupRestoreTitle": "Restore this backup?",
+  "backupRestoreWarning": "WARNING: All current data of the hub is replaced by this backup (from {date}). The current state is stored as a backup first. The hub must be restarted afterwards.",
+  "@backupRestoreWarning": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "backupRestoreConfirm": "Replace everything",
+  "backupRestoreDone": "Restored",
+  "backupRestartNeeded": "Please restart the hub now (docker compose restart familienhub) so everything reloads.",
+  "backupWarnSecretEnv": "SECRET_KEY is set in the environment and stays unchanged. If it differs from the backup's, stored credentials have to be entered again.",
+  "backupUploadHint": "A downloaded file can be placed in the hub's data folder under backups/ (docker compose cp file.zip familienhub:/app/data/backups/); it then shows up here.",
+  "backupDeleteQuestion": "Delete this backup?",
+  "backupDownloadStarted": "Download started",
+  "backupKindManual": "Manual",
+  "backupKindAuto": "Nightly",
+  "backupKindSafety": "Before a restore",
+  "backupKindUploaded": "Uploaded",
+  "backupErrNewer": "This backup was made by a newer Familienhub. Please update the hub first.",
+  "backupErrOlder": "This backup is from an older database layout. Restore it with the version that made it, then update.",
+  "backupErrInvalid": "This is not a valid Familienhub backup.",
+  "backupErrBusy": "A backup or restore is already running.",
+  "backupErrDir": "The data folder is not writable. Please mount a volume at /app/data.",
+  "backupErrSafety": "The current state could not be backed up first, so nothing was restored.",
+  "backupErrFailed": "That did not work. See the hub's log for details."
 }
