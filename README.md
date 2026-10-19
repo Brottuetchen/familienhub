@@ -8,6 +8,8 @@ Today at a glance, tasks for yourself and each other, shopping, meal plan, event
 
 [Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
+<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
+
 </div>
 
 ## Why
@@ -47,6 +49,13 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
 - **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
 - **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (eleven in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
+
+<details>
+<summary>More screenshots</summary>
+
+<img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/shopping.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/calendar.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
+
+</details>
 
 ## Themes
 
