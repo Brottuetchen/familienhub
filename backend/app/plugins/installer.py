@@ -181,17 +181,28 @@ def check_installable(manifest: Dict[str, Any], repo_url: str, db: Session) -> O
     return row
 
 
-async def read_manifest(url: str) -> tuple:
-    """(RepoRef, folder, sha, manifest) for a pasted link."""
+def pinned_link(ref: github.RepoRef, sha: str, folder: str) -> str:
+    """Link recorded for a plugin that was installed at a pinned commit (store): the repository, plus folder."""
+    return ref.url + f"/tree/{sha}/{folder}" if folder else ref.url
+
+
+async def read_manifest(url: str, pin: Optional[tuple] = None) -> tuple:
+    """(RepoRef, folder, sha, manifest) for a pasted link, or for the pinned ``(sha, folder)`` of a store entry."""
     ref = github.parse_repo_url(url)
-    sha, folder = await github.resolve_sha(ref)
+    if pin is not None:
+        sha, folder = pin
+    else:
+        sha, folder = await github.resolve_sha(ref)
     manifest = parse_manifest(await github.fetch_manifest_bytes(ref, sha, folder, MANIFEST_FILE))
     return ref, folder, sha, manifest
 
 
-async def inspect_plugin(url: str, lang: str, db: Session) -> Dict[str, Any]:
-    ref, folder, sha, manifest = await read_manifest(url)
-    link = source_url(ref)
+async def inspect_plugin(url: str, lang: str, db: Session, pin: Optional[tuple] = None,
+                         expect_id: Optional[str] = None) -> Dict[str, Any]:
+    ref, folder, sha, manifest = await read_manifest(url, pin)
+    if expect_id is not None and manifest["id"] != expect_id:
+        raise InstallError(f"Die Plugin-ID im Repository („{manifest['id']}“) weicht vom Store-Eintrag („{expect_id}“) ab")
+    link = pinned_link(ref, sha, folder) if pin is not None else source_url(ref)
     row = check_installable(manifest, link, db)
     warnings: List[str] = []
     if data_dir_persistent() is False:
@@ -447,16 +458,24 @@ def _install_dir(plugin_id: str, staging: Path, old: Path, keep_old: bool) -> No
 
 
 async def install_plugin(app: FastAPI, db: Session, user_id: Optional[int], url: str, sha: str,
-                         values: Dict[str, Any]) -> Dict[str, Any]:
-    """Install (or update to) exactly commit ``sha`` of the repository the link points to."""
+                         values: Dict[str, Any], *, folder: Optional[str] = None, expect_id: Optional[str] = None,
+                         store_source: Optional[str] = None) -> Dict[str, Any]:
+    """Install (or update to) exactly commit ``sha`` of the repository the link points to.
+
+    A store entry passes ``folder`` (its pinned folder, so the link is not resolved again), ``expect_id`` (the
+    id the index promised) and ``store_source`` (remembered on the record to detect updates).
+    """
     if not github.SHA_RE.match(sha or ""):
         raise InstallError("Ungültige Commit-Kennung")
     async with _lock:
         ref = github.parse_repo_url(url)
-        _, folder = await github.resolve_sha(ref)
+        if folder is None:
+            _, folder = await github.resolve_sha(ref)
         manifest = parse_manifest(await github.fetch_manifest_bytes(ref, sha, folder, MANIFEST_FILE))
         plugin_id = manifest["id"]
-        link = source_url(ref)
+        if expect_id is not None and plugin_id != expect_id:
+            raise InstallError(f"Die Plugin-ID im Repository („{plugin_id}“) weicht vom Store-Eintrag („{expect_id}“) ab")
+        link = pinned_link(ref, sha, folder) if store_source is not None else source_url(ref)
         row = check_installable(manifest, link, db)
         to_store = check_settings(manifest, values)
         base = prepare_dirs()
@@ -472,7 +491,7 @@ async def install_plugin(app: FastAPI, db: Session, user_id: Optional[int], url:
             await asyncio.to_thread(archive.safe_extract, data, src)
             package = _package_dir(src, folder, manifest)
             await run_pip(package, staging, tmp)
-            return await _activate(app, db, user_id, row, manifest, link, sha, to_store, staging, old)
+            return await _activate(app, db, user_id, row, manifest, link, sha, to_store, staging, old, store_source)
         except BaseException:
             _rmtree(staging)
             if row is None or row.sha != sha:
@@ -482,7 +501,8 @@ async def install_plugin(app: FastAPI, db: Session, user_id: Optional[int], url:
             _rmtree(tmp)
 
 
-async def _activate(app, db, user_id, row, manifest, link, sha, to_store, staging, old) -> Dict[str, Any]:
+async def _activate(app, db, user_id, row, manifest, link, sha, to_store, staging, old,
+                    store_source=None) -> Dict[str, Any]:
     plugin_id = manifest["id"]
     update = row is not None
     old_manifest = validate_manifest(json.loads(row.manifest)) if update else None
@@ -515,6 +535,7 @@ async def _activate(app, db, user_id, row, manifest, link, sha, to_store, stagin
         row = InstalledPlugin(id=plugin_id)
         db.add(row)
     row.repo_url, row.sha, row.version = link, sha, manifest["version"]
+    row.store_source = store_source
     row.manifest = json.dumps(manifest, ensure_ascii=False)
     row.installed_by, row.installed_at, row.enabled = user_id, datetime.utcnow(), plugin_id not in settings.disabled_plugins
     db.commit()
@@ -564,6 +585,7 @@ def installed_view(row: InstalledPlugin, lang: str) -> Dict[str, Any]:
         "short_sha": short_sha(row.sha),
         "installed_at": row.installed_at.isoformat() if row.installed_at else None,
         "enabled": row.enabled,
+        "store_source": row.store_source,
         "loaded": row.id in _loaded,
         "active": bool(plugin and plugin.active),
         "error": i18n.translate(_errors[row.id], lang) if row.id in _errors else None,

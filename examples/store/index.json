@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "name": "Example store",
+  "entries": [
+    {
+      "type": "theme",
+      "id": "clean-cards",
+      "name": "Clean Cards",
+      "summary": {
+        "de": "Ruhige weiße Karten mit feinen Rändern.",
+        "en": "Calm cards with fine borders."
+      },
+      "description": {
+        "de": "Ruhige weiße Karten mit feinen Rändern. Beispieleintrag: das mitgelieferte Theme als Store-Eintrag.",
+        "en": "Calm cards with fine borders. Example entry: the built-in theme as a store entry."
+      },
+      "author": "Familienhub contributors",
+      "repo": "https://github.com/example-org/familienhub-themes",
+      "path": "clean-cards",
+      "sha": "0000000000000000000000000000000000000001",
+      "version": "1.0.0",
+      "screenshots": [
+        "screenshots/clean-cards/1.png",
+        "screenshots/clean-cards/2.png"
+      ],
+      "tags": [
+        "theme",
+        "example"
+      ]
+    },
+    {
+      "type": "theme",
+      "id": "liquid-glass",
+      "name": "Liquid Glass",
+      "summary": {
+        "de": "Durchscheinende Glasflächen auf farbigem Verlauf.",
+        "en": "Translucent glass surfaces on a colourful gradient."
+      },
+      "description": {
+        "de": "Durchscheinende Glasflächen auf farbigem Verlauf. Beispieleintrag: das mitgelieferte Theme als Store-Eintrag.",
+        "en": "Translucent glass surfaces on a colourful gradient. Example entry: the built-in theme as a store entry."
+      },
+      "author": "Familienhub contributors",
+      "repo": "https://github.com/example-org/familienhub-themes",
+      "path": "liquid-glass",
+      "sha": "0000000000000000000000000000000000000002",
+      "version": "1.0.0",
+      "screenshots": [
+        "screenshots/liquid-glass/1.png",
+        "screenshots/liquid-glass/2.png"
+      ],
+      "tags": [
+        "theme",
+        "example"
+      ]
+    },
+    {
+      "type": "theme",
+      "id": "neo-brutalism",
+      "name": "Neo-Brutalism",
+      "summary": {
+        "de": "Kräftige Farben, harte Schatten, dicke Rahmen.",
+        "en": "Bold colours, hard shadows, thick borders."
+      },
+      "description": {
+        "de": "Kräftige Farben, harte Schatten, dicke Rahmen. Beispieleintrag: das mitgelieferte Theme als Store-Eintrag.",
+        "en": "Bold colours, hard shadows, thick borders. Example entry: the built-in theme as a store entry."
+      },
+      "author": "Familienhub contributors",
+      "repo": "https://github.com/example-org/familienhub-themes",
+      "path": "neo-brutalism",
+      "sha": "0000000000000000000000000000000000000003",
+      "version": "1.0.0",
+      "screenshots": [
+        "screenshots/neo-brutalism/1.png",
+        "screenshots/neo-brutalism/2.png"
+      ],
+      "tags": [
+        "theme",
+        "example"
+      ]
+    },
+    {
+      "type": "theme",
+      "id": "pixel",
+      "name": "Pixel",
+      "summary": {
+        "de": "Pixel-Schrift und Retro-Farben.",
+        "en": "Pixel font and retro colours."
+      },
+      "description": {
+        "de": "Pixel-Schrift und Retro-Farben. Beispieleintrag: das mitgelieferte Theme als Store-Eintrag.",
+        "en": "Pixel font and retro colours. Example entry: the built-in theme as a store entry."
+      },
+      "author": "Familienhub contributors",
+      "repo": "https://github.com/example-org/familienhub-themes",
+      "path": "pixel",
+      "sha": "0000000000000000000000000000000000000004",
+      "version": "1.0.0",
+      "screenshots": [
+        "screenshots/pixel/1.png",
+        "screenshots/pixel/2.png"
+      ],
+      "tags": [
+        "theme",
+        "example"
+      ]
+    },
+    {
+      "type": "theme",
+      "id": "warm",
+      "name": "Warm",
+      "summary": {
+        "de": "Warme Erdtöne für den Abend.",
+        "en": "Warm earth tones for the evening."
+      },
+      "description": {
+        "de": "Warme Erdtöne für den Abend. Beispieleintrag: das mitgelieferte Theme als Store-Eintrag.",
+        "en": "Warm earth tones for the evening. Example entry: the built-in theme as a store entry."
+      },
+      "author": "Familienhub contributors",
+      "repo": "https://github.com/example-org/familienhub-themes",
+      "path": "warm",
+      "sha": "0000000000000000000000000000000000000005",
+      "version": "1.0.0",
+      "screenshots": [
+        "screenshots/warm/1.png",
+        "screenshots/warm/2.png"
+      ],
+      "tags": [
+        "theme",
+        "example"
+      ]
+    },
+    {
+      "type": "plugin",
+      "id": "grocy_sync",
+      "name": {
+        "de": "Grocy-Abgleich",
+        "en": "Grocy sync"
+      },
+      "summary": {
+        "de": "Beispiel-Plugin (fiktiv): zeigt Vorräte aus Grocy.",
+        "en": "Example plugin (fictional): shows pantry stock from Grocy."
+      },
+      "description": {
+        "de": "Fiktiver Eintrag, der das Format eines Code-Plugins zeigt. Das Repository muss eine familienhub-plugin.json enthalten.",
+        "en": "Fictional entry showing the format of a code plugin. The repository must contain a familienhub-plugin.json."
+      },
+      "author": "Example Org",
+      "repo": "https://github.com/example-org/familienhub-grocy",
+      "path": "",
+      "sha": "ffffffffffffffffffffffffffffffffffffffff",
+      "version": "0.3.1",
+      "screenshots": [
+        "screenshots/grocy_sync/1.png"
+      ],
+      "tags": [
+        "plugin",
+        "pantry"
+      ],
+      "min_hub_version": "0.1.0"
+    }
+  ]
+}
