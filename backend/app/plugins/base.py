@@ -20,6 +20,7 @@ CAPABILITIES = {
     "books": "Bücher & Hörbücher",
     "media_requests": "Filme & Serien wünschen",
     "weather": "Wetter in „Heute“",
+    "timetable": "Stundenplan",
     "push_ntfy": "Push über ntfy",
 }
 

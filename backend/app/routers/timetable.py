@@ -13,9 +13,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user, require_min_role
 from app.core.timeutil import local_tz
-from app.models.timetable import TimetableEntry
+from app.models.timetable import TimetableEntry, TimetableSource
 from app.models.user import ROLE_PARTNER, User
 from app.services import timetable as svc
+from app.services import timetable_plugin as plug
 
 router = APIRouter(prefix="/api/timetable", tags=["timetable"])
 parent = require_min_role(ROLE_PARTNER)
@@ -124,7 +125,78 @@ async def get_timetable(child_id: int, user: User = Depends(get_current_user), d
         "current_week": svc.week_variant(db, today),
         "holidays": await svc.holidays(db, today, today + timedelta(days=90)),
         "can_edit": svc.is_parent(user),
+        "plugin": svc.plugin_info(plug.source_of(db, kid.id), "ok"),
     }
+
+
+@router.get("/week")
+async def get_week(child_id: int, start: Optional[date] = None, user: User = Depends(get_current_user),
+                   db: Session = Depends(get_db)):
+    """One calendar week (Monday first) of a child with real dates: manual entries merged with the lessons of the
+    plugin the child is mapped to (cancelled and substituted lessons carry a ``status``). Fails softly."""
+    if child_id not in {k.id for k in svc.children_visible_to(db, user)}:
+        raise HTTPException(403, "Not allowed to see this timetable")
+    kid = _child(db, child_id)
+    return await svc.week_view(db, kid, start or datetime.now(local_tz()).date())
+
+
+class SourceIn(BaseModel):
+    child_id: int
+    plugin_id: Optional[str] = Field(default=None, max_length=40)
+    person_id: Optional[str] = Field(default=None, max_length=200)
+
+
+class SourcesIn(BaseModel):
+    sources: List[SourceIn] = Field(max_length=50)
+
+
+async def _sources_payload(db: Session) -> dict:
+    kids = db.query(User).filter(User.role == "child", User.is_active.is_(True)).order_by(User.id).all()
+    rows = {r.child_id: r for r in db.query(TimetableSource).all()}
+    plugins = []
+    for p in plug.timetable_plugins():
+        listed, trusted = await plug.people(p)
+        plugins.append({"id": p.id, "name": p.name, "people": listed, "people_known": trusted})
+    return {
+        "children": [{"child_id": k.id, "name": k.effective_name, "plugin_id": rows[k.id].plugin_id if k.id in rows else None,
+                      "person_id": rows[k.id].person_id if k.id in rows else None,
+                      "person_name": rows[k.id].person_name if k.id in rows else None} for k in kids],
+        "plugins": plugins,
+    }
+
+
+@router.get("/sources")
+async def get_sources(_: User = Depends(parent), db: Session = Depends(get_db)):
+    """Per child: which plugin provides the timetable and who the child is there; plus the plugins that can."""
+    return await _sources_payload(db)
+
+
+@router.put("/sources")
+async def put_sources(body: SourcesIn, _: User = Depends(parent), db: Session = Depends(get_db)):
+    """Map children to plugin people. ``plugin_id`` or ``person_id`` empty removes the mapping of that child.
+    When the plugin lists its people (``timetable_people``), the identifier must be one of them."""
+    available = {p.id: p for p in plug.timetable_plugins()}
+    listed: dict = {}
+    for item in body.sources:
+        _child(db, item.child_id)
+        plugin_id = (item.plugin_id or "").strip() or None
+        person_id = (item.person_id or "").strip() or None
+        name = None
+        if plugin_id and person_id:
+            if plugin_id not in available:
+                raise HTTPException(422, "Plugin provides no timetable")
+            if plugin_id not in listed:
+                listed[plugin_id] = await plug.people(available[plugin_id])
+            people, trusted = listed[plugin_id]
+            if trusted and people:
+                match = next((p for p in people if p["id"] == person_id), None)
+                if match is None:
+                    raise HTTPException(422, "Unknown person for this plugin")
+                name = match["name"]
+        plug.save_source(db, item.child_id, plugin_id, person_id, name)
+    db.commit()
+    plug.clear_cache()
+    return await _sources_payload(db)
 
 
 @router.get("/today")

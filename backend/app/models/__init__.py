@@ -16,7 +16,7 @@ from app.models.birthday import Birthday, GiftIdea
 from app.models.service_key import ServiceKey
 from app.models.config import ConfigOverride
 from app.models.today_layout import TodayLayout
-from app.models.timetable import TimetableEntry
+from app.models.timetable import TimetableEntry, TimetableSource
 from app.models.push_device import PushDevice
 from app.models.recipe import MealPlanEntry, Recipe
 from app.models.paperless import PaperlessAccount
@@ -60,6 +60,7 @@ __all__ = [
     "MealPlanEntry",
     "ConfigOverride",
     "TimetableEntry",
+    "TimetableSource",
     "CalDAVAccount",
     "TaskList",
     "TaskCompletion",

@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from app.core.logging_config import get_logger
+from app.services import timetable_plugin
 from app.models.config import ConfigOverride
 from app.models.timetable import TimetableEntry
 from app.models.user import ROLE_CHILD, User
@@ -140,20 +141,56 @@ def entries_on(db: Session, child_id: int, day: date, periods: List[Dict[str, An
 
 
 async def today_card(db: Session, user: User, day: date) -> Dict[str, Any]:
-    """Data of the Today card: own day for a child, all children for parents. Never raises."""
+    """Data of the Today card: own day for a child, all children for parents. Never raises.
+
+    Lessons from a plugin replace the manual school entries of the day (cancelled ones stay in the list with their
+    status, so the card can say "1st-2nd period cancelled")."""
     try:
         kids = children_visible_to(db, user)
         periods = await holidays(db, day, day) if kids else []
         holiday = holiday_on(periods, day)
+        plugin_lessons = await timetable_plugin.lessons_for_children(db, kids, day, day) if kids else {}
         out = []
         for kid in kids:
-            lessons = entries_on(db, kid.id, day, periods)
-            if lessons or holiday:
-                out.append({"child_id": kid.id, "name": kid.effective_name, "holiday": holiday, "entries": lessons})
+            by_day, _ = plugin_lessons.get(kid.id, ({}, "none"))
+            lessons, source = timetable_plugin.merge_day(kid.id, day, entries_on(db, kid.id, day, periods),
+                                                         by_day.get(day.isoformat()))
+            kid_holiday = holiday if source == "manual" else None  # a plugin that has lessons knows better
+            if lessons or kid_holiday:
+                out.append({"child_id": kid.id, "name": kid.effective_name, "holiday": kid_holiday, "source": source,
+                            "entries": lessons})
         return {"status": "ok", "date": day.isoformat(), "week": week_variant(db, day), "children": out}
     except Exception as exc:  # noqa: BLE001
         logger.warning("Timetable for Today failed: %s", exc, exc_info=True)
         return {"status": "unavailable", "date": day.isoformat(), "week": None, "children": []}
+
+
+async def week_view(db: Session, kid: User, any_day: date) -> Dict[str, Any]:
+    """The seven days (Monday first) of the week of ``any_day``, manual entries merged with the plugin's lessons."""
+    first, last = timetable_plugin.week_bounds(any_day)
+    periods = await holidays(db, first, last)
+    by_day, status = await timetable_plugin.lessons(db, kid, first, last)
+    row = timetable_plugin.source_of(db, kid.id)
+    days = []
+    for i in range(7):
+        day = first + timedelta(days=i)
+        entries, source = timetable_plugin.merge_day(kid.id, day, entries_on(db, kid.id, day, periods),
+                                                     by_day.get(day.isoformat()))
+        days.append({"date": day.isoformat(), "weekday": i, "source": source,
+                     "holiday": holiday_on(periods, day) if source == "manual" else None, "entries": entries})
+    return {"child": {"id": kid.id, "name": kid.effective_name}, "start": first.isoformat(), "end": last.isoformat(),
+            "week": week_variant(db, first), "plugin": plugin_info(row, status), "days": days}
+
+
+def plugin_info(row, status: str) -> Optional[Dict[str, Any]]:
+    """Which plugin provides the lessons of a child (None without a mapping) and how it answered."""
+    if row is None:
+        return None
+    from app.plugins.registry import plugin_registry
+
+    plugin = plugin_registry.get(row.plugin_id)
+    return {"id": row.plugin_id, "name": plugin.name if plugin else row.plugin_id, "person": row.person_name or row.person_id,
+            "status": status}
 
 
 def _clone(e: TimetableEntry, weekday: int, week: str) -> TimetableEntry:

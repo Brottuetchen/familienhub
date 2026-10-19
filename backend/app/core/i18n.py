@@ -411,6 +411,7 @@ EN: Dict[str, str] = {
     "z. B. https://ntfy.sh oder http://ntfy.lan:8093": "e.g. https://ntfy.sh or http://ntfy.lan:8093",    # --- plugin installer (admin) ---
     "Aufgaben": "Tasks",
     "Termine": "Events",
+    "Stundenplan": "Timetable",
     "Einkauf": "Shopping",
     "Essensplan-Quelle (zusätzlich zum eigenen Plan)": "Meal plan source (in addition to the own plan)",
     "Rezepte suchen und einplanen": "Search and plan recipes",
