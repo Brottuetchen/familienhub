@@ -276,12 +276,33 @@ def _version_tuple(value: str) -> Optional[Tuple[int, ...]]:
     return tuple(int(p) for p in m.group(1).split(".")) if m else None
 
 
+def _pre_release(value: str) -> Optional[List[Any]]:
+    """Pre-release identifiers of "1.0.0-beta.3" as sortable pairs; None for a release."""
+    m = re.match(r"^v?\d+(?:\.\d+)*-([0-9A-Za-z.-]+)", value or "")
+    if not m:
+        return None
+    return [(0, int(p), "") if p.isdigit() else (1, 0, p) for p in m.group(1).split(".")]
+
+
 def hub_version_ok(min_hub_version: str, hub_version: str) -> bool:
-    """False only if both versions are numeric and the hub is older. Development builds pass."""
+    """False only if both versions are numeric and the hub is older. Development builds pass.
+
+    Pre-releases count: ``1.0.0-beta.2`` is older than ``1.0.0-beta.3``, which is older than ``1.0.0``.
+    An edge build (``1.0.0-edge+412``, built from main) is newer than every pre-release of its number.
+    """
     need, have = _version_tuple(min_hub_version), _version_tuple(hub_version)
     if not need or not have:
         return True
-    return have >= need
+    size = max(len(need), len(have))
+    need, have = need + (0,) * (size - len(need)), have + (0,) * (size - len(have))
+    if have != need:
+        return have > need
+    need_pre, have_pre = _pre_release(min_hub_version), _pre_release(hub_version)
+    if need_pre is None:  # a release is needed: only a release (or an edge build of it) is enough
+        return have_pre is None or str(hub_version).lstrip("v").split("-", 1)[1].startswith("edge")
+    if have_pre is None or str(hub_version).lstrip("v").split("-", 1)[1].startswith("edge"):
+        return True
+    return have_pre >= need_pre
 
 
 def settings_for(manifest: Dict[str, Any]) -> Tuple[Setting, ...]:
