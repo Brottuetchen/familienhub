@@ -1222,3 +1222,40 @@ def test_due_on_a_day_is_written_as_date_and_read_back_as_day(client, auth_a, us
     # older entries with a midnight time are shown as a day; real times stay times
     assert format_due(Todo.from_ical("BEGIN:VTODO\r\nDUE:20261020T000000\r\nEND:VTODO\r\n").get("due")) == "2026-10-20"
     assert format_due(dt(2026, 10, 20, 9, 30)) == "2026-10-20T09:30:00"
+
+
+def test_family_tasks_assigned_to_me_are_mine(client, auth_a, user_a, user_b, monkeypatch):
+    """Family-list tasks for me (also the rotation's current turn) show under "mine"; self-assigned ones not under "from_me"."""
+    db = SessionLocal()
+    try:
+        from app.core.crypto import encrypt
+        from app.models.caldav import CalDAVAccount, TaskList
+
+        db.add(CalDAVAccount(user_id=user_a.id, url="https://cloud.example.com/remote.php/dav",
+                             username="a", password_enc=encrypt("secret")))
+        db.add(TaskList(user_id=user_a.id, caldav_url="https://cloud.example.com/remote.php/dav/calendars/user/Fam",
+                        display_name="Familie", kind="family", owner_user_id=None))
+        db.commit()
+    finally:
+        db.close()
+    a, b = str(user_a.id), str(user_b.id)
+    family = FakeCalendar("Fam", ["VTODO"], [
+        _make_vtodo(str(uuid4()), "Müll", **{"x-familienhub-created-by": a, "x-familienhub-assignee": a,
+                                              "x-familienhub-rotation": f"{a},{b}"}),
+        _make_vtodo(str(uuid4()), "Rasen mähen", **{"x-familienhub-created-by": b, "x-familienhub-assignee": a}),
+        _make_vtodo(str(uuid4()), "Wäsche", **{"x-familienhub-created-by": a, "x-familienhub-assignee": b}),
+        _make_vtodo(str(uuid4()), "Für alle"),
+    ])
+    fake_client = FakeDAVClient("https://cloud.example.com/remote.php/dav", "a", "secret")
+    fake_client._principal = FakePrincipal([family])
+
+    with patch("caldav.DAVClient", return_value=fake_client):
+        mine = {t["title"] for t in client.get("/api/tasks?view=mine", headers=auth_a).json()["items"]}
+        for_me = {t["title"] for t in client.get("/api/tasks?view=for_me", headers=auth_a).json()["items"]}
+        from_me = {t["title"] for t in client.get("/api/tasks?view=from_me", headers=auth_a).json()["items"]}
+        fam = {t["title"] for t in client.get("/api/tasks?view=family", headers=auth_a).json()["items"]}
+
+    assert mine == {"Müll", "Rasen mähen"}
+    assert for_me == {"Rasen mähen"}
+    assert from_me == {"Wäsche"}  # "Müll" is my own turn, not something I gave away
+    assert fam == {"Müll", "Rasen mähen", "Wäsche", "Für alle"}

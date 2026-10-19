@@ -57,7 +57,8 @@ def test_calendar_list_and_client_are_shared_between_endpoints(client, perf):
     # components once per calendar, colour once per calendar; one REPORT per event calendar, none for task lists
     assert server.calls.count("components") == 4 and server.calls.count("color") <= 4
     assert server.calls.count("events") == 2
-    assert server.calls.count("todos") == 2  # one per view/list
+    # "mine" reads my list and the family list (tasks assigned to me there), "family" the family list
+    assert server.calls.count("todos") == 3
 
 
 def test_task_lists_are_not_asked_for_events(client, perf):

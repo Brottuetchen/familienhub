@@ -397,7 +397,9 @@ class NextcloudTasksConnector(BaseConnector):
                 # "mine"/"for_me" nur aus der EIGENEN privaten Liste. Geteilte private Listen
                 # anderer (für Zuweisungen nötig) gehören nicht dazu.
                 own_personal = task_list.kind == "personal" and task_list.owner_user_id == self.user_id
-                if view in ("mine", "for_me") and not own_personal:
+                family_list = task_list.kind == "family"
+                # Family-list tasks assigned to me (also the rotation's current turn) count as mine as well
+                if view in ("mine", "for_me") and not (own_personal or family_list):
                     continue
                 if view == "from_me" and task_list.kind == "personal" and task_list.owner_user_id == self.user_id:
                     continue
@@ -416,18 +418,22 @@ class NextcloudTasksConnector(BaseConnector):
                                 continue  # Spiegel des alten Habitica-Skripts; Habitica kommt nativ übers Plugin
 
                             # View-Filter nach created_by
+                            assigned_to_me = task.get("assignee") == self.user_id
                             if view == "mine":
-                                # Everything in my own list, also tasks others gave me (overview)
-                                pass
+                                # Everything I have to do: my own list (also from others) and family tasks for me
+                                if not own_personal and not assigned_to_me:
+                                    continue
                             elif view == "for_me":
-                                # Meine Liste, von anderen
+                                # Given to me by someone else: in my list, or a family task assigned to me
                                 created_by = task.get("created_by")
                                 if not created_by or created_by == self.user_id:
                                     continue
+                                if not own_personal and not assigned_to_me:
+                                    continue
                             elif view == "from_me":
-                                # Fremde Liste, von mir
+                                # Given by me to someone else (not what I assigned to myself)
                                 created_by = task.get("created_by")
-                                if created_by != self.user_id:
+                                if created_by != self.user_id or assigned_to_me:
                                     continue
 
                             results.append(task)
