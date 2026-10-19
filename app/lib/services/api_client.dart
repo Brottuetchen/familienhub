@@ -22,6 +22,7 @@ import '../models/shopping.dart';
 import '../models/themes.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/today_layout.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
 import '../l10n/l10n.dart';
@@ -391,6 +392,8 @@ class ApiClient {
     } else if (path.startsWith('/api/meals') || path.startsWith('/api/cookidoo/')) {
       prefixes.addAll(['meals:', 'today']);
       if (path.contains('shopping')) prefixes.add('shopping');
+    } else if (path.startsWith('/api/me/today-layout') || path.startsWith('/api/admin/today-layout')) {
+      prefixes.add('layout:today');
     } else if (path.startsWith('/api/house/')) {
       prefixes.add('today');
     } else if (path.startsWith('/api/reminders') || path.startsWith('/api/paperless/deadlines') ||
@@ -668,6 +671,23 @@ class ApiClient {
 
   Future<ApiResult<TodayData>> today() => _cachedGet(
       '/api/today', 'today', (j) => TodayData.fromJson(j as Map<String, dynamic>));
+
+  // ── Layout von Heute ───────────────────────────────────────────────────────
+
+  Future<ApiResult<TodayLayout>> todayLayout() =>
+      _cachedGet('/api/me/today-layout', 'layout:today', TodayLayout.fromJson);
+
+  Future<void> saveTodayLayout(TodayLayout layout) =>
+      _send('PUT', '/api/me/today-layout', body: layout.toJson());
+
+  /// Deletes the own layout: the family default (or the built-in one) applies again.
+  Future<void> resetTodayLayout() => _send('DELETE', '/api/me/today-layout');
+
+  /// Admin: arrangement every person without an own layout starts from.
+  Future<void> saveFamilyTodayLayout(TodayLayout layout) =>
+      _send('PUT', '/api/admin/today-layout', body: layout.toJson());
+
+  Future<void> resetFamilyTodayLayout() => _send('DELETE', '/api/admin/today-layout');
 
   // Steuerfreigaben niemals im ResponseCache speichern oder daraus lesen.
   Future<SourceResult<HouseControl>> houseControls() async {

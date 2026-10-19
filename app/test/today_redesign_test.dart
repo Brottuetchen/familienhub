@@ -85,6 +85,27 @@ void main() {
     expect(find.byTooltip('Sam'), findsWidgets); // auch an der zugewiesenen Aufgabe
   });
 
+  for (final scale in [1.0, 1.5, 2.0]) {
+    testWidgets('meal week strip fits 360 dp at text scale $scale (no overflow)', (tester) async {
+      await setScreenSize(tester, const Size(360, 1800));
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final monday = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+      final b = _backend();
+      b.json('GET', '/api/meals', {
+        'status': 'ok', 'error': null,
+        'days': [
+          for (var i = 0; i < 7; i++)
+            {'date': _d(monday.add(Duration(days: i))), 'entries': [if (i.isEven) {'id': i + 1, 'title': 'Spaghetti Bolognese', 'source': 'hub'}]},
+        ],
+      });
+      await tester.pumpWidget(_app(b));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('today-meal-week')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('Kopf: Wolke, Glocke und Avatare liegen auf einer Mittellinie', (tester) async {
     await setScreenSize(tester, const Size(360, 1800));
     await tester.pumpWidget(_app(_backend()));

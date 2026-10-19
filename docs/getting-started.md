@@ -7,10 +7,11 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-docker compose up -d
+# Current public beta; :latest is reserved for stable releases.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
-This pulls the prebuilt image and needs no configuration (Docker Compose v2.24 or newer). The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
+This pulls the prebuilt image and needs no configuration beyond pinning the current beta (Docker Compose v2.24 or newer). For anonymous pulls, the GitHub Container Registry package must be public. The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](../.env.example) and edit it before the first start.
 
 Open `http://<host>:8000` in a browser, or enter that address in the app. A new hub shows **Set up**:
 1. The first person to open the hub creates the admin account. No code is needed, and this works only while no admin exists. **If the hub is reachable from the internet before you have done this, set `SETUP_REQUIRE_CODE=true` in `.env` first:** the hub then logs a setup code (`docker compose logs familienhub | grep -i code`) that is valid only while no admin exists and changes on every restart and after ten wrong attempts. Alternative without a code: `docker compose exec familienhub python -m scripts.create_admin`.
@@ -18,6 +19,7 @@ Open `http://<host>:8000` in a browser, or enter that address in the app. A new 
    1. **Basics:** name and time zone
    2. **Areas:** where tasks, the shopping list and the calendar live, in the hub and/or a service
    3. **Services:** the ones you chose come first, with *Test connection*; calendar subscriptions (school holidays, bins …) as a list with a check
+      Tick what you want to use. Unticked services, also weather and CalDAV that work without settings, are switched off at the end; you can turn them on later under *Administration → Plugins & access*.
    4. **Family:** invite people
 
    Without any service, tasks, shopping list and family calendar are stored in the hub. You can rerun the wizard under *More → Administration*.
@@ -38,6 +40,16 @@ Database migrations run automatically on start (Alembic).
 - Run it behind a reverse proxy with HTTPS (Nginx Proxy Manager, Traefik, Caddy). The container listens on port 8000.
 - The app asks for the address on first start.
 - For access from outside, a VPN (e.g. WireGuard) is safer than exposing the hub publicly.
+
+## Public beta installations
+
+For a pre-release, either download the `docker-compose.yml` **attached to that exact GitHub release**, or set `FAMILIENHUB_VERSION` to the advertised beta version before running Docker Compose. The default `:latest` container tag is published with a stable release, not with a beta.
+
+```bash
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+```
+
+Do not use the default `latest`-based quick start from the repository until a stable release exists. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.
 
 ## 3. Get the apps
 
@@ -75,6 +87,10 @@ Firebase (Android app), Web Push (browser and home-screen web app) and ntfy (any
 Enter credentials for Nextcloud, Home Assistant, Paperless, Seerr, Shelfarr, Cookidoo, Habitica, ntfy and weather under **Administration → Plugins & access**. They are stored encrypted and take effect without a restart. You can also put them in `.env`. Personal accounts (Nextcloud, Habitica, Paperless token, ntfy) are set up by each person in the app. Details: [plugins](plugins.md).
 
 With a CalDAV server, set the shared family calendar and connect the phones to the same server, so the iPhone and Android calendar and reminder apps show the same data as the hub: [calendar & phone](calendar.md).
+
+### Customise "Today"
+
+Everyone arranges their own "Today" screen with the sliders icon in its header: drag cards to reorder them, switch them on or off and, in tile themes (see [themes](themes.md)), choose half width so two cards sit side by side. "Reset to default" returns to the family default. Admins can save their arrangement as the family default (shown to everyone without an own layout) in the same editor. Without a family default the classic arrangement applies. The layout is stored on the server (`GET/PUT/DELETE /api/me/today-layout`, admin default under `/api/admin/today-layout`); an older server simply keeps the classic arrangement.
 
 ## 7. Backup
 

@@ -8,7 +8,7 @@ Today at a glance, tasks for yourself and each other, shopping, meal plan, event
 
 [Getting started](docs/getting-started.md) · [Calendar & phone](docs/calendar.md) · [Notifications](docs/notifications.md) · [Plugins](docs/plugins.md) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md) · [Deutsch](README.de.md)
 
-<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/tasks.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme">
+<img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
 </div>
 
@@ -48,14 +48,36 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Notifications:** Firebase (Android app), Web Push (browser / home-screen web app) and ntfy (e.g. iPhones), with quiet hours and categories, see [how it works](docs/notifications.md)
 - **Family:** roles (admin, partner, child, guest), invites, sign-in with OIDC (Authentik, Keycloak …) or local accounts
 - **Apps:** Android app with widgets and offline queue, web app (PWA), iOS app for sideloading
-- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (ten in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
+- **Make it yours:** themes with light/dark variants and fonts, installable from GitHub (eleven in the [theme gallery](https://github.com/Brottuetchen/familienhub-themes)); German and English
 
 <details>
 <summary>More screenshots</summary>
 
-<img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/shopping.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/calendar.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
+<img src="docs/screenshots/en/tasks-light.png" width="23%" alt="Tasks"> <img src="docs/screenshots/en/tasks-dark.png" width="23%" alt="Tasks, dark"> <img src="docs/screenshots/en/shopping-light.png" width="23%" alt="Shopping"> <img src="docs/screenshots/en/shopping-dark.png" width="23%" alt="Shopping, dark">
+
+<img src="docs/screenshots/en/settings-light.png" width="23%" alt="Settings"> <img src="docs/screenshots/en/settings-dark.png" width="23%" alt="Settings, dark"> <img src="docs/screenshots/en/today-pixel.png" width="23%" alt="Pixel theme"> <img src="docs/screenshots/en/meals.png" width="23%" alt="Meal plan">
+
+<img src="docs/screenshots/en/calendar-month.png" width="23%" alt="Month view"> <img src="docs/screenshots/en/themes.png" width="23%" alt="Themes">
 
 </details>
+
+## Themes
+
+Make Familienhub look and feel like your family. The [Familienhub Themes gallery](https://github.com/Brottuetchen/familienhub-themes) currently offers eleven ready-made themes, each with light and dark variants:
+
+- **Candy Pop** — bright pastels and rounded cards
+- **Cyberpunk** — neon yellow and cyan on near-black
+- **E-Ink Reader** — calm, minimal greyscale
+- **8-Bit Gameboy** — classic handheld greens and pixel-style titles
+- **Matcha Zen** — soft greens and warm latte tones
+- **Nordic Fjord** — glacier blue and violet glass effects
+- **Präzision** — warm paper, signal red-orange, square panels and technical mono labels
+- **Midnight OLED** — true black with emerald and indigo accents
+- **Retro Synthwave** — 80s neon pink and cyan
+- **Solarized Paper** — warm paper tones and forest colours
+- **Swiss Bauhaus** — bold geometric shapes and primary colours
+
+**Install a theme:** an admin opens **More → Appearance → From GitHub** in the app and pastes a theme link from the gallery's README. No code is needed: themes are JSON style definitions, and each family member can choose a theme per device. Browse the [full gallery and installation links](https://github.com/Brottuetchen/familienhub-themes) or read the [theme guide](docs/themes.md).
 
 ## How it works
 
@@ -80,7 +102,8 @@ flowchart LR
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-docker compose up -d
+# Pin a version; change this value when you want to upgrade.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
 No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). The apps (APK and IPA) are attached to each [GitHub release](https://github.com/Brottuetchen/familienhub/releases/latest). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
@@ -100,7 +123,20 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 
 ## Status
 
-Familienhub is used daily by its first family since October 2026 and is approaching its first public release. Expect rough edges; issues and ideas are welcome.
+Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome.
+
+## Support
+
+Familienhub is free and built in spare time. To ship real native apps, the project needs an Apple Developer licence (99 €/year, for TestFlight, the App Store and iPhone widgets, see [#9](https://github.com/Brottuetchen/familienhub/issues/9)) and a one-time Google Play developer account (about 25 €). That makes an annual goal of **150 €**. If the hub helps your family, every bit of support helps.
+
+<div align="center">
+
+<!-- annual goal: update the first amount in the badge URL by hand, in both READMEs -->
+<a href="https://ko-fi.com/brottuetchen"><img src="https://img.shields.io/badge/Goal%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-F97316?style=for-the-badge" alt="Goal 2026: 0 € / 150 €" height="32"></a>
+
+<a href="https://ko-fi.com/brottuetchen"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" height="36"></a>&nbsp;&nbsp;<a href="https://github.com/sponsors/Brottuetchen"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors" height="36"></a>
+
+</div>
 
 ## License
 

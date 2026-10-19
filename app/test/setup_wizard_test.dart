@@ -228,6 +228,94 @@ void main() {
     expect(b.sent('POST', '/api/admin/setup/finish'), isEmpty);
   });
 
+  // Weather and CalDAV work without settings: the server reports them active, but not set up
+  Map<String, dynamic> zeroConfig(String id, String name) => {
+        'id': id, 'name': name, 'description': '', 'configured': true, 'disabled': false, 'active': true,
+        'set_up': false, 'fields': <Map<String, dynamic>>[],
+      };
+
+  Future<void> toServices(WidgetTester tester) async {
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byKey(const Key('wizard-next')));
+      await tester.pumpAndSettle();
+    }
+  }
+
+  Future<void> toEnd(WidgetTester tester) async {
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byKey(const Key('wizard-next')));
+      await tester.pumpAndSettle();
+    }
+  }
+
+  bool ticked(WidgetTester tester, String id) => tester.widget<Checkbox>(find.byKey(Key('wizard-use-$id'))).value == true;
+
+  testWidgets('Zero-config services start unticked, can be ticked and unticked, summary follows the ticks', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final b = _backend();
+    b.json('GET', '/api/admin/settings', [_ha, zeroConfig('weather', 'Wetter'), zeroConfig('nextcloud', 'CalDAV')]);
+    b.json('POST', '/api/admin/setup/finish', {'disabled': ['nextcloud']});
+    final container = ProviderContainer(overrides: [apiClientProvider.overrideWithValue(b.api())]);
+    addTearDown(container.dispose);
+    container.read(sessionProvider.notifier).state =
+        const SessionState(SessionPhase.loggedIn, user: null, onboarding: true);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(locale: Locale('de', 'DE'), home: SetupWizardScreen()),
+    ));
+    await tester.pumpAndSettle();
+    await toServices(tester);
+
+    expect(ticked(tester, 'weather'), isFalse);
+    expect(ticked(tester, 'nextcloud'), isFalse);
+    expect(find.text('Eingerichtet'), findsNothing, reason: 'nothing was set up');
+    await tester.tap(find.byKey(const Key('wizard-use-weather')));
+    await tester.tap(find.byKey(const Key('wizard-use-nextcloud')));
+    await tester.pump();
+    expect(ticked(tester, 'weather'), isTrue);
+    await tester.tap(find.byKey(const Key('wizard-use-nextcloud')));
+    await tester.pump();
+    expect(ticked(tester, 'nextcloud'), isFalse, reason: 'the tick can be removed again');
+
+    await toEnd(tester);
+    expect(find.text('Verbunden: Wetter.'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('wizard-next')));
+    await tester.pumpAndSettle();
+    expect(bodyOf(b.sent('POST', '/api/admin/setup/finish').single), {'keep': ['weather']});
+    expect(container.read(sessionProvider).onboarding, isFalse);
+  });
+
+  testWidgets('Summary lists no unticked zero-config service', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final b = _backend();
+    b.json('GET', '/api/admin/settings', [_ha, zeroConfig('weather', 'Wetter'), zeroConfig('nextcloud', 'CalDAV')]);
+    await tester.pumpWidget(appWith(b.api(), const SetupWizardScreen()));
+    await tester.pumpAndSettle();
+    await toServices(tester);
+    await toEnd(tester);
+    expect(find.textContaining('Noch keine Dienste verbunden'), findsOneWidget);
+  });
+
+  testWidgets('Wizard re-run: active services start ticked, unticking switches only that one off', (tester) async {
+    await setScreenSize(tester, const Size(420, 1200));
+    final b = _backend();
+    b.json('GET', '/api/admin/settings', [_ha, zeroConfig('weather', 'Wetter'), zeroConfig('nextcloud', 'CalDAV')]);
+    b.json('PUT', '/api/admin/plugins/weather', {...zeroConfig('weather', 'Wetter'), 'disabled': true, 'active': false});
+    await tester.pumpWidget(appWith(b.api(), const SetupWizardScreen(standalone: true)));
+    await tester.pumpAndSettle();
+    await toServices(tester);
+    expect(ticked(tester, 'weather'), isTrue);
+    expect(ticked(tester, 'nextcloud'), isTrue);
+    await tester.tap(find.byKey(const Key('wizard-use-weather')));
+    await tester.pump();
+    await toEnd(tester);
+    await tester.tap(find.byKey(const Key('wizard-next')));
+    await tester.pumpAndSettle();
+    expect(bodyOf(b.sent('PUT', '/api/admin/plugins/weather').single), {'enabled': false});
+    expect(b.sent('PUT', '/api/admin/plugins/nextcloud'), isEmpty);
+    expect(b.sent('POST', '/api/admin/setup/finish'), isEmpty);
+  });
+
   testWidgets('Verbindung testen: eingegebene Werte, Ergebnis sichtbar, Geheimnis leer = gespeichert', (tester) async {
     await setScreenSize(tester, const Size(420, 1200));
     final b = _backend();

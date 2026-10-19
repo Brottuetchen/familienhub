@@ -8,7 +8,7 @@ Heute auf einen Blick, Aufgaben für sich und füreinander, Einkauf, Essensplan,
 
 [English](README.md) · Die ausführliche Doku ist auf Englisch: [Einstieg](docs/getting-started.md) · [Kalender & Handy](docs/calendar.md) · [Mitteilungen](docs/notifications.md) · [Plugins](docs/plugins.md) · [Plugin-Vorlage](examples/plugin-template/) · [Themes](docs/themes.md) · [Roadmap](docs/roadmap.md)
 
-<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/tasks.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme">
+<img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/calendar-light.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/calendar-dark.png" width="23%" alt="Termine, dunkel">
 
 </div>
 
@@ -47,12 +47,16 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 - **Mitteilungen:** Firebase (Android-App), Web Push (Browser/Web-App) und ntfy (z. B. iPhone), mit Ruhezeiten und Kategorien
 - **Familie:** Rollen (Admin, Partner, Kind, Gast), Einladungen, Anmeldung per OIDC (Authentik, Keycloak …) oder lokal
 - **Apps:** Android-App mit Widgets und Offline-Warteschlange, Web-App (PWA), iOS-App zum Sideloaden
-- **Anpassbar:** Themes mit Hell/Dunkel und Schriften, installierbar aus GitHub (zehn in der [Theme-Galerie](https://github.com/Brottuetchen/familienhub-themes)); Deutsch und Englisch
+- **Anpassbar:** Themes mit Hell/Dunkel und Schriften, installierbar aus GitHub (elf in der [Theme-Galerie](https://github.com/Brottuetchen/familienhub-themes)); Deutsch und Englisch
 
 <details>
 <summary>Weitere Screenshots</summary>
 
-<img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/shopping.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/calendar.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
+<img src="docs/screenshots/de/tasks-light.png" width="23%" alt="Aufgaben"> <img src="docs/screenshots/de/tasks-dark.png" width="23%" alt="Aufgaben, dunkel"> <img src="docs/screenshots/de/shopping-light.png" width="23%" alt="Einkauf"> <img src="docs/screenshots/de/shopping-dark.png" width="23%" alt="Einkauf, dunkel">
+
+<img src="docs/screenshots/de/settings-light.png" width="23%" alt="Einstellungen"> <img src="docs/screenshots/de/settings-dark.png" width="23%" alt="Einstellungen, dunkel"> <img src="docs/screenshots/de/today-pixel.png" width="23%" alt="Pixel-Theme"> <img src="docs/screenshots/de/meals.png" width="23%" alt="Essensplan">
+
+<img src="docs/screenshots/de/calendar-month.png" width="23%" alt="Monatsansicht"> <img src="docs/screenshots/de/themes.png" width="23%" alt="Themes">
 
 </details>
 
@@ -61,7 +65,8 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-docker compose up -d
+# Öffentliche Beta: Version explizit angeben; :latest gibt es erst mit einem stabilen Release.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
 Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen (oder die Adresse in der App eintragen): Wer einen neuen Hub zuerst öffnet, legt das Admin-Konto an, danach führt der Einrichtungs-Assistent durch den Rest. Ist der Hub vor der Einrichtung aus dem Internet erreichbar, `SETUP_REQUIRE_CODE=true` setzen (siehe [Sicherheit](docs/security.md#first-admin-and-secret-key), englisch). APK und IPA hängen an jedem [GitHub-Release](https://github.com/Brottuetchen/familienhub/releases/latest). Mehr dazu (Reverse-Proxy, Selbst bauen, Sicherung) im [Einstieg](docs/getting-started.md) (englisch).
@@ -71,6 +76,19 @@ Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen 
 Eigene Plugins gibt es per GitHub-Link direkt in der App (*Verwaltung → Plugins & Zugänge → Plugin installieren*); die Anleitung zum Schreiben und eine Vorlage stehen in [docs/plugins.md](docs/plugins.md) (englisch) und [examples/plugin-template](examples/plugin-template/).
 
 Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *Mehr → Feedback senden → An die Entwickler*. Code, Übersetzungen, Themes und Plugins: siehe [CONTRIBUTING](CONTRIBUTING.md).
+
+## Unterstützen
+
+Familienhub ist kostenlos und entsteht in der Freizeit. Für echte native Apps braucht das Projekt eine Apple-Entwicklerlizenz (99 €/Jahr, für TestFlight, den App Store und Widgets auf dem iPhone, siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9)) und einmalig ein Google-Play-Entwicklerkonto (rund 25 €). Daraus ergibt sich ein Jahresziel von **150 €**. Wenn der Hub eurer Familie hilft, freuen wir uns über jede Unterstützung.
+
+<div align="center">
+
+<!-- annual goal: update the first amount in the badge URL by hand, in both READMEs -->
+<a href="https://ko-fi.com/brottuetchen"><img src="https://img.shields.io/badge/Jahresziel%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-F97316?style=for-the-badge" alt="Jahresziel 2026: 0 € / 150 €" height="32"></a>
+
+<a href="https://ko-fi.com/brottuetchen"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Auf Ko-fi unterstützen" height="36"></a>&nbsp;&nbsp;<a href="https://github.com/sponsors/Brottuetchen"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Sponsern-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors" height="36"></a>
+
+</div>
 
 ## Lizenz
 

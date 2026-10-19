@@ -539,7 +539,7 @@
   "hubNameHint": "e.g. “The Example Family”",
   "timeZone": "Time zone",
   "timeZoneHint": "For reminders, due dates and “Today”.",
-  "servicesQuestion": "Which services do you use? Set up what you have – everything else stays off and can be added later under Administration → Plugins.",
+  "servicesQuestion": "Which services do you use? Tick what you want to use and set it up – everything unticked stays off and can be added later under Administration → Plugins.",
   "configured": "Set up",
   "familyQuestion": "Who belongs to it? Invite each person: they get a message with the app, the server address and a code to set their own password. With an identity provider like Authentik they simply sign in with the same email address.",
   "setupComplete": "Setup complete",
@@ -778,5 +778,16 @@
   "alarmHoursBefore": "{n} hours before",
   "alarmDaysBefore": "{n} days before",
   "calendarOnPhone": "Calendar is set up on my phone",
-  "calendarOnPhoneHint": "Then your phone reminds you of events. If this is off, the hub sends a notification when an event reminder is due."
+  "calendarOnPhoneHint": "Then your phone reminds you of events. If this is off, the hub sends a notification when an event reminder is due.",
+  "customiseToday": "Customise Today",
+  "customiseTodayHint": "Drag cards to reorder them and switch them on or off.",
+  "customiseTodayHintBento": "Drag cards to reorder, switch them on or off. Two half-width cards sit side by side.",
+  "dragToReorder": "Drag to reorder",
+  "sizeHalfTapForFull": "Half width (tap for full width)",
+  "sizeFullTapForHalf": "Full width (tap for half width)",
+  "resetTodayLayout": "Reset to default",
+  "saveAsFamilyDefault": "Save as family default",
+  "removeFamilyDefault": "Remove family default",
+  "familyTodayLayoutSaved": "Family default saved",
+  "familyTodayLayoutRemoved": "Family default removed"
 }

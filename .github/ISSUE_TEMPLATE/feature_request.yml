@@ -1,20 +1,52 @@
-name: Feature request
-description: An idea or wish for Familienhub
-labels: [enhancement]
+name: "Feature request"
+description: Suggest a feature to improve FamilienHub
+title: "[Idea]: "
+labels: ["enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        FamilienHub grows with the community. English and German submissions are welcome.
+        Tell us about the real-life problem first; a technical solution is optional.
   - type: textarea
     id: problem
     attributes:
       label: What would you like to do?
-      description: Describe the situation in your family, not only the solution.
+      description: Describe the need or problem in your household.
     validations:
       required: true
   - type: textarea
     id: idea
     attributes:
-      label: Idea
+      label: Your idea (optional)
+      description: How could FamilienHub help?
   - type: dropdown
     id: area
     attributes:
       label: Area
-      options: [Today, Tasks, Shopping, Meals, Calendar, Reminders, House, Notifications, Plugins, Themes, Apps, Other]
+      options:
+        - Today / dashboard
+        - Tasks / chores
+        - Shopping
+        - Meals / recipes
+        - Calendar
+        - Reminders / notifications
+        - House / Home Assistant
+        - Plugins / integrations
+        - Themes / appearance
+        - Android / iOS / web
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround (optional)
+      description: How do you solve this today?
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: I would like to help
+      options:
+        - label: I can test this feature.
+        - label: I might help implement it.

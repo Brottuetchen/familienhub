@@ -24,6 +24,9 @@ class WeatherPlugin(Plugin):
         default location is used as long as WEATHER_ENABLED is not switched off."""
         return self._explicit() or bool(settings.weather_enabled)
 
+    def is_set_up(self) -> bool:
+        return self._explicit()
+
     @staticmethod
     def _explicit() -> bool:
         from app.services.config_store import was_saved

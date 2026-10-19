@@ -907,7 +907,7 @@
   "hubNameHint": "z. B. „Familie Beispiel“",
   "timeZone": "Zeitzone",
   "timeZoneHint": "Für Erinnerungen, Fälligkeiten und „Heute“.",
-  "servicesQuestion": "Welche Dienste nutzt ihr? Richte ein, was ihr habt – alles andere bleibt aus und lässt sich später unter Verwaltung → Plugins nachholen.",
+  "servicesQuestion": "Welche Dienste nutzt ihr? Setzt einen Haken bei dem, was ihr nutzen wollt, und richtet es ein – alles ohne Haken bleibt aus und lässt sich später unter Verwaltung → Plugins nachholen.",
   "configured": "Eingerichtet",
   "familyQuestion": "Wer gehört dazu? Lade jede Person ein: Sie bekommt einen Text mit App, Server-Adresse und einem Code, mit dem sie ihr eigenes Passwort festlegt. Mit einem Anmeldedienst wie Authentik meldet sie sich einfach mit derselben E-Mail-Adresse an.",
   "setupComplete": "Fertig eingerichtet",
@@ -1421,5 +1421,16 @@
   "alarmDaysBefore": "{n} Tage vorher",
   "@alarmDaysBefore": {"placeholders": {"n": {"type": "int"}}},
   "calendarOnPhone": "Kalender ist am Handy eingerichtet",
-  "calendarOnPhoneHint": "Dann erinnert das Handy an Termine. Ist das aus, schickt der Hub eine Mitteilung, sobald eine Termin-Erinnerung fällig ist."
+  "calendarOnPhoneHint": "Dann erinnert das Handy an Termine. Ist das aus, schickt der Hub eine Mitteilung, sobald eine Termin-Erinnerung fällig ist.",
+  "customiseToday": "Heute anpassen",
+  "customiseTodayHint": "Karten per Ziehen sortieren und ein- oder ausblenden.",
+  "customiseTodayHintBento": "Karten per Ziehen sortieren, ein- oder ausblenden. Zwei Karten in halber Breite stehen nebeneinander.",
+  "dragToReorder": "Zum Sortieren ziehen",
+  "sizeHalfTapForFull": "Halbe Breite (antippen für volle Breite)",
+  "sizeFullTapForHalf": "Volle Breite (antippen für halbe Breite)",
+  "resetTodayLayout": "Auf Standard zurücksetzen",
+  "saveAsFamilyDefault": "Als Familien-Standard speichern",
+  "removeFamilyDefault": "Familien-Standard entfernen",
+  "familyTodayLayoutSaved": "Familien-Standard gespeichert",
+  "familyTodayLayoutRemoved": "Familien-Standard entfernt"
 }

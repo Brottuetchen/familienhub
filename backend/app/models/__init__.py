@@ -12,6 +12,7 @@ from app.models.hub import HubEvent, HubShoppingItem, HubTask
 from app.models.event_alarm import EventAlarmSent
 from app.models.service_key import ServiceKey
 from app.models.config import ConfigOverride
+from app.models.today_layout import TodayLayout
 from app.models.push_device import PushDevice
 from app.models.recipe import MealPlanEntry, Recipe
 from app.models.paperless import PaperlessAccount

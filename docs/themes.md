@@ -2,11 +2,11 @@
 
 A theme is a single `theme.json` file: colours plus a small, fixed set of style switches. A theme contains no CSS, no code and no free text apart from its name, so any theme is safe to install.
 
-Familienhub ships five themes (`backend/app/themes/`): Warm, Liquid Glass, Clean Cards, Neo-Brutalism and Pixel. Admins can install more from GitHub, for example the ten from the [theme gallery](#theme-gallery). Each person picks a theme and *Light / Dark / Automatic* per device under **More → Appearance**.
+Familienhub ships five themes (`backend/app/themes/`): Warm, Liquid Glass, Clean Cards, Neo-Brutalism and Pixel. Admins can install more from GitHub, for example the eleven from the [theme gallery](#theme-gallery). Each person picks a theme and *Light / Dark / Automatic* per device under **More → Appearance**.
 
 ## Theme gallery
 
-[**Brottuetchen/familienhub-themes**](https://github.com/Brottuetchen/familienhub-themes) has ten ready-made themes, each with a light and a dark variant: 8-Bit Gameboy, Candy Pop, Cyberpunk, E-Ink Reader, Matcha Zen, Midnight OLED, Nordic Fjord, Retro Synthwave, Solarized Paper and Swiss Bauhaus.
+[**Brottuetchen/familienhub-themes**](https://github.com/Brottuetchen/familienhub-themes) has eleven ready-made themes, each with a light and a dark variant: 8-Bit Gameboy, Candy Pop, Cyberpunk, E-Ink Reader, Matcha Zen, Midnight OLED, Nordic Fjord, Retro Synthwave, Solarized Paper, Swiss Bauhaus and Präzision.
 
 To install one, an admin opens **More → Appearance → From GitHub** and pastes its link from the gallery's README, e.g. `https://github.com/Brottuetchen/familienhub-themes/blob/main/gameboy-pocket/theme.json`. New themes for the gallery are welcome as pull requests there.
 
