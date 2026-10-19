@@ -33,6 +33,7 @@ class PluginsAdminScreen extends ConsumerWidget {
 
   void _refresh(WidgetRef ref) {
     ref.invalidate(adminPluginsProvider);
+    ref.invalidate(adminOverviewProvider);
     ref.invalidate(installedPluginsProvider);
     ref.invalidate(modulesProvider);
   }
