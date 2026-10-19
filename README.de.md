@@ -77,6 +77,10 @@ Eigene Plugins gibt es per GitHub-Link direkt in der App (*Verwaltung → Plugin
 
 Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *Mehr → Feedback senden → An die Entwickler*. Code, Übersetzungen, Themes und Plugins: siehe [CONTRIBUTING](CONTRIBUTING.md).
 
+## Unterstützen
+
+Familienhub ist kostenlos und entsteht in der Freizeit. Die iOS-App gibt es bisher nur zum Sideloaden: Für TestFlight und Widgets auf dem iPhone braucht es eine Apple-Entwicklerlizenz (99 €/Jahr), siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9). Wenn der Hub eurer Familie hilft, könnt ihr auf [Ko-fi](https://ko-fi.com/brottuetchen) etwas beisteuern.
+
 ## Lizenz
 
 [AGPL-3.0](LICENSE). Wer eine veränderte Fassung anderen als Dienst anbietet, muss den Quellcode ebenfalls zugänglich machen.

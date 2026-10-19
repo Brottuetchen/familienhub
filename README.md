@@ -125,6 +125,10 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 
 Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome.
 
+## Support
+
+Familienhub is free and built in spare time. The iOS app is sideloaded for now: TestFlight and home screen widgets on iPhone need an Apple Developer licence (99 €/year), see [#9](https://github.com/Brottuetchen/familienhub/issues/9). If the hub helps your family, you can chip in on [Ko-fi](https://ko-fi.com/brottuetchen).
+
 ## License
 
 [AGPL-3.0](LICENSE). If you run a modified version as a service for others, you must make your source code available too.
