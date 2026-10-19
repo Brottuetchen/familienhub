@@ -99,3 +99,45 @@ class BackupResult {
         warnings: ((j['warnings'] as List?) ?? const []).map((e) => '$e').toList(),
       );
 }
+
+class UpdateInfo {
+  final bool enabled;
+  final String repo;
+  final String current;
+  final bool available;
+  final String? latest;
+  final String? url;
+  final String? name;
+  final bool prerelease;
+  final String dockerCommand;
+  final DateTime? checkedAt;
+  final String status; // ok | off | unavailable | unknown_version | bad_repo
+
+  const UpdateInfo({
+    this.enabled = true,
+    this.repo = '',
+    this.current = '',
+    this.available = false,
+    this.latest,
+    this.url,
+    this.name,
+    this.prerelease = false,
+    this.dockerCommand = 'docker compose pull && docker compose up -d',
+    this.checkedAt,
+    this.status = 'ok',
+  });
+
+  factory UpdateInfo.fromJson(Map<String, dynamic> j) => UpdateInfo(
+        enabled: j['enabled'] != false,
+        repo: (j['repo'] as String?) ?? '',
+        current: (j['current'] as String?) ?? '',
+        available: j['available'] == true,
+        latest: j['latest'] as String?,
+        url: j['url'] as String?,
+        name: j['name'] as String?,
+        prerelease: j['prerelease'] == true,
+        dockerCommand: (j['docker_command'] as String?) ?? 'docker compose pull && docker compose up -d',
+        checkedAt: DateTime.tryParse((j['checked_at'] as String?) ?? ''),
+        status: (j['status'] as String?) ?? 'ok',
+      );
+}

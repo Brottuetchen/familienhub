@@ -1744,5 +1744,30 @@
   "backupErrBusy": "Es läuft schon ein Backup oder eine Wiederherstellung.",
   "backupErrDir": "Der Datenordner ist nicht beschreibbar. Bitte ein Volume unter /app/data einbinden.",
   "backupErrSafety": "Der jetzige Stand konnte nicht vorher gesichert werden, deshalb wurde nichts wiederhergestellt.",
-  "backupErrFailed": "Das hat nicht geklappt. Details stehen im Protokoll des Hubs."
+  "backupErrFailed": "Das hat nicht geklappt. Details stehen im Protokoll des Hubs.",
+  "updateTitle": "Updates",
+  "updateHint": "Hinweis auf neue Versionen",
+  "updateAvailable": "Version {version} ist verfügbar",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCurrent": "Installiert: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateUpToDate": "Der Hub ist auf dem neuesten Stand",
+  "updateReleaseNotes": "Versionshinweise ansehen",
+  "updateCommand": "Update-Befehl auf dem Server",
+  "updatePrerelease": "Vorabversion",
+  "updateCheckSwitch": "Auf neue Versionen prüfen",
+  "updateCheckHint": "Der Hub fragt ein paar Mal am Tag bei GitHub nach. Es werden keine Daten gesendet.",
+  "updateRepo": "GitHub-Repository (Besitzer/Name)",
+  "updateOff": "Die Prüfung ist ausgeschaltet",
+  "updateUnavailable": "GitHub ist gerade nicht erreichbar",
+  "updateUnknownVersion": "Entwicklungsversion: kein Vergleich möglich",
+  "updateBadRepo": "Bitte das Repository als Besitzer/Name angeben"
 }

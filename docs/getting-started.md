@@ -126,3 +126,5 @@ docker compose pull && docker compose up -d
 ```
 
 To pin a version, set `FAMILIENHUB_VERSION` in `.env` (default `latest`). If you build from source: `git pull` and then the build command from above.
+
+**Update notice:** the hub checks the GitHub releases of `Brottuetchen/familienhub` a few times a day (cached, nothing but the request itself is sent). When a newer release exists, *Administration* shows a notice with the version, a link to the release notes and the update command. Pre-releases (`-beta.N`) are only offered while you run a pre-release yourself; then the command pins the version, because `latest` never points at a pre-release. Under *Administration → Updates* you can switch the check off, or point it to a fork (`UPDATE_CHECK=false`, `UPDATE_CHECK_REPO=owner/name` in `.env`). If GitHub is not reachable nothing is shown. Development builds (no version number) skip the check. Make a backup before you update.

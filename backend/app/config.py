@@ -148,7 +148,8 @@ class Settings(BaseSettings):
     # --- Backups (Administration → Backup) and update notice ---
     backup_auto: bool = False  # nightly backup into <DATA_DIR>/backups
     backup_keep: int = 7  # automatic backups to keep
-
+    update_check: bool = True  # look for a newer release on GitHub (cached, a few times a day)
+    update_check_repo: str = "Brottuetchen/familienhub"  # owner/name whose releases are checked
 
     # --- Push: Web Push (VAPID) und Firebase (FCM) ---
     vapid_private_key: Optional[str] = None

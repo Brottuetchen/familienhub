@@ -1603,6 +1603,13 @@ class ApiClient {
           body: {'confirm': true}, timeout: const Duration(minutes: 10))
       as Map<String, dynamic>);
 
+  Future<UpdateInfo> updateInfo() async =>
+      UpdateInfo.fromJson(await _send('GET', '/api/admin/update') as Map<String, dynamic>);
+
+  Future<UpdateInfo> saveUpdateSettings({required bool enabled, required String repo}) async => UpdateInfo.fromJson(
+      await _send('PUT', '/api/admin/update/settings', body: {'enabled': enabled, 'repo': repo})
+          as Map<String, dynamic>);
+
   // ── Filme & Serien (Seerr) ─────────────────────────────────────────────────
 
   Future<MediaList<MediaItem>> searchMedia(String query) async {

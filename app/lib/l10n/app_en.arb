@@ -1053,5 +1053,30 @@
   "backupErrBusy": "A backup or restore is already running.",
   "backupErrDir": "The data folder is not writable. Please mount a volume at /app/data.",
   "backupErrSafety": "The current state could not be backed up first, so nothing was restored.",
-  "backupErrFailed": "That did not work. See the hub's log for details."
+  "backupErrFailed": "That did not work. See the hub's log for details.",
+  "updateTitle": "Updates",
+  "updateHint": "Notice about new versions",
+  "updateAvailable": "Version {version} is available",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateCurrent": "Installed: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateUpToDate": "The hub is up to date",
+  "updateReleaseNotes": "View release notes",
+  "updateCommand": "Update command on the server",
+  "updatePrerelease": "Pre-release",
+  "updateCheckSwitch": "Check for new versions",
+  "updateCheckHint": "The hub asks GitHub a few times a day. No data is sent.",
+  "updateRepo": "GitHub repository (owner/name)",
+  "updateOff": "The check is switched off",
+  "updateUnavailable": "GitHub is not reachable right now",
+  "updateUnknownVersion": "Development build: nothing to compare",
+  "updateBadRepo": "Please enter the repository as owner/name"
 }
