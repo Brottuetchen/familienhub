@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter
@@ -73,6 +74,22 @@ class Plugin:
     def task_connector(self, user_id: int, db) -> Any:
         """Persönlicher Aufgabenadapter; Plugins ohne Aufgaben liefern keinen."""
         return None
+
+    async def calendar_events(self, start: datetime, end: datetime, user, db) -> List[Dict[str, Any]]:
+        """Read-only events of a plugin with the ``calendar`` capability in ``[start, end)`` (local wall time).
+
+        Each event is a dict shaped like the hub's ICS events: ``title``, ``start``, ``end`` (ISO date for all-day
+        events, with an exclusive end; ISO date-time otherwise), ``all_day``, ``calendar`` (display name) and
+        ``calendar_id`` (must start with ``"<plugin id>:"``), optionally ``location``, ``description`` and ``color``.
+        The hub forces ``source`` to the plugin id and ``writable`` to false, and drops events with a foreign
+        ``calendar_id``. Raising or taking longer than about 5 s only skips this plugin. Default: no events.
+        """
+        return []
+
+    def calendars(self, user, db) -> List[Dict[str, Any]]:
+        """The calendars this plugin offers, for the chips and filters: ``{"id": "<plugin id>:<x>", "name": …,
+        "color": None | "#RRGGBB"}``. Default: none."""
+        return []
 
     def is_configured(self) -> bool:
         """Standard: alle Pflicht-Einstellungen haben einen Wert."""
