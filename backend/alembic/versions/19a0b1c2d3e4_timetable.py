@@ -1,7 +1,7 @@
 """Timetable of children
 
 Revision ID: 19a0b1c2d3e4
-Revises: a1b2c3d4e5f7
+Revises: 18b9d2f4a6c1
 Create Date: 2026-10-19 12:00:00
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "19a0b1c2d3e4"
-down_revision: Union[str, None] = "a1b2c3d4e5f7"
+down_revision: Union[str, None] = "18b9d2f4a6c1"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
