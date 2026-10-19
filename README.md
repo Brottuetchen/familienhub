@@ -80,7 +80,8 @@ flowchart LR
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-docker compose up -d
+# First public beta (once released); stable versions use :latest by default.
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
 No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). The apps (APK and IPA) are attached to each [GitHub release](https://github.com/Brottuetchen/familienhub/releases/latest). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
