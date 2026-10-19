@@ -52,7 +52,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# Erste öffentliche Beta (nach Veröffentlichung); stabile Releases nutzen standardmäßig :latest.
+# Öffentliche Beta: Version explizit angeben; :latest gibt es erst mit einem stabilen Release.
 FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
 ```
 
