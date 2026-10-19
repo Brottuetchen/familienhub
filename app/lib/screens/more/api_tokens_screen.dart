@@ -21,7 +21,7 @@ class ApiTokensScreen extends ConsumerWidget {
     final api = ref.read(apiClientProvider);
     final container = ProviderScope.containerOf(context, listen: false);
     try {
-      final created = await api.createApiToken(name);
+      final created = await api.createApiToken(name, scopes: const ['voice']); // least privilege: voice endpoints only
       container.invalidate(apiTokensProvider);
       if (!context.mounted) return;
       final plain = created.token;

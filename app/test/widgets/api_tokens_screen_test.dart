@@ -36,7 +36,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
     await tester.pumpAndSettle();
 
-    expect(bodyOf(backend.sent('POST', '/api/auth/api-tokens').single), {'name': 'Sprachassistent'});
+    expect(bodyOf(backend.sent('POST', '/api/auth/api-tokens').single), {'name': 'Sprachassistent', 'scopes': ['voice']});
     expect(find.text('fhp_abcdGEHEIM'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Fertig'));

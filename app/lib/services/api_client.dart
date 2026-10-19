@@ -1325,8 +1325,10 @@ class ApiClient {
       _maps(await _send('GET', '/api/auth/api-tokens')).map(ApiTokenInfo.fromJson).toList();
 
   /// Liefert den Schlüssel inklusive Klartext (nur dieses eine Mal).
-  Future<ApiTokenInfo> createApiToken(String name) async => ApiTokenInfo.fromJson(
-      await _send('POST', '/api/auth/api-tokens', body: {'name': name}) as Map<String, dynamic>);
+  /// [scopes] limits the key to the given scopes or presets (`voice`); without it the key is unrestricted.
+  Future<ApiTokenInfo> createApiToken(String name, {List<String>? scopes}) async => ApiTokenInfo.fromJson(
+      await _send('POST', '/api/auth/api-tokens', body: {'name': name, if (scopes != null) 'scopes': scopes})
+          as Map<String, dynamic>);
 
   Future<void> revokeApiToken(int id) => _send('DELETE', '/api/auth/api-tokens/$id');
 

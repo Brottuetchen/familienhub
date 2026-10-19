@@ -117,6 +117,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 | [Getting started](docs/getting-started.md) | install, reach it, apps, people and sign-in, backup |
 | [Notifications](docs/notifications.md) | Firebase, Web Push, ntfy, iPhone; [ntfy setup](docs/ntfy.md) |
 | [Notification sources](docs/notification-sources.md) | Home Assistant, Shelfarr, Paperless → `POST /api/notify` |
+| [Voice assistant](docs/voice-assistant.md) | Home Assistant Assist: shopping, tasks, meals, events, reminders by voice |
 | [Plugins](docs/plugins.md) | what ships, install a plugin from a GitHub link, write and share one; [plugin template](examples/plugin-template/) |
 | [Themes](docs/themes.md) | the `theme.json` format, the [theme gallery](https://github.com/Brottuetchen/familienhub-themes), how to share a theme |
 | [Security](docs/security.md) | principles, roles, public endpoints; [report a vulnerability](SECURITY.md) |
