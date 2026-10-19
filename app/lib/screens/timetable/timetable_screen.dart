@@ -28,6 +28,14 @@ String _weekLabel(String week) => switch (week) {
       _ => l10n.timetableWeekAll,
     };
 
+DateTime _mondayOf(DateTime day) => DateTime(day.year, day.month, day.day).subtract(Duration(days: day.weekday - 1));
+
+String _statusLabel(String status) => switch (status) {
+      'cancelled' => l10n.timetableStatusCancelled,
+      'substitution' => l10n.timetableStatusSubstitution,
+      _ => l10n.timetableStatusChanged,
+    };
+
 /// Name of a weekday (0 = Monday); 1 January 2024 was a Monday.
 String _dayName(int weekday) => localDate('EEEE').format(DateTime(2024, 1, 1 + weekday));
 
@@ -42,6 +50,8 @@ class TimetableScreen extends ConsumerStatefulWidget {
 class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   int? _childId;
   String? _week; // the variant being viewed: all | a | b
+  bool _planView = false; // children with a plugin: the weekly plan (own entries) instead of the real week
+  DateTime _weekStart = _mondayOf(DateTime.now());
 
   void _reload(int childId) => ref.invalidate(timetableProvider(childId));
 
@@ -90,6 +100,17 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                         builder: (_) => _SettingsSheet(settings: data.settings),
                       );
                       if (saved == true) _reload(id);
+                    } else if (v == 'sources') {
+                      final saved = await showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        useSafeArea: true,
+                        builder: (_) => const _SourcesSheet(),
+                      );
+                      if (saved == true) {
+                        ref.invalidate(timetableWeekProvider);
+                        _reload(id);
+                      }
                     } else if (v == 'a-b') {
                       _copyWeek(data, 'a', 'b');
                     } else if (v == 'b-a') {
@@ -98,6 +119,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                   },
                   itemBuilder: (_) => [
                     PopupMenuItem(value: 'settings', child: Text(l10n.timetableSettings)),
+                    PopupMenuItem(key: const Key('timetable-sources-menu'), value: 'sources', child: Text(l10n.timetableSources)),
                     if (data.settings.hasAbWeeks) ...[
                       PopupMenuItem(value: 'a-b', child: Text(l10n.timetableCopyWeek(_weekLabel('a'), _weekLabel('b')))),
                       PopupMenuItem(value: 'b-a', child: Text(l10n.timetableCopyWeek(_weekLabel('b'), _weekLabel('a')))),
@@ -149,34 +171,61 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                 onSelected: (_) => setState(() => _childId = k.id),
               ),
           ]),
-        if (ab) ...[
+        if (data.plugin != null) ...[
           const SizedBox(height: 8),
-          Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            for (final w in ['a', 'b'])
-              ChoiceChip(
-                key: Key('timetable-week-$w'),
-                label: Text(_weekLabel(w)),
-                selected: week == w,
-                onSelected: (_) => setState(() => _week = w),
-              ),
-            if (data.currentWeek != null)
-              Text(l10n.timetableThisWeek(_weekLabel(data.currentWeek!)),
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Wrap(spacing: 8, runSpacing: 4, children: [
+            ChoiceChip(
+              key: const Key('timetable-view-week'),
+              label: Text(l10n.timetableViewWeek),
+              selected: !_planView,
+              onSelected: (_) => setState(() => _planView = false),
+            ),
+            ChoiceChip(
+              key: const Key('timetable-view-plan'),
+              label: Text(l10n.timetableViewTemplate),
+              selected: _planView,
+              onSelected: (_) => setState(() => _planView = true),
+            ),
           ]),
         ],
-        if (current != null || next != null)
-          Card(
-            key: const Key('timetable-holiday'),
-            margin: const EdgeInsets.only(top: 12),
-            child: ListTile(
-              leading: const Icon(Icons.beach_access_outlined),
-              title: Text(current != null
-                  ? l10n.timetableHolidayNow(dateFormat.format(current.end))
-                  : l10n.timetableHolidayNext(next!.title, dateFormat.format(next.start))),
-              subtitle: current != null && current.title.isNotEmpty ? Text(current.title) : null,
+        if (data.plugin != null && !_planView)
+          _PluginWeek(
+            childId: data.child.id,
+            plugin: data.plugin!,
+            start: _weekStart,
+            onShift: (days) => setState(() => _weekStart = _weekStart.add(Duration(days: days))),
+            onToday: () => setState(() => _weekStart = _mondayOf(DateTime.now())),
+          )
+        else ...[
+          if (ab) ...[
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              for (final w in ['a', 'b'])
+                ChoiceChip(
+                  key: Key('timetable-week-$w'),
+                  label: Text(_weekLabel(w)),
+                  selected: week == w,
+                  onSelected: (_) => setState(() => _week = w),
+                ),
+              if (data.currentWeek != null)
+                Text(l10n.timetableThisWeek(_weekLabel(data.currentWeek!)),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            ]),
+          ],
+          if (current != null || next != null)
+            Card(
+              key: const Key('timetable-holiday'),
+              margin: const EdgeInsets.only(top: 12),
+              child: ListTile(
+                leading: const Icon(Icons.beach_access_outlined),
+                title: Text(current != null
+                    ? l10n.timetableHolidayNow(dateFormat.format(current.end))
+                    : l10n.timetableHolidayNext(next!.title, dateFormat.format(next.start))),
+                subtitle: current != null && current.title.isNotEmpty ? Text(current.title) : null,
+              ),
             ),
-          ),
-        for (final d in days) _daySection(data, d, week),
+          for (final d in days) _daySection(data, d, week),
+        ],
       ],
     );
   }
@@ -546,6 +595,271 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
           FilledButton(key: const Key('timetable-settings-save'), onPressed: _busy ? null : _save, child: Text(l10n.save)),
         ]),
       ]),
+    );
+  }
+}
+
+/// One calendar week with real dates for a child whose lessons come from a plugin: cancelled lessons are struck
+/// through, substitutions highlighted. Fails softly: the server falls back to the entered timetable.
+class _PluginWeek extends ConsumerWidget {
+  final int childId;
+  final TimetablePluginInfo plugin;
+  final DateTime start;
+  final void Function(int days) onShift;
+  final VoidCallback onToday;
+  const _PluginWeek({required this.childId, required this.plugin, required this.start, required this.onShift, required this.onToday});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final async = ref.watch(timetableWeekProvider((childId: childId, start: start)));
+    final fmt = localDate('d. MMM');
+    final end = start.add(const Duration(days: 6));
+    return Column(
+      key: const Key('timetable-plugin-week'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Row(children: [
+          IconButton(
+            key: const Key('timetable-prev-week'),
+            tooltip: l10n.timetablePrevWeek,
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () => onShift(-7),
+          ),
+          Expanded(
+            child: TextButton(
+              key: const Key('timetable-this-week'),
+              onPressed: onToday,
+              child: Text(l10n.timetableWeekRange(fmt.format(start), fmt.format(end)), textAlign: TextAlign.center),
+            ),
+          ),
+          IconButton(
+            key: const Key('timetable-next-week'),
+            tooltip: l10n.timetableNextWeek,
+            icon: const Icon(Icons.chevron_right),
+            onPressed: () => onShift(7),
+          ),
+        ]),
+        Text(l10n.timetableFromPlugin(plugin.name), style: muted),
+        async.when(
+          loading: () => const Padding(padding: EdgeInsets.all(24), child: Center(child: HubLoader())),
+          error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(timetableWeekProvider)),
+          data: (week) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (week.plugin?.unavailable ?? false)
+              Card(
+                key: const Key('timetable-plugin-unavailable'),
+                margin: const EdgeInsets.only(top: 12),
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_off_outlined),
+                  title: Text(l10n.timetablePluginUnavailable(plugin.name)),
+                ),
+              ),
+            for (final d in week.days)
+              if (d.weekday < 5 || d.entries.isNotEmpty) _dayBlock(context, d),
+          ]),
+        ),
+      ],
+    );
+  }
+
+  Widget _dayBlock(BuildContext context, TimetableDay d) {
+    final theme = Theme.of(context);
+    return Column(
+      key: Key('timetable-date-${d.date.year}-${d.date.month}-${d.date.day}'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(localDate('EEEE, d. MMM').format(d.date), style: theme.textTheme.titleMedium),
+        if (d.holiday != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(children: [
+              const Icon(Icons.beach_access_outlined, size: 18),
+              const SizedBox(width: 6),
+              Expanded(child: Text(d.holiday == '-' ? l10n.timetableHolidays : '${l10n.timetableHolidays}: ${d.holiday}')),
+            ]),
+          ),
+        if (d.entries.isEmpty && d.holiday == null)
+          Text(l10n.timetableEmptyDay, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant))
+        else
+          for (final e in d.entries) _LessonTile(entry: e),
+      ],
+    );
+  }
+}
+
+/// A dated lesson: cancelled ones struck through, substitutions highlighted, with the note under it.
+class _LessonTile extends StatelessWidget {
+  final TimetableEntry entry;
+  const _LessonTile({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final e = entry;
+    final background = e.isCancelled ? scheme.errorContainer : (e.isChanged ? scheme.tertiaryContainer : null);
+    final foreground = e.isCancelled ? scheme.onErrorContainer : (e.isChanged ? scheme.onTertiaryContainer : null);
+    final details = [
+      '${e.start}–${e.end}',
+      if (e.location != null && e.location!.isNotEmpty) e.location!,
+      if (e.teacher != null && e.teacher!.isNotEmpty) e.teacher!,
+    ].join(' · ');
+    final status = e.status == 'normal' ? null : [_statusLabel(e.status), if (e.note != null && e.note!.isNotEmpty) e.note!].join(' · ');
+    return Card(
+      color: background,
+      margin: const EdgeInsets.only(top: 4),
+      child: ListTile(
+        key: Key('timetable-lesson-${e.date?.day ?? 0}-${e.start}-${e.status}'),
+        iconColor: foreground,
+        textColor: foreground,
+        leading: Icon(_kindIcon(e.kind)),
+        title: Text(
+          e.title,
+          style: e.isCancelled ? const TextStyle(decoration: TextDecoration.lineThrough) : null,
+        ),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(details),
+          if (status != null) Text(status, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Which plugin provides the timetable of each child, and who the child is in the plugin's system.
+class _SourcesSheet extends ConsumerStatefulWidget {
+  const _SourcesSheet();
+
+  @override
+  ConsumerState<_SourcesSheet> createState() => _SourcesSheetState();
+}
+
+class _SourcesSheetState extends ConsumerState<_SourcesSheet> {
+  final _plugin = <int, String?>{};
+  final _person = <int, String?>{};
+  final _fields = <int, TextEditingController>{};
+  bool _filled = false;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    for (final c in _fields.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _fill(TimetableSources sources) {
+    if (_filled) return;
+    _filled = true;
+    for (final c in sources.children) {
+      _plugin[c.childId] = sources.plugins.any((p) => p.id == c.pluginId) ? c.pluginId : null;
+      _person[c.childId] = c.personId;
+      _fields[c.childId] = TextEditingController(text: c.personId ?? '');
+    }
+  }
+
+  Future<void> _save(TimetableSources sources) async {
+    final api = ref.read(apiClientProvider);
+    setState(() => _busy = true);
+    final body = [
+      for (final c in sources.children)
+        {
+          'child_id': c.childId,
+          'plugin_id': _plugin[c.childId],
+          'person_id': _plugin[c.childId] == null
+              ? null
+              : (sources.plugins.firstWhere((p) => p.id == _plugin[c.childId]).peopleKnown
+                  ? _person[c.childId]
+                  : _fields[c.childId]!.text.trim()),
+        },
+    ];
+    final ok = await runAction(context, () => api.saveTimetableSources(body));
+    if (!mounted) return;
+    if (ok) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final async = ref.watch(timetableSourcesProvider);
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      child: async.when(
+        loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: HubLoader())),
+        error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(timetableSourcesProvider)),
+        data: (sources) {
+          _fill(sources);
+          return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(l10n.timetableSources, style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(sources.plugins.isEmpty ? l10n.timetableSourcesNone : l10n.timetableSourcesHelp, style: muted),
+            if (sources.plugins.isNotEmpty)
+              for (final c in sources.children) ...[
+                const SizedBox(height: 16),
+                Text(c.name, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
+                DropdownButtonFormField<String?>(
+                  key: Key('timetable-source-plugin-${c.childId}'),
+                  initialValue: _plugin[c.childId],
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: l10n.timetableSourcePlugin),
+                  items: [
+                    DropdownMenuItem<String?>(value: null, child: Text(l10n.timetableSourceOwn)),
+                    for (final p in sources.plugins) DropdownMenuItem<String?>(value: p.id, child: Text(p.name)),
+                  ],
+                  onChanged: (v) => setState(() {
+                    if (v != _plugin[c.childId]) _person[c.childId] = null; // a person belongs to one plugin
+                    _plugin[c.childId] = v;
+                  }),
+                ),
+                if (_plugin[c.childId] != null) ...[
+                  const SizedBox(height: 8),
+                  _personField(sources, c),
+                ],
+              ],
+            const SizedBox(height: 12),
+            Wrap(alignment: WrapAlignment.end, spacing: 8, runSpacing: 8, children: [
+              TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: Text(l10n.cancel)),
+              if (sources.plugins.isNotEmpty)
+                FilledButton(
+                  key: const Key('timetable-sources-save'),
+                  onPressed: _busy ? null : () => _save(sources),
+                  child: Text(l10n.save),
+                ),
+            ]),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _personField(TimetableSources sources, TimetableChildSource c) {
+    final plugin = sources.plugins.firstWhere((p) => p.id == _plugin[c.childId]);
+    if (plugin.peopleKnown && plugin.people.isNotEmpty) {
+      final current = plugin.people.any((x) => x.id == _person[c.childId]) ? _person[c.childId] : null;
+      return DropdownButtonFormField<String?>(
+        key: Key('timetable-source-person-${c.childId}-${plugin.id}'),
+        initialValue: current,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: l10n.timetableSourcePerson),
+        items: [for (final x in plugin.people) DropdownMenuItem<String?>(value: x.id, child: Text(x.name))],
+        onChanged: (v) => setState(() => _person[c.childId] = v),
+      );
+    }
+    return TextField(
+      key: Key('timetable-source-id-${c.childId}'),
+      controller: _fields[c.childId],
+      maxLength: 200,
+      decoration: InputDecoration(labelText: l10n.timetableSourceIdentifier),
     );
   }
 }

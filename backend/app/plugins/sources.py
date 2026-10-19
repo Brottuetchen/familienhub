@@ -87,6 +87,8 @@ def _clean_item(raw: Any) -> Optional[Dict[str, Any]]:
     for key in ("description", "amount"):
         if raw.get(key) not in (None, ""):
             item[key] = str(raw[key])[:200]
+    if "description" not in item and "amount" in item:
+        item["description"] = item["amount"]  # the app shows the description under the item
     return item
 
 

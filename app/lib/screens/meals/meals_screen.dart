@@ -38,7 +38,8 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
     final id = hub ? '${entry.hubRecipeId}' : entry.cookidooId!;
     final result = await showRecipeQuickView(
       context,
-      RecipeRef(source: entry.source, id: id, title: entry.title, image: entry.image, url: entry.url, minutes: entry.minutes),
+      RecipeRef(source: entry.source, id: id, title: entry.title, image: entry.image, url: entry.url, minutes: entry.minutes,
+          sourceLabel: entry.sourceLabel),
       onRemove: hub
           ? (entry.id == null ? null : () => api.deleteMeal(entry.id!))
           : () => entry.isCookidoo ? api.unplanCookidoo(day, id) : api.unplanFromSource(entry.source, day, id),

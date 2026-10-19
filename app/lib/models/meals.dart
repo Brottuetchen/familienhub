@@ -4,7 +4,8 @@ class MealEntry {
   final int? id;
   final String? uid;
   final String title;
-  final String source; // hub | cookidoo
+  final String source; // hub | cookidoo | mealie | the id of a plugin
+  final String? sourceLabel; // display name the server sends for plugin sources
   final String? mealType;
   final String? description;
 
@@ -22,6 +23,7 @@ class MealEntry {
     this.uid,
     required this.title,
     required this.source,
+    this.sourceLabel,
     this.mealType,
     this.description,
     this.cookidooId,
@@ -37,13 +39,14 @@ class MealEntry {
   bool get isExternal => source != 'hub';
 
   /// Display name of the source, e.g. "Cookidoo", "Mealie".
-  String get sourceName => recipeSourceNames[source] ?? source;
+  String get sourceName => recipeSourceNames[source] ?? sourceLabel ?? source;
 
   factory MealEntry.fromJson(Map<String, dynamic> json) => MealEntry(
         id: parseInt(json['id']),
         uid: json['uid'] as String?,
         title: (json['title'] as String?) ?? '',
         source: (json['source'] as String?) ?? 'hub',
+        sourceLabel: json['source_name'] as String?,
         mealType: json['meal_type'] as String?,
         description: json['description'] as String?,
         // Recipe id of the source: Cookidoo sends cookidoo_id, other sources (Mealie) recipe_id

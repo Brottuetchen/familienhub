@@ -6,6 +6,7 @@ import '../../l10n/l10n.dart';
 import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../widgets/hub_image.dart';
 
 /// What the person did in the quick view. `null` = just closed.
 enum QuickViewResult { changed, edit }
@@ -19,9 +20,13 @@ class RecipeRef {
   final String? image;
   final String? url;
   final int? minutes;
-  const RecipeRef({required this.source, required this.id, required this.title, this.image, this.url, this.minutes});
 
-  String get sourceName => source == 'hub' ? l10n.recipeBook : recipeSourceNames[source] ?? source;
+  /// Display name of a plugin source (the server sends it); the built-in sources are named in the app.
+  final String? sourceLabel;
+  const RecipeRef(
+      {required this.source, required this.id, required this.title, this.image, this.url, this.minutes, this.sourceLabel});
+
+  String get sourceName => source == 'hub' ? l10n.recipeBook : recipeSourceNames[source] ?? sourceLabel ?? source;
 }
 
 /// One bottom sheet for every recipe: from search results (hub, Cookidoo, Mealie …) and from the week plan.
@@ -148,7 +153,7 @@ class _RecipeQuickViewState extends ConsumerState<RecipeQuickView> {
                   borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
                     height: 170,
-                    child: Image.network(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                    child: HubImage(url: image, placeholder: const SizedBox.shrink()),
                   ),
                 ),
               if (image != null && image.isNotEmpty) const SizedBox(height: 12),

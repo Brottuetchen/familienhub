@@ -98,7 +98,7 @@ def test_shopping_list_end_to_end(client, auth, shop):
     body, items = _open(client, auth)
     assert body["status"] == "ok" and body["groups"][0]["entity"] == "fakeshop"
     milk = next(i for i in items if i["summary"] == "Milch")
-    assert set(milk) >= {"uid", "summary", "status", "amount", "recipes"} and milk["amount"] == "2"
+    assert set(milk) >= {"uid", "summary", "status", "amount", "recipes"} and milk["amount"] == "2" and milk["description"] == "2"
     assert [i["summary"] for i in items] == ["Milch", "Brot"]
     assert shop.items[milk["uid"]]["summary"] == "Milch"  # it really went to the plugin, not the hub list
 
