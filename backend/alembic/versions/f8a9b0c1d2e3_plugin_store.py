@@ -1,7 +1,7 @@
 """plugin and theme store: extra sources, and where an installed plugin or theme came from
 
 Revision ID: f8a9b0c1d2e3
-Revises: e2f3a4b5c6d7
+Revises: 17a1c0de5701
 Create Date: 2026-10-19 10:00:00
 """
 from typing import Sequence, Union
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "f8a9b0c1d2e3"
-down_revision: Union[str, None] = "e2f3a4b5c6d7"
+down_revision: Union[str, None] = "17a1c0de5701"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
