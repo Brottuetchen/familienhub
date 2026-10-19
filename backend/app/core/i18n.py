@@ -25,6 +25,25 @@ DEFAULT = "de"
 
 EN: Dict[str, str] = {
     "Zeitüberschreitung": "Timed out",
+    # --- birthdays ---
+    "Geburtstage sind für Gäste nicht sichtbar": "Birthdays are not visible to guests",
+    "Geschenkidee nicht gefunden": "Gift idea not found",
+    "Ungültiges Datum": "Invalid date",
+    "Link muss mit http:// oder https:// beginnen": "The link must start with http:// or https://",
+    "Nur eigene Geschenkideen ändern": "You can only change your own gift ideas",
+    "Nur eigene Geschenkideen löschen": "You can only delete your own gift ideas",
+    "Geburtstag heute": "Birthday today",
+    "Geburtstag morgen": "Birthday tomorrow",
+    "Geburtstag in {days} Tagen": "Birthday in {days} days",
+    "Jahrestag heute": "Anniversary today",
+    "Jahrestag morgen": "Anniversary tomorrow",
+    "Jahrestag in {days} Tagen": "Anniversary in {days} days",
+    "Geburtstag heute · wird {age}": "Birthday today · turns {age}",
+    "Geburtstag morgen · wird {age}": "Birthday tomorrow · turns {age}",
+    "Geburtstag in {days} Tagen · wird {age}": "Birthday in {days} days · turns {age}",
+    "Jahrestag heute · {age}. Jahrestag": "Anniversary today · {age} years",
+    "Jahrestag morgen · {age}. Jahrestag": "Anniversary tomorrow · {age} years",
+    "Jahrestag in {days} Tagen · {age}. Jahrestag": "Anniversary in {days} days · {age} years",
     # --- week shopping list ---
     "Keine Rezepte im Zeitraum geplant.": "No recipes planned in this period.",
     "Einkaufsliste aktualisiert.": "Shopping list updated.",

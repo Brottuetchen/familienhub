@@ -5,7 +5,7 @@ from app.core.security import get_password_hash
 from app.models.user import User
 
 ME, ADMIN = "/api/me/today-layout", "/api/admin/today-layout"
-IDS = ["tasks", "shopping", "events", "meals", "reminders", "house"]
+IDS = ["tasks", "shopping", "events", "meals", "reminders", "house", "birthdays"]
 
 
 def _partner(client, name):
@@ -33,7 +33,7 @@ def test_builtin_default_matches_original_arrangement(client, auth):
 def test_layout_is_per_person_and_resettable(client, auth):
     client.delete(ADMIN, headers=auth)
     a, b = _partner(client, "tl_b1"), _partner(client, "tl_b2")
-    order = ["meals", "tasks", "house", "events", "shopping", "reminders"]
+    order = ["meals", "tasks", "house", "events", "shopping", "reminders", "birthdays"]
     r = client.put(ME, headers=a, json={"cards": _cards(order, hidden=("house",))})
     assert r.status_code == 200 and r.json()["source"] == "user"
     got = client.get(ME, headers=a).json()["cards"]
@@ -46,7 +46,7 @@ def test_layout_is_per_person_and_resettable(client, auth):
 def test_missing_cards_are_appended(client, auth):
     h = _partner(client, "tl_c")
     r = client.put(ME, headers=h, json={"cards": _cards(["house", "meals"])})
-    assert [c["id"] for c in r.json()["cards"]] == ["house", "meals", "tasks", "shopping", "events", "reminders"]
+    assert [c["id"] for c in r.json()["cards"]] == ["house", "meals", "tasks", "shopping", "events", "reminders", "birthdays"]
 
 
 def test_admin_default_is_fallback_and_user_wins(client, auth):

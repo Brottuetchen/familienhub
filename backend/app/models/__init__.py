@@ -11,6 +11,7 @@ from app.models.seerr_notice import SeerrNotice
 from app.models.hub import HubEvent, HubShoppingItem, HubTask
 from app.models.list_template import ListTemplate, ListTemplateItem
 from app.models.event_alarm import EventAlarmSent
+from app.models.birthday import Birthday, GiftIdea
 from app.models.service_key import ServiceKey
 from app.models.config import ConfigOverride
 from app.models.today_layout import TodayLayout
@@ -25,6 +26,8 @@ from app.models.installed_plugin import InstalledPlugin
 from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
+    "Birthday",
+    "GiftIdea",
     "EventAlarmSent",
     "ListTemplate",
     "ListTemplateItem",

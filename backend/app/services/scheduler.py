@@ -98,6 +98,12 @@ async def run_scheduler() -> None:
                 await send_due()
             except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
                 logger.warning("event alarms failed: %s", type(exc).__name__)
+            try:
+                from app.services.birthdays import send_due as send_birthdays
+
+                await send_birthdays()
+            except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
+                logger.warning("birthday reminders failed: %s", type(exc).__name__)
             ticks += 1
             if ticks % SEERR_EVERY == 0:
                 try:

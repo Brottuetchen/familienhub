@@ -123,8 +123,20 @@ async def collect_events(db: Session, user: User, days: int, start: Optional[dat
             (HubEvent.end >= midnight) | (HubEvent.recurrence != "none")).all()
         for e in rows:
             events.extend(o for o in _hub_occurrences(e, midnight, end) if o["end"] >= midnight.date().isoformat())
+    events.extend(_birthday_events(db, user, start, end))
     events.sort(key=lambda e: e.get("start") or "")
     return events
+
+
+def _birthday_events(db: Session, user: User, start: datetime, end: datetime) -> List[Dict[str, Any]]:
+    """Read-only virtual calendar of birthdays and anniversaries (not for guests); never breaks the calendar."""
+    from app.services import birthdays
+
+    try:
+        return birthdays.calendar_events(birthdays.visible_rows(db, user), start.date(), end.date() + timedelta(days=1))
+    except Exception as exc:  # noqa: BLE001 - fail softly
+        logger.warning("birthdays skipped: %s", type(exc).__name__)
+        return []
 
 
 def _user_account(db: Session, user: User) -> Optional[CalDAVAccount]:
@@ -194,6 +206,11 @@ async def calendars(current_user: User = Depends(get_current_user), db: Session 
 
         for name, _url in parse_feeds(get_setting("ICS_FEEDS")):
             out.append({"id": feed_id(name), "name": name, "source": "ics", "color": None, "writable": False, "family": True})
+    from app.services import birthdays
+
+    if birthdays.visible_rows(db, current_user):  # the chip only appears once there is something to show
+        out.append({"id": birthdays.CALENDAR_ID, "name": birthdays.CALENDAR_NAME, "source": "birthdays", "color": None,
+                    "writable": False, "family": True})
     return out
 
 

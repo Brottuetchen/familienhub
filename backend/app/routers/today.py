@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api", tags=["today"])
 logger = logging.getLogger("hermes.today")
 
 # Seconds a source may take before "Heute" shows its fail-soft state instead of waiting (#71)
-SOURCE_TIMEOUT = {"events": 8.0, "tasks": 8.0, "meals": 6.0, "shopping": 5.0, "reminders": 3.0, "weather": 4.0, "house": 6.0}
+SOURCE_TIMEOUT = {"events": 8.0, "tasks": 8.0, "meals": 6.0, "shopping": 5.0, "reminders": 3.0, "weather": 4.0, "house": 6.0, "birthdays": 3.0}
 
 
 def _occurs_on(event: dict, day) -> bool:
@@ -73,7 +73,8 @@ async def get_today(
             midnight = datetime.combine(today, datetime.min.time())
             cal_events = await collect_events(db, current_user, 2, start=midnight)
             # The window also reaches into tomorrow (so late events are never cut off); the card says "today".
-            for e in [e for e in (cal_events or []) if _occurs_on(e, today)][:10]:
+            # birthdays have their own card
+            for e in [e for e in (cal_events or []) if e.get("source") != "birthdays" and _occurs_on(e, today)][:10]:
                 events.append({
                     "title": e.get("title", ""),
                     "start": e.get("start", ""),
@@ -199,6 +200,15 @@ async def get_today(
             return await ha.get_house_states()
         return {"status": "not_configured", "error": None, "items": []}
 
+    async def birthdays_part():
+        from app.services import birthdays
+
+        try:
+            return birthdays.upcoming(db, current_user, today)
+        except Exception as exc:  # noqa: BLE001 - fail softly: the card stays empty
+            logger.warning("Failed to fetch birthdays: %s", exc, exc_info=True)
+            return []
+
     gone = {"status": "unavailable", "error": "Zeitüberschreitung", "items": []}
 
     def limited(name, make, default, on_timeout=None):
@@ -206,7 +216,7 @@ async def get_today(
 
     # All sources at once: the page takes as long as the slowest one, not the sum. They share the request's
     # DB session, but its (synchronous) queries never overlap on the event loop.
-    events, tasks, meals, shopping_open, reminders, weather, house = await asyncio.gather(
+    events, tasks, meals, shopping_open, reminders, weather, house, birthdays = await asyncio.gather(
         limited("events", events_part, []),
         limited("tasks", tasks_part, None, on_timeout=lambda: dict(gone)),
         limited("meals", meals_part, []),
@@ -214,6 +224,7 @@ async def get_today(
         limited("reminders", reminders_part, []),
         limited("weather", weather_part, None),
         limited("house", house_part, None, on_timeout=lambda: dict(gone)),
+        limited("birthdays", birthdays_part, []),
     )
 
     # Ungelesene Mitteilungen (Verlauf)
@@ -233,4 +244,5 @@ async def get_today(
         "reminders": reminders,
         "weather": weather,
         "house": house,
+        "birthdays": birthdays,
     }
