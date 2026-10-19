@@ -127,7 +127,8 @@ Familienhub is in public beta (`v1.0.0-beta.1`) and has been used daily by its f
 
 ## Support
 
-[![Goal 2026](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrottuetchen%2Ffamilienhub%2Fmain%2F.github%2Ffunding-goal.json)](https://ko-fi.com/brottuetchen)
+<!-- annual goal: change the first amount in both READMEs -->
+[![Goal 2026](https://img.shields.io/badge/Goal%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-orange)](https://ko-fi.com/brottuetchen) [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Familienhub-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/brottuetchen)
 
 Familienhub is free and built in spare time. To ship real native apps, the project needs an Apple Developer licence (99 €/year, for TestFlight, the App Store and iPhone widgets, see [#9](https://github.com/Brottuetchen/familienhub/issues/9)) and a one-time Google Play developer account (about 25 €). That makes an annual goal of **150 €**. If the hub helps your family, you can chip in on [Ko-fi](https://ko-fi.com/brottuetchen) or via [GitHub Sponsors](https://github.com/sponsors/Brottuetchen).
 

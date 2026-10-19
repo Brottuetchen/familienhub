@@ -79,7 +79,8 @@ Fehler und Wünsche gern als Issue, auch auf Deutsch, oder direkt aus der App: *
 
 ## Unterstützen
 
-[![Jahresziel 2026](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FBrottuetchen%2Ffamilienhub%2Fmain%2F.github%2Ffunding-goal.json)](https://ko-fi.com/brottuetchen)
+<!-- annual goal: change the first amount in both READMEs -->
+[![Jahresziel 2026](https://img.shields.io/badge/Jahresziel%202026-0%20%E2%82%AC%20%2F%20150%20%E2%82%AC-orange)](https://ko-fi.com/brottuetchen) [![Ko-fi](https://img.shields.io/badge/Ko--fi-Familienhub%20unterst%C3%BCtzen-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/brottuetchen)
 
 Familienhub ist kostenlos und entsteht in der Freizeit. Für echte native Apps braucht das Projekt eine Apple-Entwicklerlizenz (99 €/Jahr, für TestFlight, den App Store und Widgets auf dem iPhone, siehe [#9](https://github.com/Brottuetchen/familienhub/issues/9)) und einmalig ein Google-Play-Entwicklerkonto (rund 25 €). Daraus ergibt sich ein Jahresziel von **150 €**. Wenn der Hub eurer Familie hilft, könnt ihr auf [Ko-fi](https://ko-fi.com/brottuetchen) oder über [GitHub Sponsors](https://github.com/sponsors/Brottuetchen) etwas beisteuern.
 
