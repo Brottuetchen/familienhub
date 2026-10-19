@@ -759,5 +759,9 @@
   },
   "recipeNoDetails": "There are no further details for this recipe here.",
   "recipeDetailsFailed": "The recipe details could not be loaded.",
-  "recipeQuickView": "Recipe"
+  "recipeQuickView": "Recipe",
+  "shoppingGroupByRecipe": "Group by recipe",
+  "shoppingShowAsList": "Show as list",
+  "shoppingNoRecipe": "No recipe",
+  "shoppingFromRecipeCount": "for {count, plural, =1{1 recipe} other{{count} recipes}}"
 }

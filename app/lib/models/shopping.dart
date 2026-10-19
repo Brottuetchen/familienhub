@@ -7,6 +7,7 @@ class ShoppingItem {
   final bool done;
   final String? description;
   final bool pending; // ohne Netz gemerkt, noch nicht gesendet (#32)
+  final List<String> recipes; // Rezepte, für die der Artikel auf der Liste steht (#69)
 
   const ShoppingItem({
     required this.uid,
@@ -14,6 +15,7 @@ class ShoppingItem {
     this.done = false,
     this.description,
     this.pending = false,
+    this.recipes = const [],
   });
 
   /// Offline hinzugefügt: gibt es auf dem Server noch nicht, also weder abhaken noch löschen.
@@ -25,6 +27,7 @@ class ShoppingItem {
         done: json['status'] == 'completed',
         description: json['description'] as String?,
         pending: json['pending'] == true,
+        recipes: ((json['recipes'] as List?) ?? const []).whereType<String>().toList(),
       );
 }
 

@@ -1392,5 +1392,16 @@
   },
   "recipeNoDetails": "Zu diesem Rezept gibt es hier keine weiteren Angaben.",
   "recipeDetailsFailed": "Die Rezeptdetails konnten nicht geladen werden.",
-  "recipeQuickView": "Rezept"
+  "recipeQuickView": "Rezept",
+  "shoppingGroupByRecipe": "Nach Rezept gruppieren",
+  "shoppingShowAsList": "Als Liste anzeigen",
+  "shoppingNoRecipe": "Ohne Rezept",
+  "shoppingFromRecipeCount": "aus {count, plural, =1{1 Rezept} other{{count} Rezepten}}",
+  "@shoppingFromRecipeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
