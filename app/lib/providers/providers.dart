@@ -14,6 +14,7 @@ import '../models/pending.dart';
 import '../models/shopping.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/timetable.dart';
 import '../models/today_layout.dart';
 import '../services/api_client.dart';
 import 'cached_read.dart';
@@ -308,6 +309,12 @@ final eventsRangeProvider = StateNotifierProvider.family<CachedRead<List<Calenda
         (j) => (j as List).whereType<Map<String, dynamic>>().map(CalendarEvent.fromJson).toList(),
         (api) => api.eventsRange(DateTime.parse(parts[0]), int.parse(parts[1])));
   });
+
+final timetableChildrenProvider = FutureProvider.autoDispose<List<TimetableChild>>(
+    (ref) => ref.watch(apiClientProvider).timetableChildren());
+
+final timetableProvider = FutureProvider.autoDispose.family<TimetableData, int>(
+    (ref, childId) => ref.watch(apiClientProvider).timetable(childId));
 
 final remindersProvider = FutureProvider.autoDispose<List<Reminder>>(
     (ref) => ref.watch(apiClientProvider).reminders());

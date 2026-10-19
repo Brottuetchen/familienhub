@@ -16,6 +16,7 @@ import 'caldav_account_screen.dart';
 import 'notification_settings_screen.dart';
 import 'birthdays_screen.dart';
 import 'reminders_screen.dart';
+import '../timetable/timetable_screen.dart';
 import 'task_lists_screen.dart';
 import '../../l10n/l10n.dart';
 
@@ -72,6 +73,14 @@ class MoreScreen extends ConsumerWidget {
               title: Text(l10n.birthdays),
               subtitle: Text(l10n.birthdaysHint),
               onTap: () => open(const BirthdaysScreen()),
+            ),
+          if (canAct)
+            ListTile(
+              key: const Key('more-timetable'),
+              leading: const Icon(Icons.calendar_view_week_outlined),
+              title: Text(l10n.timetable),
+              subtitle: Text(l10n.timetableHint),
+              onTap: () => open(const TimetableScreen()),
             ),
           if (modules.has('documents'))
             ListTile(

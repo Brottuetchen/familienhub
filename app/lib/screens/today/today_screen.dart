@@ -10,6 +10,7 @@ import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../main_shell.dart';
 import '../more/birthdays_screen.dart';
+import '../timetable/timetable_screen.dart';
 import 'house_controls.dart';
 import 'today_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -202,6 +203,26 @@ class TodayScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (final b in data.birthdays) _Line(leading: '', text: b.whenText, wide: true),
+            ],
+          ),
+        ),
+      if (data.timetable.isNotEmpty)
+        'timetable': SectionCard(
+          key: const Key('today-timetable'),
+          icon: Icons.calendar_view_week_outlined,
+          title: l10n.timetable,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TimetableScreen())),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final c in data.timetable)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text.rich(TextSpan(children: [
+                    TextSpan(text: '${c.name}: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    TextSpan(text: c.summary),
+                  ])),
+                ),
             ],
           ),
         ),

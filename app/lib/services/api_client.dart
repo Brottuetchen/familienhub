@@ -24,6 +24,7 @@ import '../models/shopping.dart';
 import '../models/themes.dart';
 import '../models/task.dart';
 import '../models/today.dart';
+import '../models/timetable.dart';
 import '../models/today_layout.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
@@ -677,6 +678,39 @@ class ApiClient {
 
   Future<ApiResult<TodayData>> today() => _cachedGet(
       '/api/today', 'today', (j) => TodayData.fromJson(j as Map<String, dynamic>));
+
+  // ── Timetable of children ──────────────────────────────────────────────────
+
+  Future<List<TimetableChild>> timetableChildren() async =>
+      TimetableChild.list(await _send('GET', '/api/timetable/children'));
+
+  Future<TimetableData> timetable(int childId) async => TimetableData.fromJson(
+      (await _send('GET', '/api/timetable?child_id=$childId')) as Map<String, dynamic>);
+
+  Future<void> saveTimetableEntry(Map<String, dynamic> body, {int? id}) =>
+      id == null ? _send('POST', '/api/timetable', body: body) : _send('PATCH', '/api/timetable/$id', body: body);
+
+  Future<void> deleteTimetableEntry(int id) => _send('DELETE', '/api/timetable/$id');
+
+  /// Returns how many entries were created.
+  Future<int> copyTimetableDay(int childId, {required String week, required int from, required List<int> to}) async =>
+      (((await _send('POST', '/api/timetable/copy-day',
+              body: {'child_id': childId, 'week': week, 'from_weekday': from, 'to_weekdays': to})) as Map)['copied'] as num)
+          .toInt();
+
+  Future<int> copyTimetableWeek(int childId, {required String from, required String to}) async =>
+      (((await _send('POST', '/api/timetable/copy-week',
+              body: {'child_id': childId, 'from_week': from, 'to_week': to})) as Map)['copied'] as num)
+          .toInt();
+
+  /// [abReference]: any day inside an A week (null = no A/B weeks); [holidayFeed]: calendar subscription id.
+  Future<void> saveTimetableSettings({DateTime? abReference, String? holidayFeed}) =>
+      _send('PUT', '/api/timetable/settings', body: {
+        'ab_reference': abReference == null
+            ? null
+            : '${abReference.year.toString().padLeft(4, '0')}-${abReference.month.toString().padLeft(2, '0')}-${abReference.day.toString().padLeft(2, '0')}',
+        'holiday_feed': holidayFeed,
+      });
 
   // ── Layout von Heute ───────────────────────────────────────────────────────
 

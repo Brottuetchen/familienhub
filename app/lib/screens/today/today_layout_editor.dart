@@ -33,6 +33,7 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
         'reminders' => l10n.reminders,
         'house' => l10n.house,
         'birthdays' => l10n.birthdays,
+        'timetable' => l10n.timetable,
         _ => id,
       };
 
