@@ -39,6 +39,16 @@ Database migrations run automatically on start (Alembic).
 - The app asks for the address on first start.
 - For access from outside, a VPN (e.g. WireGuard) is safer than exposing the hub publicly.
 
+## Public beta installations
+
+For a pre-release, either download the `docker-compose.yml` **attached to that exact GitHub release**, or set `FAMILIENHUB_VERSION` to the advertised beta version before running Docker Compose. The default `:latest` container tag is published with a stable release, not with a beta.
+
+```bash
+FAMILIENHUB_VERSION=1.0.0-beta.1 docker compose up -d
+```
+
+Do not use the default `latest`-based quick start from the repository until a stable release exists. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.
+
 ## 3. Get the apps
 
 APK and IPA are attached to each GitHub release: <https://github.com/Brottuetchen/familienhub/releases/latest>.
