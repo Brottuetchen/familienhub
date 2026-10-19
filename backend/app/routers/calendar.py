@@ -37,6 +37,8 @@ class EventCreateRequest(BaseModel):
     location: Optional[str] = Field(default=None, max_length=200)
     notes: Optional[str] = Field(default=None, max_length=2000)
     recurrence: Literal["none", "daily", "weekly", "monthly", "yearly"] = "none"
+    # Reminder in minutes before the start (0 = at the start); None = no reminder
+    alarm_minutes: Optional[int] = Field(default=None, ge=0, le=10080)
 
     @model_validator(mode="after")
     def _times(self):
@@ -81,6 +83,7 @@ def _hub_event(e, start: Optional[datetime] = None) -> Dict[str, Any]:
     fmt = (lambda d: d.date().isoformat()) if e.all_day else (lambda d: d.isoformat())
     return {"id": e.id, "title": e.title, "start": fmt(begin), "end": fmt(finish), "all_day": bool(e.all_day),
             "location": e.location, "notes": getattr(e, "notes", None), "recurrence": getattr(e, "recurrence", None) or "none",
+            "alarm_minutes": getattr(e, "alarm_minutes", None),
             "calendar": "Familie", "calendar_id": "hub", "source": "hub"}
 
 
@@ -228,7 +231,8 @@ async def create_event(
 
         row = HubEvent(title=event.title.strip(), start=_parse(event.start), end=_parse(event.end),
                        all_day=event.all_day, location=(event.location or "").strip() or None,
-                       notes=(event.notes or "").strip() or None, recurrence=event.recurrence, created_by=current_user.id)
+                       notes=(event.notes or "").strip() or None, recurrence=event.recurrence,
+                       alarm_minutes=event.alarm_minutes, created_by=current_user.id)
         db.add(row)
         db.commit()
         return _hub_event(row)
@@ -240,6 +244,8 @@ async def create_event(
     connector = connector_for_user(db, current_user)
     extras = {k: v for k, v in {"location": (event.location or "").strip(), "notes": (event.notes or "").strip(),
                                  "rrule": RRULE.get(event.recurrence)}.items() if v}
+    if event.alarm_minutes is not None:
+        extras["alarm_minutes"] = event.alarm_minutes  # 0 (at the start) is a valid value
     try:
         return await connector.create_event(
             title=event.title,
@@ -278,6 +284,7 @@ class EventUpdateRequest(BaseModel):
     location: Optional[str] = Field(default=None, max_length=200)
     notes: Optional[str] = Field(default=None, max_length=2000)
     recurrence: Literal["none", "daily", "weekly", "monthly", "yearly"] = "none"
+    alarm_minutes: Optional[int] = Field(default=None, ge=0, le=10080)  # only applied when sent
 
     @model_validator(mode="after")
     def _times(self):
@@ -303,6 +310,8 @@ async def update_event(event_id: int, data: EventUpdateRequest, current_user: Us
     row.location = (data.location or "").strip() or None
     row.notes = (data.notes or "").strip() or None
     row.recurrence = data.recurrence
+    if "alarm_minutes" in data.model_fields_set:
+        row.alarm_minutes = data.alarm_minutes
     db.commit()
     return _hub_event(row)
 
@@ -325,6 +334,8 @@ async def update_caldav_event(calendar_id: str, uid: str, data: EventUpdateReque
                "start": _parse(data.start).isoformat() if not data.all_day else _parse(data.start).date().isoformat(),
                "end": _parse(data.end).isoformat() if not data.all_day else _parse(data.end).date().isoformat(),
                "all_day": data.all_day}
+    if "alarm_minutes" in data.model_fields_set:
+        changes["alarm_minutes"] = data.alarm_minutes
     try:
         ok = await connector_for_user(db, current_user).update_event(url, uid, changes)
     except Exception as exc:  # noqa: BLE001
@@ -347,3 +358,22 @@ async def delete_caldav_event(calendar_id: str, uid: str, current_user: User = D
     if not ok:
         raise HTTPException(status_code=404, detail="Termin nicht gefunden")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class ReminderSettings(BaseModel):
+    calendar_on_phone: bool
+
+
+@router.get("/me/reminders")
+async def get_reminder_settings(current_user: User = Depends(get_current_user)):
+    """Own setting: with the calendar synced on the phone, the phone alerts and the hub sends no event reminders."""
+    return {"calendar_on_phone": bool(getattr(current_user, "calendar_on_phone", False))}
+
+
+@router.put("/me/reminders")
+async def put_reminder_settings(data: ReminderSettings, current_user: User = Depends(get_current_user),
+                                db: Session = Depends(get_db)):
+    user = db.get(User, current_user.id)
+    user.calendar_on_phone = data.calendar_on_phone
+    db.commit()
+    return {"calendar_on_phone": user.calendar_on_phone}

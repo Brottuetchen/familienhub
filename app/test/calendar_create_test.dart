@@ -70,4 +70,41 @@ void main() {
     expect(body['all_day'], true);
     expect(DateTime.parse(body['end'] as String).difference(DateTime.parse(body['start'] as String)).inDays, 1);
   });
+
+  testWidgets('reminder: 15 minutes by default', (tester) async {
+    final b = backend();
+    await open(tester, b);
+    await tester.enterText(find.byKey(const Key('event-title')), 'Zahnarzt');
+    expect(find.text('15 Minuten vorher'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('event-save')));
+    await tester.tap(find.byKey(const Key('event-save')));
+    await tester.pumpAndSettle();
+    expect(bodyOf(b.sent('POST', '/api/calendar/events').single)['alarm_minutes'], 15);
+  });
+
+  testWidgets('reminder "none" sends null', (tester) async {
+    final b2 = backend();
+    await open(tester, b2);
+    await tester.enterText(find.byKey(const Key('event-title')), 'Ohne');
+    await tester.ensureVisible(find.byKey(const Key('event-alarm')));
+    await tester.tap(find.byKey(const Key('event-alarm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keine').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('event-save')));
+    await tester.tap(find.byKey(const Key('event-save')));
+    await tester.pumpAndSettle();
+    final body = bodyOf(b2.sent('POST', '/api/calendar/events').single);
+    expect(body.containsKey('alarm_minutes'), isTrue);
+    expect(body['alarm_minutes'], isNull);
+  });
+
+  test('alarm labels', () {
+    expect(alarmLabel(-1), 'Keine');
+    expect(alarmLabel(0), 'Zur Startzeit');
+    expect(alarmLabel(30), '30 Minuten vorher');
+    expect(alarmLabel(60), '1 Stunde vorher');
+    expect(alarmLabel(120), '2 Stunden vorher');
+    expect(alarmLabel(1440), '1 Tag vorher');
+  });
 }

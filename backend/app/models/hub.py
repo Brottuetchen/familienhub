@@ -68,5 +68,6 @@ class HubEvent(Base):
     location = Column(String(200), nullable=True)
     notes = Column(Text, nullable=True)
     recurrence = Column(String(16), nullable=False, default="none")  # none | daily | weekly | monthly | yearly
+    alarm_minutes = Column(Integer, nullable=True)  # reminder before the start; None = none
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

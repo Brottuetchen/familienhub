@@ -468,6 +468,7 @@ class EventDetailsSheet extends ConsumerWidget {
         ]),
         const SizedBox(height: 8),
         row(Icons.schedule, _when()),
+        if (event.alarmMinutes != null) row(Icons.notifications_none, alarmLabel(event.alarmMinutes!)),
         if (event.calendar != null) row(Icons.calendar_month_outlined, event.calendar!),
         if (repeat != null) row(Icons.repeat, repeat),
         if (event.location != null && event.location!.isNotEmpty) row(Icons.place_outlined, event.location!),
@@ -521,10 +522,12 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
   bool _allDay = false;
   bool _saving = false;
   String _recurrence = 'none';
+  int _alarm = 15; // minutes before the start; -1 = none
   String? _target; // calendar id
   String? _lastTarget;
 
   static const _recurrences = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
+  static const _alarms = [-1, 0, 5, 15, 30, 60, 1440];
 
   bool get _editing => widget.initial != null;
 
@@ -541,6 +544,7 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
       _notes.text = e.notes ?? '';
       _allDay = e.allDay;
       _recurrence = e.source == 'hub' ? e.recurrence : 'none';
+      _alarm = e.alarmMinutes ?? -1;
       final s = e.start ?? DateTime.now();
       final end = e.end ?? s.add(const Duration(hours: 1));
       _day = s;
@@ -593,11 +597,13 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
       final api = ref.read(apiClientProvider);
       if (_editing) {
         await api.updateEvent(widget.initial!, title: title, start: start, end: end, allDay: _allDay,
-            location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence);
+            location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence,
+            alarmMinutes: _alarm < 0 ? null : _alarm);
       } else {
         await api.createEvent(
             title: title, start: start, end: end, allDay: _allDay, calendarId: target,
-            location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence);
+            location: _location.text.trim(), notes: _notes.text.trim(), recurrence: _recurrence,
+            alarmMinutes: _alarm < 0 ? null : _alarm);
       }
       if (target != null && !_editing) {
         try {
@@ -760,6 +766,15 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
               items: [for (final r in _recurrences) DropdownMenuItem(value: r, child: Text(_recurrenceLabel(r)))],
               onChanged: (v) => setState(() => _recurrence = v ?? 'none'),
             ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              key: const Key('event-alarm'),
+              initialValue: _alarm,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: l10n.eventAlarm, prefixIcon: const Icon(Icons.notifications_none)),
+              items: [for (final m in _alarms) DropdownMenuItem(value: m, child: Text(alarmLabel(m)))],
+              onChanged: (v) => setState(() => _alarm = v ?? -1),
+            ),
             const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerRight,
@@ -775,3 +790,14 @@ class _EventCreateSheetState extends ConsumerState<EventCreateSheet> {
     );
   }
 }
+
+
+/// "15 Minuten vorher", "Zur Startzeit", "Keine" (-1).
+String alarmLabel(int minutes) => switch (minutes) {
+      < 0 => l10n.alarmNone,
+      0 => l10n.alarmAtStart,
+      1440 => l10n.alarmDayBefore,
+      60 => l10n.alarmHourBefore,
+      _ => minutes % 1440 == 0 ? l10n.alarmDaysBefore(minutes ~/ 1440)
+          : minutes % 60 == 0 ? l10n.alarmHoursBefore(minutes ~/ 60) : l10n.alarmMinutesBefore(minutes),
+    };

@@ -17,6 +17,7 @@ class CalendarEvent {
   final String? location;
   final String? calendar;
   final String? color;
+  final int? alarmMinutes; // reminder before the start (0 = at the start); null = none
 
   const CalendarEvent({
     this.id,
@@ -33,6 +34,7 @@ class CalendarEvent {
     this.location,
     this.calendar,
     this.color,
+    this.alarmMinutes,
   });
 
   /// Does the event take place on [day]? All-day ends are exclusive (ICS), timed events count on every touched day.
@@ -78,6 +80,7 @@ class CalendarEvent {
       location: json['location'] as String?,
       calendar: json['calendar'] as String?,
       color: json['color'] as String?,
+      alarmMinutes: (json['alarm_minutes'] as num?)?.toInt(),
     );
   }
 }

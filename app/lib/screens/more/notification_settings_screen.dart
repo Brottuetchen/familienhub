@@ -154,6 +154,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                         ),
                       ),
                     const NtfyCard(),
+                    const CalendarOnPhoneTile(),
                     for (final entry in notificationCategories.entries)
                       SwitchListTile(
                         title: Text(entry.value),
@@ -262,6 +263,33 @@ class _DevicesSection extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+final calendarOnPhoneProvider = FutureProvider.autoDispose<bool>((ref) => ref.watch(apiClientProvider).calendarOnPhone());
+
+/// Event reminders: the hub notifies unless the calendar is set up on this person's phone (then the phone alerts).
+class CalendarOnPhoneTile extends ConsumerWidget {
+  const CalendarOnPhoneTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(calendarOnPhoneProvider).valueOrNull;
+    return SwitchListTile(
+      key: const Key('calendar-on-phone'),
+      secondary: const Icon(Icons.event_available_outlined),
+      title: Text(l10n.calendarOnPhone),
+      subtitle: Text(l10n.calendarOnPhoneHint),
+      value: value ?? false,
+      onChanged: value == null
+          ? null
+          : (v) async {
+              if (await runAction(context, () => ref.read(apiClientProvider).setCalendarOnPhone(v))) {
+                ref.invalidate(calendarOnPhoneProvider);
+              }
+            },
     );
   }
 }
