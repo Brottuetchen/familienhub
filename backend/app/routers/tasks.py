@@ -532,6 +532,12 @@ async def update_task(
 
     updates = task.model_dump(exclude_unset=True)
     updates.pop("stars", None)  # hub-side, not a connector field
+    if task.stars is not None and not (set(updates) - {"operation_id", "expected_version"}):
+        # Only the stars changed: nothing to write to the task source
+        from app.services import stars as stars_svc
+
+        return {"uid": uid, "provider": provider,
+                "stars": stars_svc.set_task_stars(db, provider, uid, task.stars, current_user) or None}
     if "operation_id" in updates:
         updates["operation_id"] = str(task.operation_id)
     if task.title is not None:

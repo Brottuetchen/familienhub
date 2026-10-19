@@ -239,6 +239,17 @@ def test_person_without_use_has_no_card(client, fam):
     assert body["balance"] == 0 and body["enabled"] is False or body["pending"]["total"] > 0
 
 
+def test_patch_stars_only_and_clear(client, fam):
+    uid = _hub_task(client, fam, 2, title="Pflanzen gießen")
+    params = {"provider": "hub_tasks", "account": f"{fam['mom_id']}:hub"}
+    r = client.patch(f"/api/tasks/{uid}", params=params, headers=fam["mom"], json={"stars": 9})
+    assert r.status_code == 200 and r.json()["stars"] == 9
+    assert client.patch(f"/api/tasks/{uid}", params=params, headers=fam["kid"], json={"stars": 99}).status_code == 403
+    r = client.patch(f"/api/tasks/{uid}", params=params, headers=fam["mom"], json={"stars": 0})
+    assert r.json()["stars"] is None
+    assert "stars_awarded" not in _complete(client, fam, uid).json()
+
+
 def test_rotation_successor_keeps_the_stars(client, fam):
     mom = fam["mom"]
     r = client.post("/api/tasks", params={"provider": "hub_tasks", "account": f"{fam['mom_id']}:hub"}, headers=mom,
