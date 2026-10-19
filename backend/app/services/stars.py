@@ -291,8 +291,14 @@ def summary(db: Session, user: User) -> Dict[str, Any]:
     return out
 
 
-def reward_dict(r: StarReward) -> Dict[str, Any]:
-    return {"id": r.id, "title": r.title, "price": r.price, "active": bool(r.active)}
+def reward_dict(r: StarReward, parent: bool = False) -> Dict[str, Any]:
+    """``parent`` adds the plugin action (with its parameter values), which only parents get to see."""
+    out = {"id": r.id, "title": r.title, "price": r.price, "active": bool(r.active)}
+    if parent:
+        from app.services import reward_actions
+
+        out["action"] = reward_actions.action_view(r)
+    return out
 
 
 def request_dict(r: StarRequest, name: str = "") -> Dict[str, Any]:

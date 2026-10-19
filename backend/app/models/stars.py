@@ -66,6 +66,10 @@ class StarReward(Base):
     active = Column(Boolean, nullable=False, default=True)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Optional plugin action that runs when a parent approves a request for this reward (services/reward_actions.py)
+    action_plugin = Column(String(32), nullable=True)
+    action_id = Column(String(64), nullable=True)
+    action_params = Column(Text, nullable=True)  # JSON object of the parent's parameter values
 
 
 class StarRequest(Base):
