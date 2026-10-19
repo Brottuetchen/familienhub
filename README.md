@@ -149,7 +149,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 ## Status
 
-Familienhub is in public beta (`v1.0.0-beta.2`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome.
+Familienhub is in public beta (`v1.0.0-beta.2`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome. What changed: [changelog](CHANGELOG.md).
 
 ## Support
 

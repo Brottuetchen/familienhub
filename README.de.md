@@ -149,7 +149,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 ## Status
 
-Familienhub ist in der öffentlichen Beta (`v1.0.0-beta.2`) und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen.
+Familienhub ist in der öffentlichen Beta (`v1.0.0-beta.2`) und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen. Was sich geändert hat: [Changelog](CHANGELOG.md) (englisch).
 
 ## Unterstützen
 
