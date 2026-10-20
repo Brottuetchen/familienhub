@@ -8,7 +8,7 @@
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
-📖 **[Documentation website](https://brottuetchen.github.io/familienhub/)**
+📖 **[Documentation website](https://brottuetchen.github.io/familienhub/)** · 💬 **[Wiki](https://github.com/Brottuetchen/familienhub/wiki)** (German how-tos, FAQ, troubleshooting)
 
 [Install](#install) · [Features](#features) · [Ecosystem](#ecosystem) · [Roadmap](docs/roadmap.md) · [Community](#community) · [Deutsch](README.de.md)
 
