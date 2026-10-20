@@ -102,15 +102,11 @@ class AppearanceScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: SegmentedButton<String>(
-                key: const Key('app-language'),
-                showSelectedIcon: false, // labels only: "Automatic" fits on one line at phone width
-                segments: [
-                  ButtonSegment(value: 'system', label: Text(l10n.languageSystem)),
-                  for (final e in appLanguages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
-                ],
-                selected: {ref.watch(languageChoiceProvider)},
-                onSelectionChanged: (s) => ref.read(languageChoiceProvider.notifier).select(s.first),
+              child: _LanguagePicker(
+                languages: appLanguages,
+                systemLabel: l10n.languageSystem,
+                selected: ref.watch(languageChoiceProvider),
+                onSelected: (v) => ref.read(languageChoiceProvider.notifier).select(v),
               ),
             ),
             _ThemeTile(
@@ -198,6 +194,49 @@ class _ThemeTile extends StatelessWidget {
               color: selected ? scheme.primary : scheme.onSurfaceVariant),
         ],
       ),
+    );
+  }
+}
+
+/// Few languages: segmented buttons. Many (community translations): a dropdown, so it never overflows.
+class _LanguagePicker extends StatelessWidget {
+  const _LanguagePicker({
+    required this.languages,
+    required this.systemLabel,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final Map<String, String> languages;
+  final String systemLabel;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (languages.length <= 3) {
+      return SegmentedButton<String>(
+        key: const Key('app-language'),
+        showSelectedIcon: false, // labels only: "Automatic" fits on one line at phone width
+        segments: [
+          ButtonSegment(value: 'system', label: Text(systemLabel)),
+          for (final e in languages.entries) ButtonSegment(value: e.key, label: Text(e.value)),
+        ],
+        selected: {selected},
+        onSelectionChanged: (s) => onSelected(s.first),
+      );
+    }
+    return DropdownButton<String>(
+      key: const Key('app-language'),
+      isExpanded: true,
+      value: languages.containsKey(selected) ? selected : 'system',
+      items: [
+        DropdownMenuItem(value: 'system', child: Text(systemLabel)),
+        for (final e in languages.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
+      ],
+      onChanged: (v) {
+        if (v != null) onSelected(v);
+      },
     );
   }
 }

@@ -26,7 +26,7 @@ The shipped plugins live in `backend/app/plugins/builtin/`:
 
 Admins switch plugins on and off and enter credentials under **More → Administration → Plugins & access**. The change applies without a restart, secrets are stored encrypted, and *Test connection* checks reachability. Alternatively, set the same keys as environment variables in `.env`.
 
-More plugins come from GitHub: admins install reviewed ones with one click from the [plugin and theme store](store.md), or any plugin with a link, see [Install a plugin from GitHub](#install-a-plugin-from-github). To write one, see [Write a plugin](#write-a-plugin) and the ready-to-copy [plugin template](../examples/plugin-template/).
+More plugins come from GitHub: admins install reviewed ones with one click from the [plugin and theme store](store.md), or any plugin with a link, see [Install a plugin from GitHub](#install-a-plugin-from-github). To write one, see [Write a plugin](#write-a-plugin) and the ready-to-copy [plugin template](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template).
 
 ## Install a plugin from GitHub
 
@@ -75,7 +75,7 @@ The installer only talks to `api.github.com`, `raw.githubusercontent.com` and `c
 
 A plugin is a small Python project in a GitHub repository. It has a manifest (`familienhub-plugin.json`) that tells the hub what the plugin is and which settings it needs, and a Python package with a `Plugin` class. Admins install it with a link, see above.
 
-**Quick start:** copy [`examples/plugin-template/`](../examples/plugin-template/) into a new repository and follow its README. The template is a working plugin with one setting, one secret, one endpoint and tests.
+**Quick start:** copy [`examples/plugin-template/`](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template) into a new repository and follow its README. The template is a working plugin with one setting, one secret, one endpoint and tests.
 
 ### Repository layout
 
@@ -423,7 +423,7 @@ Settings in the manifest drive the install screen. When an admin installs a plug
                 "message": "Connected to Grocy" if r.status_code == 200 else f"Grocy answers with error {r.status_code}"}
 ```
 
-The [plugin template](../examples/plugin-template/) shows `today_cards` and `test_settings` working with tests.
+The [plugin template](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template) shows `today_cards` and `test_settings` working with tests.
 
 ## Calendar plugins
 

@@ -72,7 +72,7 @@ An admin can add their own GitHub repository as an extra source under **Store â†
 }
 ```
 
-A complete example that the test suite validates is in [`examples/store/index.json`](../examples/store/index.json).
+A complete example that the test suite validates is in [`examples/store/index.json`](https://github.com/Brottuetchen/familienhub/blob/main/examples/store/index.json).
 
 | Field | Required | Rules |
 |---|---|---|

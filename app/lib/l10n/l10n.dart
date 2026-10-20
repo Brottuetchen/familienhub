@@ -7,8 +7,12 @@ import 'gen/app_localizations.dart';
 
 export 'gen/app_localizations.dart';
 
-/// Unterstützte Sprachen der App. Neue Sprache: `app_<code>.arb` anlegen und hier eintragen.
-const appLanguages = {'de': 'Deutsch', 'en': 'English'};
+/// Supported app languages (code -> own name), derived from the generated locales.
+/// A new language only needs an `app_<code>.arb` with a translated `languageName`.
+Map<String, String> get appLanguages => {
+  for (final locale in AppLocalizations.supportedLocales)
+    locale.languageCode: lookupAppLocalizations(locale).languageName,
+};
 
 const languagePrefKey = 'app_language';
 

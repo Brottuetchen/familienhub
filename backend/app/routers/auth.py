@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.database import get_db
+from app.core.ingress import cookie_path, resolve_prefix
 from app.core.oidc import (
     exchange_code_for_tokens,
     fetch_jwks,
@@ -181,7 +182,7 @@ async def refresh_token(
         revoke_refresh_token(token, db)
         new_refresh = create_refresh_token(user.id, db, request)
         return {"access_token": access, "token_type": "bearer", "refresh_token": new_refresh}
-    response.set_cookie(key="access_token", value=access, httponly=True, samesite="lax")
+    response.set_cookie(key="access_token", value=access, httponly=True, samesite="lax", path=cookie_path())
     return {"access_token": access, "token_type": "bearer"}
 
 
@@ -505,7 +506,7 @@ async def _finish_oidc_login(code: str, state: str, request: Request, db: Sessio
         # Web: Cookies auf genau die Antwort setzen, die zurückgeht (vorher gingen sie verloren)
         access = create_access_token(data={"sub": user.username})
         refresh = create_refresh_token(user.id, db, request)
-        redirect = RedirectResponse(url="/", status_code=302)
+        redirect = RedirectResponse(url=(resolve_prefix(request) or "") + "/", status_code=302)
         set_auth_cookies(redirect, access, refresh)
         return redirect
 

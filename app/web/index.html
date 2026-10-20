@@ -24,8 +24,9 @@
 <body>
   <div id="splash"><img src="icons/Icon-192.png" alt=""></div>
   <script>
+    // Relative to <base href>, so it also works under a sub-path (Home Assistant ingress).
     // Push-Service-Worker früh registrieren (Mitteilungen + Tipp auf Mitteilung).
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/push-sw.js').catch(() => {});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('push-sw.js').catch(() => {});
     window.addEventListener('flutter-first-frame', () => document.getElementById('splash')?.remove());
   </script>
   <script src="flutter_bootstrap.js" async></script>

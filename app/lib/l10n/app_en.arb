@@ -1,5 +1,6 @@
 {
   "@@locale": "en",
+  "languageName": "English",
   "pendingRejected": "{count, plural, =1{1 change rejected} other{{count} changes rejected}}",
   "pendingWaiting": "{count, plural, =1{1 change waiting for network} other{{count} changes waiting for network}}",
   "oidcUnknownUser": "Your Authentik account is not enabled in Familienhub. The email address must match a hub account.",

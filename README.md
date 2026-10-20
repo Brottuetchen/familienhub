@@ -8,6 +8,8 @@
 
 <img src="docs/screenshots/en/today-light.png" width="23%" alt="Today"> <img src="docs/screenshots/en/today-dark.png" width="23%" alt="Today, dark"> <img src="docs/screenshots/en/calendar-light.png" width="23%" alt="Calendar"> <img src="docs/screenshots/en/calendar-dark.png" width="23%" alt="Calendar, dark">
 
+📖 **[Documentation website](https://brottuetchen.github.io/familienhub/)** · 💬 **[Wiki](https://github.com/Brottuetchen/familienhub/wiki)** (German how-tos, FAQ, troubleshooting)
+
 [Install](#install) · [Features](#features) · [Ecosystem](#ecosystem) · [Roadmap](docs/roadmap.md) · [Community](#community) · [Deutsch](README.de.md)
 
 </div>
@@ -90,7 +92,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 
 [![Add repository to my Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBrottuetchen%2Ffamilienhub-ha-addon)
 
-The add-on runs the hub inside Home Assistant (SQLite, data in `/data`) and opens on port 8000. It has no Home Assistant sidebar entry yet ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). More in the [add-on repository](https://github.com/Brottuetchen/familienhub-ha-addon).
+The add-on runs the hub inside Home Assistant (SQLite, data in `/data`) and opens on port 8000. The hub can run under the Home Assistant ingress prefix ([details](docs/home-assistant.md)); the sidebar entry arrives with an add-on release that enables it ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). More in the [add-on repository](https://github.com/Brottuetchen/familienhub-ha-addon).
 
 ### Apps
 
@@ -143,7 +145,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Ask and show:** [GitHub Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 - **Report a bug or wish:** [open an issue](https://github.com/Brottuetchen/familienhub/issues), or use *More → Send feedback* in the app.
 - **Contribute:** see [CONTRIBUTING](CONTRIBUTING.md) for the dev setup and pull requests. Plugins and themes can live in their own repositories.
-- **Translate:** more languages are welcome, planned with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)). Until then, add an `.arb` file as described in [CONTRIBUTING](CONTRIBUTING.md).
+- **Help translate:** more languages are welcome, no Git needed. The Weblate project is coming ([#25](https://github.com/Brottuetchen/familienhub/issues/25)); until then see [Translations](CONTRIBUTING.md#translations).
 - **Security issue:** please report it privately, see [SECURITY.md](SECURITY.md).
 - **What is next:** the [roadmap](docs/roadmap.md).
 

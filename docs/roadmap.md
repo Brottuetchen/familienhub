@@ -64,7 +64,7 @@ Status: October 2026. Familienhub is in public beta and runs daily in its first 
 
 ## Community welcome
 
-- **More languages** with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)), a good first issue. Until it is set up, add `app/lib/l10n/app_<code>.arb`, see [CONTRIBUTING](../CONTRIBUTING.md).
+- **More languages** with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)), a good first issue. Until it is set up, add `app/lib/l10n/app_<code>.arb`, see [CONTRIBUTING](https://github.com/Brottuetchen/familienhub/blob/main/CONTRIBUTING.md).
 - **Themes:** share yours, see [themes](themes.md) and the [gallery](https://github.com/Brottuetchen/familienhub-themes).
-- **Plugins:** start from the [plugin template](../examples/plugin-template/) and propose it for the store.
+- **Plugins:** start from the [plugin template](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template) and propose it for the store.
 - **Docs, bug reports and ideas:** open an issue or start a discussion.

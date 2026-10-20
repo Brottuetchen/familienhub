@@ -19,7 +19,7 @@ Before publishing:
 2. **Required:** configure the Android signing secrets in **Settings → Secrets and variables → Actions** before publishing. The release workflow refuses to build a public APK without them. Without the same permanent signing key on each release, users cannot install APK updates in place. Back up the keystore and its password securely outside GitHub. Do not add them to the repository.
 3. If you need native Firebase push in the public Android app, configure `GOOGLE_SERVICES_JSON` using the same Firebase project as the server; otherwise prefer ntfy/Web Push as documented.
 4. Confirm the GHCR image package is **public** (repository visibility does not guarantee package visibility).
-5. Add the version's section to [`CHANGELOG.md`](../CHANGELOG.md) (`## [1.0.0-beta.2]`). The release workflow copies that section into the GitHub release notes.
+5. Add the version's section to [`CHANGELOG.md`](https://github.com/Brottuetchen/familienhub/blob/main/CHANGELOG.md) (`## [1.0.0-beta.2]`). The release workflow copies that section into the GitHub release notes.
 6. GitHub is the primary repository. Do not push to it from a mirror: a push mirror with pruning overwrites `main` and deletes branches and tags.
 
 Either way works:
@@ -79,3 +79,15 @@ The IPA is unsigned. People install it with [SideStore](https://sidestore.io/) o
 ## Visibility
 
 Images in GitHub Container Registry inherit the repository's visibility on first push. While the repository is private, `docker compose pull` needs `docker login ghcr.io` with a token that has `read:packages`. After making the repository public, also set the package to public (*Packages → familienhub → Package settings → Change visibility*).
+
+## Documentation website
+
+The `docs/` folder is published as a website at <https://brottuetchen.github.io/familienhub/> (MkDocs Material, configured in `mkdocs.yml`). The `docs.yml` workflow builds it with `mkdocs build --strict` on every pull request that touches `docs/` or `mkdocs.yml`, and deploys it on every push to `main`. `docs/internal/` is not published.
+
+One-time setup by the repository owner: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Until this is set, the deploy job fails; the build check on pull requests works regardless.
+
+To preview locally: `pip install -r docs/requirements.txt && mkdocs serve`. Links from a page to files outside `docs/` must be absolute GitHub URLs, otherwise the strict build fails.
+
+## Wiki
+
+The [GitHub wiki](https://github.com/Brottuetchen/familienhub/wiki) holds German how-tos, FAQ and troubleshooting for families. Its pages live in [`wiki/`](https://github.com/Brottuetchen/familienhub/tree/main/wiki) in this repository and are changed through pull requests like any other file. On every push to `main` that touches `wiki/`, the `Wiki` workflow copies the folder into the wiki. Edits made in the wiki web UI are overwritten by the next sync, so keep wiki editing restricted to collaborators (*Settings → Features → Wikis*).
