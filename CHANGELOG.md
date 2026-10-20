@@ -2,6 +2,24 @@
 
 All notable changes per release. Versions follow the Git tags (`v1.0.0-beta.2` → image `ghcr.io/brottuetchen/familienhub:1.0.0-beta.2`).
 
+## [1.0.0-beta.4]
+
+Home Assistant sidebar support, a documentation website, a wiki and the groundwork for more languages.
+
+### New
+- **Run under a sub-path / Home Assistant ingress:** the hub works behind a path prefix, from the `X-Ingress-Path` header of Home Assistant or a fixed `ROOT_PATH`. Direct access on the port works as before. With this release the [Home Assistant add-on](https://github.com/Brottuetchen/familienhub-ha-addon) can show Familienhub in the HA sidebar. See [Home Assistant](docs/home-assistant.md). (#28)
+- **Documentation website:** https://brottuetchen.github.io/familienhub/ (#26)
+- **Wiki** with German how-tos, FAQ and troubleshooting: https://github.com/Brottuetchen/familienhub/wiki
+- **Translations:** the language picker is built from the available languages, so a new language only needs an `app_<code>.arb` file. A CI check guards the translation files. Translating through Weblate is being set up. See [translations](docs/translations.md). (#25)
+
+### Fixed
+- Bottom navigation: labels no longer wrap mid-word with wide theme fonts or large text. (#29)
+
+### Upgrading from 1.0.0-beta.3
+1. Download a backup in Administration first.
+2. `FAMILIENHUB_VERSION=1.0.0-beta.4 docker compose pull && FAMILIENHUB_VERSION=1.0.0-beta.4 docker compose up -d`
+3. No database migrations. New optional settings, all off by default: `ROOT_PATH`, `TRUST_INGRESS_HEADER`, `INGRESS_PROXY_IPS`. See [`.env.example`](.env.example).
+
 ## [1.0.0-beta.3]
 
 Plugins can now do much more, and the store lists the first seven official plugins.
