@@ -69,3 +69,4 @@ app/android/key.properties
 firebase-service-account*.json
 backend/vapid_keys.json
 .agent-report-*.md
+site/

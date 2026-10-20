@@ -6,7 +6,7 @@ Continuous checks on every pull request, on `main` and weekly (`.forgejo/workflo
 - Trivy (Dockerfile, Compose)
 - Bandit and Semgrep (unsafe patterns)
 
-Run them locally with `.forgejo/ci/security.sh`. A full manual review was done on 2026-10-18; its findings and fixes are in [`internal/SICHERHEIT.md`](internal/SICHERHEIT.md) (German).
+Run them locally with `.forgejo/ci/security.sh`. A full manual review was done on 2026-10-18; its findings and fixes are in [`internal/SICHERHEIT.md`](https://github.com/Brottuetchen/familienhub/blob/main/docs/internal/SICHERHEIT.md) (German).
 
 ## Principles
 - **Sign-in:** local accounts (bcrypt) or OIDC with PKCE, `state` and `nonce`. Short-lived access tokens (JWT), rotating refresh tokens. The app's OIDC return (`familienhub://auth`) is bound to the app by PKCE.
@@ -53,4 +53,4 @@ The server enforces every rule (`require_min_role`). The app also hides what a r
 Everything else requires sign-in.
 
 ## Reporting a vulnerability
-Please do not open a public issue. Use GitHub's private advisory (*Security → Report a vulnerability*), see [SECURITY.md](../SECURITY.md).
+Please do not open a public issue. Use GitHub's private advisory (*Security → Report a vulnerability*), see [SECURITY.md](https://github.com/Brottuetchen/familienhub/blob/main/SECURITY.md).

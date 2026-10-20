@@ -1,0 +1,82 @@
+site_name: Familienhub
+site_description: The self-hosted family hub that works on its own and plugs into what you already run.
+site_url: https://brottuetchen.github.io/familienhub/
+repo_url: https://github.com/Brottuetchen/familienhub
+repo_name: Brottuetchen/familienhub
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: false
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.action.edit
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search:
+      lang:
+        - en
+        - de
+
+exclude_docs: |
+  internal/
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Brottuetchen/familienhub
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Install and set up: getting-started.md
+  - Features:
+      - Calendar, tasks and your phone: calendar.md
+      - Recipe import: recipe-import.md
+      - Template lists: templates.md
+      - Birthdays and gift ideas: birthdays.md
+      - Timetable for children: timetable.md
+      - Kids mode: kids-mode.md
+      - Notifications: notifications.md
+      - Push via ntfy: ntfy.md
+      - Voice assistant: voice-assistant.md
+  - Integrations & plugins:
+      - Plugins: plugins.md
+      - Notification sources: notification-sources.md
+  - Store & themes:
+      - Store: store.md
+      - Themes: themes.md
+  - Administration:
+      - Security and roles: security.md
+  - Development:
+      - Roadmap: roadmap.md
+      - Releasing: releasing.md
