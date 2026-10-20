@@ -1,5 +1,7 @@
 {
   "@@locale": "de",
+  "languageName": "Deutsch",
+  "@languageName": {"description": "Name of this language in its own language, shown in the language picker"},
   "pendingRejected": "{count, plural, =1{1 Änderung abgelehnt} other{{count} Änderungen abgelehnt}}",
   "@pendingRejected": {
     "placeholders": {

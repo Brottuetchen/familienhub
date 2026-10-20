@@ -145,7 +145,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 - **Fragen und Zeigen:** [GitHub Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 - **Fehler oder Wunsch melden:** [Issue anlegen](https://github.com/Brottuetchen/familienhub/issues), auch auf Deutsch, oder in der App *Mehr → Feedback senden*.
 - **Code beitragen:** [CONTRIBUTING](CONTRIBUTING.md) (englisch) beschreibt Entwicklungsumgebung und Pull Requests. Plugins und Themes können in eigenen Repositories liegen.
-- **Übersetzen:** Weitere Sprachen sind willkommen, geplant mit Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)). Bis dahin eine `.arb`-Datei anlegen, wie in [CONTRIBUTING](CONTRIBUTING.md) beschrieben.
+- **Übersetzen helfen:** Weitere Sprachen sind willkommen, ganz ohne Git. Das Weblate-Projekt folgt ([#25](https://github.com/Brottuetchen/familienhub/issues/25)); bis dahin siehe [Translations](CONTRIBUTING.md#translations) (englisch).
 - **Sicherheitslücke:** bitte privat melden, siehe [SECURITY.md](SECURITY.md).
 - **Wie geht es weiter:** die [Roadmap](docs/roadmap.md).
 

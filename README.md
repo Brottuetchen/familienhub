@@ -145,7 +145,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 - **Ask and show:** [GitHub Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 - **Report a bug or wish:** [open an issue](https://github.com/Brottuetchen/familienhub/issues), or use *More → Send feedback* in the app.
 - **Contribute:** see [CONTRIBUTING](CONTRIBUTING.md) for the dev setup and pull requests. Plugins and themes can live in their own repositories.
-- **Translate:** more languages are welcome, planned with Weblate ([#25](https://github.com/Brottuetchen/familienhub/issues/25)). Until then, add an `.arb` file as described in [CONTRIBUTING](CONTRIBUTING.md).
+- **Help translate:** more languages are welcome, no Git needed. The Weblate project is coming ([#25](https://github.com/Brottuetchen/familienhub/issues/25)); until then see [Translations](CONTRIBUTING.md#translations).
 - **Security issue:** please report it privately, see [SECURITY.md](SECURITY.md).
 - **What is next:** the [roadmap](docs/roadmap.md).
 
