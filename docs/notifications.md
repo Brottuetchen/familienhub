@@ -25,7 +25,7 @@ flowchart LR
 | **Web Push** | Browser and the web app on the home screen, including iPhone from iOS 16.4 | nothing: keys are generated on first start (own keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`); contact address = first admin's email or `VAPID_EMAIL` | *More → Notifications & devices → Enable notifications on this device* |
 | **ntfy** | Anyone with the ntfy app, especially iPhones with the sideloaded app | `ntfy` plugin: server and optional publish token, see [ntfy](ntfy.md) | Turn on *Notifications via ntfy*, subscribe to the shown topic in the ntfy app |
 
-- **Categories:** `task_assigned`, `task_due`, `reminder`, `shopping`, `house`, `media`, `documents`, `system`. Each person switches them on or off and sets quiet hours.
+- **Categories:** `task_assigned`, `task_due`, `reminder`, `shopping`, `house`, `media`, `documents`, `stars`, `plugins`, `system`. Each person switches them on or off and sets quiet hours. Installed plugins send through the `plugins` category with a rate limit per plugin, see [Push notifications from plugins](plugins.md#push-notifications-from-plugins).
 - **Buttons:** reminders carry *Done / In 1 hr / Tomorrow*. Android shows them through the app (FCM data message), the web app through its service worker (`app/web/push-sw.js`), ntfy as HTTP actions. All three use a short-lived token signed by the hub that is valid for one reminder and one person only.
 - **Test:** *More → Notifications & devices → Send test notification* reports how many channels it reached.
 - **Silent refresh:** after changes, the hub sends a silent FCM message so Android widgets update. This is not a visible notification.

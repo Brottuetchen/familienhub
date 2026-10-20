@@ -1,6 +1,8 @@
 // Installing plugins from GitHub (Administration → Plugins & access): what the server's
 // `/api/plugins/*` endpoints return. Texts arrive in the app's language.
 
+import 'admin.dart' show ConnectionResult;
+
 /// One setting of the form that is generated from the plugin's manifest.
 class PluginSettingSpec {
   final String key;
@@ -186,12 +188,16 @@ class PluginInstallResult {
   final bool updated;
   final bool restartRequired;
   final bool active;
+
+  /// The plugin's own connection test with the values just entered (null: the plugin has none).
+  final ConnectionResult? connectionTest;
   const PluginInstallResult({
     required this.id,
     required this.version,
     this.updated = false,
     this.restartRequired = false,
     this.active = false,
+    this.connectionTest,
   });
 
   factory PluginInstallResult.fromJson(Map<String, dynamic> j) => PluginInstallResult(
@@ -200,5 +206,8 @@ class PluginInstallResult {
         updated: j['updated'] == true,
         restartRequired: j['restart_required'] == true,
         active: j['active'] == true,
+        connectionTest: j['connection_test'] is Map
+            ? ConnectionResult.fromJson(Map<String, dynamic>.from(j['connection_test'] as Map))
+            : null,
       );
 }

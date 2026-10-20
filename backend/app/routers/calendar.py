@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import re
 
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
@@ -73,6 +75,89 @@ def _caldav_active() -> bool:
     return plugin_registry.serves("calendar", "nextcloud")
 
 
+# Calendar sources the router reads itself; a plugin with one of these ids is never asked for events
+# (``birthdays`` is not a plugin, the id is reserved so nobody can pose as it).
+HARD_WIRED_CALENDAR_SOURCES = frozenset({"hub_calendar", "nextcloud", "caldav", "ics", "birthdays"})
+PLUGIN_CALENDAR_TIMEOUT = 5.0  # seconds a plugin may take for its events
+MAX_PLUGIN_EVENTS = 2000
+_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+_EVENT_TEXT_KEYS = ("location", "description")
+
+
+def _plugin_calendar_sources():
+    """Active, chosen calendar plugins that are neither built in nor hard-wired in this router."""
+    from app.plugins.registry import plugin_registry
+
+    return [p for p in plugin_registry.providers("calendar") if not p.builtin and p.id not in HARD_WIRED_CALENDAR_SOURCES]
+
+
+def _plugin_event(plugin_id: str, raw: Any) -> Optional[Dict[str, Any]]:
+    """One event of a plugin in the hub's shape, or None. ``source`` and ``writable`` are not the plugin's to set."""
+    if not isinstance(raw, dict):
+        return None
+    calendar_id, start, end = raw.get("calendar_id"), raw.get("start"), raw.get("end")
+    if not isinstance(calendar_id, str) or not calendar_id.startswith(plugin_id + ":"):
+        return None  # a plugin only writes into its own calendars
+    if not isinstance(start, str) or not start or not isinstance(end, str):
+        return None
+    out: Dict[str, Any] = {"title": str(raw.get("title") or ""), "start": start, "end": end or start,
+                           "all_day": bool(raw.get("all_day")), "calendar": str(raw.get("calendar") or plugin_id),
+                           "calendar_id": calendar_id, "source": plugin_id, "writable": False}
+    for key in _EVENT_TEXT_KEYS:
+        if raw.get(key):
+            out[key] = str(raw[key])
+    color = raw.get("color")
+    if isinstance(color, str) and _COLOR_RE.match(color):
+        out["color"] = color
+    return out
+
+
+async def _plugin_events(db: Session, user: User, start: datetime, end: datetime) -> List[Dict[str, Any]]:
+    """Events of the calendar plugins, all asked at once. A plugin that fails or is too slow is skipped."""
+    from app.core.timing import timed
+
+    async def one(plugin) -> List[Dict[str, Any]]:
+        try:
+            raw = await timed(f"calendar:{plugin.id}", lambda: plugin.calendar_events(start, end, user, db),
+                              timeout=PLUGIN_CALENDAR_TIMEOUT, default=[], logger=logger)
+        except Exception as exc:  # noqa: BLE001 - a plugin must never break the calendar
+            logger.warning("calendar plugin %s skipped: %s", plugin.id, type(exc).__name__)
+            return []
+        if not isinstance(raw, (list, tuple)):
+            logger.warning("calendar plugin %s skipped: no list", plugin.id)
+            return []
+        kept = [e for e in (_plugin_event(plugin.id, item) for item in raw[:MAX_PLUGIN_EVENTS]) if e]
+        if len(kept) < min(len(raw), MAX_PLUGIN_EVENTS):
+            logger.warning("calendar plugin %s: %d events dropped (invalid or foreign calendar)", plugin.id,
+                           min(len(raw), MAX_PLUGIN_EVENTS) - len(kept))
+        return kept
+
+    plugins = _plugin_calendar_sources()
+    if not plugins:
+        return []
+    return [e for part in await asyncio.gather(*(one(p) for p in plugins)) for e in part]
+
+
+def _plugin_calendars(db: Session, user: User) -> List[Dict[str, Any]]:
+    """Calendars (chips, filters) of the calendar plugins; read-only, shared with the family."""
+    out: List[Dict[str, Any]] = []
+    for plugin in _plugin_calendar_sources():
+        try:
+            items = plugin.calendars(user, db)
+        except Exception as exc:  # noqa: BLE001 - fail softly
+            logger.warning("calendar plugin %s: calendars skipped: %s", plugin.id, type(exc).__name__)
+            continue
+        for c in items if isinstance(items, (list, tuple)) else []:
+            cid = c.get("id") if isinstance(c, dict) else None
+            if not isinstance(cid, str) or not cid.startswith(plugin.id + ":"):
+                continue
+            color = c.get("color")
+            out.append({"id": cid, "name": str(c.get("name") or cid), "source": plugin.id,
+                        "color": color if isinstance(color, str) and _COLOR_RE.match(color) else None,
+                        "writable": False, "family": True})
+    return out
+
+
 RRULE = {"daily": "DAILY", "weekly": "WEEKLY", "monthly": "MONTHLY", "yearly": "YEARLY"}
 
 
@@ -99,7 +184,8 @@ def _hub_occurrences(e, window_start: datetime, window_end: datetime) -> List[Di
 
 
 async def collect_events(db: Session, user: User, days: int, start: Optional[datetime] = None) -> List[Dict[str, Any]]:
-    """All events of the time window: CalDAV (own account, else the shared one) and the hub calendar."""
+    """All events of the time window: CalDAV (own account, else the shared one), ICS, the hub calendar,
+    birthdays and the read-only events of calendar plugins."""
     from app.models.hub import HubEvent
 
     start = start or datetime.now()
@@ -123,6 +209,7 @@ async def collect_events(db: Session, user: User, days: int, start: Optional[dat
             (HubEvent.end >= midnight) | (HubEvent.recurrence != "none")).all()
         for e in rows:
             events.extend(o for o in _hub_occurrences(e, midnight, end) if o["end"] >= midnight.date().isoformat())
+    events.extend(await _plugin_events(db, user, start, end))
     events.extend(_birthday_events(db, user, start, end))
     events.sort(key=lambda e: e.get("start") or "")
     return events
@@ -206,6 +293,7 @@ async def calendars(current_user: User = Depends(get_current_user), db: Session 
 
         for name, _url in parse_feeds(get_setting("ICS_FEEDS")):
             out.append({"id": feed_id(name), "name": name, "source": "ics", "color": None, "writable": False, "family": True})
+    out.extend(_plugin_calendars(db, current_user))
     from app.services import birthdays
 
     if birthdays.visible_rows(db, current_user):  # the chip only appears once there is something to show

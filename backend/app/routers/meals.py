@@ -64,6 +64,8 @@ async def get_meals(
     for e in entries:
         if e.date not in hub_meals_by_date:
             hub_meals_by_date[e.date] = []
+        if e.source:  # recipe of an external plugin: shown like a Mealie/Cookidoo entry
+            continue
         recipe = recipes.get(e.recipe_id)
         hub_meals_by_date[e.date].append({
             "id": e.id,
@@ -119,13 +121,17 @@ async def get_meals(
         except MealieUnavailable as exc:
             status, error = "unavailable", str(exc)  # other entries stay visible
 
+    from app.plugins.sources import planned_entries
+
+    plugin_meals_by_date = planned_entries(db, today, end)  # recipes of installed plugins, planned in the hub
+
     # Merge nach Tagen
     days_list = []
     current = today
     while current <= end:
         date_str = current.isoformat()
         entries_for_day = (hub_meals_by_date.get(date_str, []) + cookidoo_meals_by_date.get(date_str, [])
-                           + mealie_meals_by_date.get(date_str, []))
+                           + mealie_meals_by_date.get(date_str, []) + plugin_meals_by_date.get(date_str, []))
         days_list.append({
             "date": date_str,
             "entries": entries_for_day,
@@ -174,6 +180,8 @@ async def get_plan(
     for e in entries:
         if e.date not in hub_meals_by_date:
             hub_meals_by_date[e.date] = []
+        if e.source:  # recipe of an external plugin: shown like a Mealie/Cookidoo entry
+            continue
         recipe = recipes.get(e.recipe_id)
         hub_meals_by_date[e.date].append({
             "id": e.id,
@@ -212,12 +220,17 @@ async def get_plan(
                 "days": [],
             }
 
+    from app.plugins.sources import planned_entries
+
+    plugin_meals_by_date = planned_entries(db, today, end)
+
     # Merge nach Tagen
     days_list = []
     current = today
     while current <= end:
         date_str = current.isoformat()
-        entries_for_day = hub_meals_by_date.get(date_str, []) + cookidoo_meals_by_date.get(date_str, [])
+        entries_for_day = (hub_meals_by_date.get(date_str, []) + cookidoo_meals_by_date.get(date_str, [])
+                           + plugin_meals_by_date.get(date_str, []))
         days_list.append({
             "date": date_str,
             "entries": entries_for_day,
@@ -426,6 +439,30 @@ async def generate_shopping_list(
             report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
         else:
             report(source, label, len(ids), added, "ok", f"{label}: {len(ids)} Rezepte auf die Einkaufsliste übernommen.")
+
+    # Recipes of installed plugins (planned in the hub): the plugin's own list or ours, see PluginRecipes
+    from app.plugins.sources import PluginSourceError, planned_entries, recipe_service
+
+    by_plugin: dict = {}
+    for entries in planned_entries(db, start_d, end_d).values():
+        for e in entries:
+            info = by_plugin.setdefault(e["source"], {"label": e["source_name"], "ids": []})
+            if e["recipe_id"] not in info["ids"]:
+                info["ids"].append(e["recipe_id"])
+    for source, info in by_plugin.items():
+        service, label = recipe_service(source), info["label"]
+        if service is None:
+            continue
+        try:
+            added = await recipes_to_shopping(service, info["ids"], current_user.id)
+        except PluginSourceError:
+            report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("%s shopping failed: %s", label, type(exc).__name__)
+            report(source, label, 0, 0, "unavailable", f"{label}: nicht erreichbar, übersprungen.")
+        else:
+            report(source, label, len(info["ids"]), added, "ok",
+                   f"{label}: {len(info['ids'])} Rezepte auf die Einkaufsliste übernommen.")
 
     total = sum(x["added"] for x in sources)
     if not sources:

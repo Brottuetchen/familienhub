@@ -321,6 +321,13 @@ final timetableChildrenProvider = FutureProvider.autoDispose<List<TimetableChild
 final timetableProvider = FutureProvider.autoDispose.family<TimetableData, int>(
     (ref, childId) => ref.watch(apiClientProvider).timetable(childId));
 
+/// Calendar week of a child with real dates: [start] is any day of the week.
+final timetableWeekProvider = FutureProvider.autoDispose.family<TimetableWeek, ({int childId, DateTime start})>(
+    (ref, key) => ref.watch(apiClientProvider).timetableWeek(key.childId, key.start));
+
+final timetableSourcesProvider = FutureProvider.autoDispose<TimetableSources>(
+    (ref) => ref.watch(apiClientProvider).timetableSources());
+
 final remindersProvider = FutureProvider.autoDispose<List<Reminder>>(
     (ref) => ref.watch(apiClientProvider).reminders());
 

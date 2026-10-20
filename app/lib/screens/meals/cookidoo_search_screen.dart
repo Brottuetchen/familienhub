@@ -7,6 +7,7 @@ import '../../models/common.dart';
 import '../../models/meals.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../widgets/hub_image.dart';
 import '../../l10n/l10n.dart';
 import 'recipe_quick_view.dart';
 
@@ -60,7 +61,9 @@ class _CookidooSearchScreenState extends ConsumerState<CookidooSearchScreen> {
   /// Tapping a result opens the quick view; planning happens there (on the day this search is for).
   Future<void> _open(CookidooRecipe recipe) async {
     final result = await showRecipeQuickView(context,
-        RecipeRef(source: widget.source, id: recipe.id, title: recipe.name, image: recipe.thumbnail, url: recipe.url),
+        RecipeRef(
+            source: widget.source, id: recipe.id, title: recipe.name, image: recipe.thumbnail, url: recipe.url,
+            sourceLabel: widget.sourceName),
         planDay: widget.day);
     if (result == QuickViewResult.changed && mounted) Navigator.pop(context, true);
   }
@@ -131,7 +134,7 @@ class RecipeThumb extends StatelessWidget {
     if (url == null || url!.isEmpty) return fallback;
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Image.network(url!, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback),
+      child: HubImage(url: url, width: size, height: size, placeholder: fallback),
     );
   }
 }

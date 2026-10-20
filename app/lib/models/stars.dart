@@ -1,4 +1,5 @@
 import 'common.dart';
+import 'plugin_card.dart';
 
 /// Own stars: balance, what is reserved by open requests, the next reward and (parents) open decisions.
 class StarsSummary {
@@ -40,7 +41,11 @@ class StarReward {
   final bool active;
   final int missing;
 
-  const StarReward({required this.id, required this.title, required this.price, this.active = true, this.missing = 0});
+  /// Plugin action that runs when a parent approves this reward (only parents get to see it).
+  final RewardActionRef? action;
+
+  const StarReward(
+      {required this.id, required this.title, required this.price, this.active = true, this.missing = 0, this.action});
 
   factory StarReward.fromJson(Map<String, dynamic> json) => StarReward(
         id: parseInt(json['id']) ?? 0,
@@ -48,6 +53,7 @@ class StarReward {
         price: parseInt(json['price']) ?? 0,
         active: json['active'] != false,
         missing: parseInt(json['missing']) ?? 0,
+        action: RewardActionRef.fromJson(json['action']),
       );
 }
 

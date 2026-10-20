@@ -408,5 +408,6 @@ def test_migration_head_is_unique():
     root = pathlib.Path(__file__).resolve().parents[1]
     cfg = Config(str(root / "alembic.ini"))
     cfg.set_main_option("script_location", str(root / "alembic"))
-    assert ScriptDirectory.from_config(cfg).get_heads() == ["f8a9b0c1d2e3"]
+    # Each new migration moves the head; the test is about there being exactly one (no branches)
+    assert len(ScriptDirectory.from_config(cfg).get_heads()) == 1
 

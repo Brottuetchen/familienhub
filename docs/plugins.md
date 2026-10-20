@@ -129,7 +129,7 @@ The `package` field of the manifest points to the folder with `pyproject.toml` (
 | `author` | required | At most 100 characters. |
 | `homepage` | optional | An `https://` address. |
 | `license` | optional | e.g. an [SPDX](https://spdx.org/licenses/) id such as `MIT`. |
-| `min_hub_version` | optional | The oldest hub version that works, e.g. `1.0.0`. Compared by its numbers; if the hub's own version is not a number (e.g. `dev`), the check is skipped. Installing on an older hub is refused. |
+| `min_hub_version` | optional | The oldest hub version that works, e.g. `1.0.0`. Compared by its numbers, pre-releases included (`1.0.0-beta.2` is older than `1.0.0-beta.3`, which is older than `1.0.0`); edge builds count as newer than the pre-releases of their number. If the hub's own version is not a number (e.g. `dev`), the check is skipped. Installing on an older hub is refused. |
 | `package` | optional | Folder with the `pyproject.toml` (or `setup.py`), relative to the manifest, default `.`. No `..`, no absolute path. |
 | `entry_point` | required | `module:Class`, e.g. `fh_plugin_grocy.plugin:GrocyPlugin`. The class, or a function that returns a `Plugin`. |
 | `settings` | optional | The settings the admin fills in, at most 20, see below. |
@@ -227,14 +227,14 @@ include = ["fh_plugin_grocy*"]
 
 ### Rules
 
-- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `push_ntfy`. Recipe sources (`meal_planning`) appear in the app as "Recipe from <name>" through `/api/recipe-sources` (`backend/app/routers/recipe_sources.py`); a new source adds its service there. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints.
+- **Capabilities** decide which areas the app shows: `tasks`, `calendar`, `shopping`, `meal_source`, `meal_planning`, `documents`, `books`, `media_requests`, `weather`, `timetable`, `push_ntfy`. Plugins provide data for `shopping`, `meal_planning` and `timetable` by overriding methods of `Plugin`, see [Data sources](#data-sources); recipe sources appear in the app as "Recipe from <name>" through `/api/recipe-sources` without any change to the hub. Several task providers can be active side by side. For the other areas, the first active plugin wins. A plugin without capabilities only offers its own endpoints. A `calendar` plugin overrides two methods, `calendars(user, db)` and `async calendar_events(start, end, user, db)`, see [Calendar plugins](#calendar-plugins); all active calendar plugins are merged.
 - **Settings** are read only through `get_setting(KEY)`: admin entry > core setting > environment. Fields with `secret` are stored encrypted (Fernet, key derived from the hub's `SECRET_KEY`) and never sent back to the app: the app only learns *set* or *not set*.
 - **Active** means all required settings are set and the id is not in `PLUGINS_DISABLED`. Override `is_configured()` if your plugin works with per-person accounts instead.
 - **Fail softly.** Lists from external systems use `{status: ok | unavailable | not_configured, error, items}`. An external system that is down must never break the app: catch `httpx.HTTPError` and parse errors, set a timeout (6 s is a good default), return `unavailable` plus a short message. An exception in your code becomes an error page for the user, so catch what you can foresee.
 - **Never log secrets, tokens, passwords or full addresses with credentials.** The admin log shows what you log at warning level or above.
 - **Personal data only with personal access.** If data belongs to a person (documents, tasks, requests), each person connects their own account. There is no shared admin login that reads everyone's data.
 - **Roles:** protect write endpoints with `require_min_role(ROLE_PARTNER)` (`ROLE_CHILD`, `ROLE_PARTNER`, `ROLE_ADMIN` from `app.models.user`; `require_min_role` from `app.core.security`) as a dependency: `Depends(require_min_role(ROLE_PARTNER))`. Guests mostly read: see the role table in [security](security.md).
-- **Notifications:** call `await notify(user_id, title, body, category=…, data={"route": "/…"})` from `app.services.notify`. Quiet hours and channels are handled for you, and the text is translated for the recipient when it is a known hub text; texts from your plugin stay as you write them, so write them in the language you want or pick one per recipient yourself.
+- **Notifications:** use `app.plugins.api.notify` (category `plugins`, switchable per person, rate limited, see [Extension points](#push-notifications-from-plugins)). Calling `await notify(user_id, title, body, category=…, data={"route": "/…"})` from `app.services.notify` directly still works for plugins in a custom image. Quiet hours and channels are handled for you, and the text is translated for the recipient when it is a known hub text; texts from your plugin stay as you write them, so write them in the language you want or pick one per recipient yourself.
 - **Texts in two languages.** In the manifest, `name`, `description`, `label` and `help` can be `{"de": …, "en": …}`; the app shows the text in its language (the admin's choice, else the phone's), and falls back to German, then English. For texts your endpoints return (`error` and the like), use `request_language(request)` from `app.core.i18n` (it returns `"de"` or `"en"` from `X-App-Language` / `Accept-Language`) and pick the text yourself, as in the example above. Texts that are only a single string are shown as they are in every language.
 - **Database tables:** installed plugins cannot ship migrations and must not create tables in the hub's database themselves. Keep state in the service you connect to, or in settings. If you need tables, open an issue; built-in plugins use Alembic migrations in the main repository.
 - **App screens:** a plugin can only extend the server. If it needs its own screens in the app, open an issue first: app screens are part of the main repository.
@@ -275,6 +275,319 @@ Try it for real before you publish: push to a branch of your repository and inst
 - No token, password or private address in the repository, the tests or the logs.
 - The README says what the plugin reads and writes, whose credentials it uses and which hosts it contacts.
 - Tests pass; the version is raised.
+
+## Extension points
+
+Besides endpoints and capabilities, a plugin can hook into the hub. Every hook is a method on `Plugin` with a safe default (it does nothing), so a plugin overrides only what it needs. The hub calls hooks **only while the plugin is active** (all required settings set, not switched off: a plugin that still *needs setup* runs none of them), **with a timeout**, and **catches every exception** (logged by type only, never with the message, which might contain a token). A broken plugin never breaks a screen.
+
+| Hook | What it does | Called | Timeout | Details |
+|---|---|---|---|---|
+| `async today_cards(user, db) -> list[dict]` | Cards on the person's "Today" screen | on every `GET /api/today` | 4 s | [Today cards](#today-cards) |
+| `app.plugins.api.notify(...)` (a function, not a hook) | Push notification to family members | by the plugin, any time | – | [Notifications](#push-notifications-from-plugins) |
+| `schedule_minutes` + `async scheduled(db)` | Periodic job | by the scheduler, every `schedule_minutes` | 120 s | [Scheduled jobs](#scheduled-jobs) |
+| `reward_actions()` + `async run_reward_action(...)` | Action when a parent approves a reward (kids mode) | on approval | 20 s | [Reward actions](#reward-actions-kids-mode) |
+| `async test_settings(values) -> dict` | "Test connection" with values that are not saved yet | install and settings screens | 15 s | [Credentials and test](#credentials-and-connection-test) |
+| Calendar events from plugins | Plugin events in the family calendar | – | – | see [Calendar plugins](#calendar-plugins) |
+| Data sources: `shopping_connector`, `recipe_search` / `recipe`, `timetable`, `proxy_image` | Plugin data for shopping, recipes and timetable; images from internal servers | – | – | see [Data sources](#data-sources) |
+
+General rules for all hooks:
+
+- **Everything a plugin returns is validated and shortened by the hub** before a person sees it. Invalid fields are dropped, too long texts are cut with an ellipsis, control characters and line breaks are removed. Do not rely on formatting.
+- **Hooks get the hub's database session** (`db`) for the request or job. Do not keep it, do not commit changes you did not make, and keep your own state in the service you connect to or in settings (see *Database tables* above).
+- **Fail softly:** return `[]` / `None` when there is nothing to show or the service is down. Raising is allowed (it is caught), but returning is cheaper and clearer.
+- **Be quick.** `today_cards` runs on every start of the app, so use short timeouts for your service calls (3 s) and cache what you can in memory.
+
+### Today cards
+
+```python
+class GrocyPlugin(Plugin):
+    async def today_cards(self, user, db):
+        # `user` is the person who opens Today: show only what they may see
+        low = await self._low_stock()           # your own code, with its own timeout
+        if not low:
+            return []                           # nothing to show: no card
+        return [{
+            "id": "stock",                      # unique within your plugin
+            "title": "Stock",
+            "icon": "shopping_cart",            # one of the icon names below
+            "badge": str(len(low)),             # optional, short
+            "lines": [{"text": p["name"], "secondary": f"{p['amount']} left"} for p in low[:6]],
+            "image": "/api/plugins/grocy/chart.png",   # optional, served by your own router
+            "link": "https://grocy.example.org/stockoverview",   # optional, https only
+        }]
+```
+
+| Field | Rules |
+|---|---|
+| `id` | required, `A–Z a–z 0–9 _ -`, at most 40 characters, unique within the plugin (duplicates are dropped) |
+| `title` | required, at most 60 characters |
+| `icon` | a Material icon name from the allow-list below; anything else becomes `extension` |
+| `lines` | at most 6 lines; each `{"text": str, "secondary": str \| None}` (a plain string works as `text`), at most 160 characters each |
+| `image` | optional. A hub-relative path that **must start with `/api/plugins/<your plugin id>/`**, no `..`, no `//`, no encoded dots or slashes, at most 300 characters. It is served by your own router, which already requires a login, and the app loads it with the person's login. Anything else is dropped (the card stays) |
+| `link` | optional, an `https://` address (opens outside the app), at most 500 characters; other schemes are dropped |
+| `badge` | optional, at most 16 characters |
+
+At most 5 cards per plugin. Allowed icons: `extension info event schedule check_circle shopping_cart restaurant home school sports_soccer local_shipping cloud wb_sunny notifications favorite star book movie music_note directions_car directions_bus pets build eco water_drop bolt lock payments medication cake child_care fitness_center local_laundry_service delete_outline wifi thermostat photo celebration sync warning` (list in `backend/app/plugins/hooks.py`, `CARD_ICONS`).
+
+The hub puts the validated cards into `GET /api/today` as `plugin_cards` (each with `key`, `plugin`, `plugin_name` and the fields above). In the customisable Today layout every card has the id `plugin:<plugin id>:<card id>`. The layout accepts these ids only for active plugins; a card of a plugin that is switched off disappears from the stored layout. New cards appear at the end, visible, until the person hides, moves or resizes them like any other card. The card is shown with its title (and *From the plugin …*) in the layout editor.
+
+### Push notifications from plugins
+
+```python
+from app.plugins.api import notify
+
+result = await notify("grocy",
+                      user_ids=[user.id],            # and/or roles=["partner", "admin"]; "all" = everyone active
+                      title="Milk is almost gone",
+                      body="Only 1 left",
+                      url="https://grocy.example.org/stockoverview",   # optional, https only
+                      data={"route": "/shopping"})                      # optional, up to 10 short text values
+# {"recipients": 1, "delivered": 1, "sent": True, "reason": None}
+```
+
+`notify(plugin_id, *, user_ids=None, roles=None, title, body="", url=None, data=None)` is a thin wrapper around the hub's notification service. Quiet hours, the person's devices (FCM, Web Push, ntfy) and their notification settings apply, and the message is also kept in the person's history.
+
+- **Category:** all plugin notifications use the one category **`plugins`**. Each person can switch it off (or set quiet hours for it) under *More → Notification settings → Plugins*. The history shows the plugin as the source (`plugin:<id>`).
+- **Recipients:** people by `user_ids`, and/or everyone with one of the `roles` (`admin`, `partner`, `child`, `guest`, or `all`). Without recipients nothing is sent. At most 50 people per call.
+- **Limits:** title 100 characters, body 500, at most 10 `data` values of 200 characters. `data["route"]` may be an in-app path such as `/shopping`; keys the hub uses itself (`actions`, `action_token`, `notification_id` …) are ignored.
+- **Rate limit:** each plugin may send **20 notifications per hour** (one call counts once, whatever the number of recipients). Further calls are dropped and logged until the hour has passed, so a buggy plugin cannot flood a family.
+- **Fails softly:** never raises. The result says whether anything was sent and, if not, why (`reason`: `inactive`, `no_recipients`, `invalid`, `rate_limited`, `error`). A plugin that is switched off or needs setup sends nothing.
+- Write the text in the language you want; the hub only translates its own texts.
+
+### Scheduled jobs
+
+```python
+class GrocyPlugin(Plugin):
+    def __init__(self):
+        super().__init__(id="grocy", ...)
+        self.schedule_minutes = 30              # at least 5; None (default) = no job
+
+    async def scheduled(self, db):
+        for product in await self._low_stock():
+            await notify("grocy", roles=["partner"], title="Low stock", body=product["name"])
+```
+
+`schedule_minutes` can also be a class attribute. The hub's scheduler checks once a minute and runs `scheduled(db)` for every **active** plugin whose interval has passed (a value below 5 counts as 5). Each job runs in its own task with a **120 second timeout**, **never twice at the same time** for one plugin (a run that is still going is skipped), and an exception is logged by type and never stops the scheduler or other plugins. The time of the last run is kept in memory only: after a restart every plugin runs once soon. Keep the job idempotent, and remember what you already did (for example a notification already sent) in the service you connect to.
+
+### Reward actions (kids mode)
+
+A plugin can offer actions that a reward triggers when a parent approves it, for example "unlock the tablet for N minutes":
+
+```python
+class KidSyncPlugin(Plugin):
+    def reward_actions(self):
+        return [{
+            "id": "unlock",
+            "label": "Unlock the tablet",
+            "params": [                          # setting-like fields the parent fills in
+                {"key": "minutes", "label": "Minutes", "type": "number", "required": True},
+                {"key": "device", "label": "Device", "type": "select", "default": "tab",
+                 "options": [{"value": "tab", "label": "Tablet"}, {"value": "tv", "label": "TV"}]},
+            ],
+        }]
+
+    async def run_reward_action(self, action_id, params, child, reward, db):
+        # params: {"minutes": "30", "device": "tab"} (strings, already validated against the fields above)
+        try:
+            await self._unlock(child.username, int(params["minutes"]))
+        except MyServiceError:
+            return {"ok": False, "message": "Tablet not reachable"}
+        return {"ok": True, "message": f"Tablet unlocked for {params['minutes']} minutes"}
+```
+
+- **Fields** (`params`): `key` (`a–z`, digits, `_`), `label`, `type` (`text`, `number`, `bool`, `select` with `options`), `required` (default true; never for `bool`), `default`, `help`. At most 20 actions and 8 fields per action.
+- **Parents choose it** when creating or editing a reward in the app (*Stars and rewards*): a drop-down of the actions of all active plugins, plus the fields of the chosen one. `GET /api/stars/reward-actions` (parents only) lists them. A reward is saved with `action: {"plugin", "action", "params"}`; `action: null` removes it. The values are checked against your field specs, and an action of a plugin that is not active is refused. Children never see the action or its values.
+- **On approval:** the approval and the star booking are committed first. Then the action runs (20 s timeout). Its result is shown to the approving parent (response field `action_result`, and a notification), and on success the child gets a notification, too. **A failure never reverts the approval**: an exception, a timeout, `{"ok": false}`, a plugin that has been switched off or removed since all lead to a failure message for the parent and a log line, and the stars stay paid.
+- The action runs once per approval (a second approval of the same request is refused by the stars rules). It uses the reward's *current* action and values.
+- Return `{"ok": bool, "message": str}`; the message is shortened to 300 characters. Never put secrets in it.
+
+### Credentials and connection test
+
+Settings in the manifest drive the install screen. When an admin installs a plugin from a link or from the store, the app asks for them **before** the plugin is activated:
+
+- `required` settings must be filled in (a missing one is refused before anything is downloaded), `url` and `number` values are checked, and values of `secret` / `password` settings are stored **encrypted** and never sent back (the form shows *saved, leave empty to keep*).
+- A plugin whose required settings are missing (or that an admin cleared later) shows as **not set up** (`needs_setup` in the plugin list) and runs none of its hooks.
+- **Test connection:** implement `async test_settings(self, values) -> {"ok": bool, "level": "ok" | "info" | "warn" | "error", "message": str}`. `values` maps each of your setting keys to the value as typed, **not yet saved**; a secret the admin left empty arrives as the stored value. The same hook serves both screens: right after installing, the result is shown in the install screen (the plugin's code is only loaded once it is installed, so a new plugin is tested as its last install step, with the values just entered; a failing test does not undo the installation, the admin sees the message and can correct the settings), and the *Test connection* button of the plugin's settings screen and of an update calls it before saving. Plugins without this hook get the generic reachability check, or none. Return short messages without addresses or tokens; an exception or a hang (15 s) is reported as a failed test without details.
+
+```python
+    async def test_settings(self, values):
+        base = values["GROCY_URL"].rstrip("/")
+        try:
+            async with httpx.AsyncClient(timeout=6) as client:
+                r = await client.get(f"{base}/api/system/info", headers={"GROCY-API-KEY": values["GROCY_API_KEY"]})
+        except httpx.HTTPError:
+            return {"ok": False, "level": "error", "message": "Grocy is not reachable"}
+        if r.status_code in (401, 403):
+            return {"ok": False, "level": "error", "message": "Grocy rejected the API key"}
+        return {"ok": r.status_code == 200, "level": "ok" if r.status_code == 200 else "error",
+                "message": "Connected to Grocy" if r.status_code == 200 else f"Grocy answers with error {r.status_code}"}
+```
+
+The [plugin template](../examples/plugin-template/) shows `today_cards` and `test_settings` working with tests.
+
+## Calendar plugins
+
+A plugin with the capability `calendar` can show events in the family calendar. It is read-only: the hub never writes to a plugin's calendars. Two methods of `Plugin` are the whole interface:
+
+```python
+from datetime import date, datetime, timedelta
+
+from app.plugins import Plugin, Setting
+
+
+class SchoolTripsPlugin(Plugin):
+    def __init__(self):
+        super().__init__(id="schooltrips", name="School trips", capabilities=frozenset({"calendar"}),
+                         settings=(Setting("SCHOOLTRIPS_CLASS", "Class"),))
+
+    def calendars(self, user, db):
+        # The chips and filters in the app. Ids start with "<plugin id>:", the colour is None or "#RRGGBB".
+        return [{"id": "schooltrips:trips", "name": "School trips", "color": "#E07A5F"}]
+
+    async def calendar_events(self, start: datetime, end: datetime, user, db):
+        # Events in [start, end), local wall time. Fetch with httpx, catch errors, return [] when in doubt.
+        day = date(2026, 11, 12)
+        if not (start.date() <= day < end.date()):
+            return []
+        return [{
+            "title": "Museum visit",
+            "start": day.isoformat(),                         # all-day: a date ...
+            "end": (day + timedelta(days=1)).isoformat(),     # ... and an exclusive end date, like ICS
+            "all_day": True,
+            "calendar": "School trips",                       # display name
+            "calendar_id": "schooltrips:trips",               # must start with "schooltrips:"
+            "location": "Old town",                           # optional, as are "description" and "color"
+        }]
+```
+
+- **Event shape** is the one of calendar subscriptions (ICS): `title`, `start`, `end`, `all_day`, `calendar`, `calendar_id`, optionally `location`, `description`, `color` (`#RRGGBB`). Timed events use ISO date-times in the hub's local time (`2026-11-12T09:30:00`); all-day events use ISO dates with an **exclusive** end.
+- **The hub sets `source` to your plugin id and `writable` to false**, whatever you return. Events whose `calendar_id` does not start with `<plugin id>:` are dropped, so a plugin cannot show up in another calendar. The same prefix rule applies to `calendars()`.
+- **Fail softly.** All calendar plugins are asked at once, each with a limit of about 5 seconds. A plugin that raises, times out or returns something that is not a list is skipped (and logged); the calendar and Today still work. Cache what you fetch: the hub asks on every refresh of the calendar and of Today.
+- Only active plugins that the admin did not exclude under *Sources per area* are asked. The built-in sources (family calendar, CalDAV, calendar subscriptions, birthdays) are read by the hub itself, plugins with these ids are never called.
+- Today shows plugin events like any other. The `/api/calendar/holidays` endpoint (German public holidays, computed in the hub) is not affected.
+- The hook exists since hub **1.0.0-beta.3**. Set `"min_hub_version": "1.0.0-beta.3"` in your store entry and manifest so older hubs refuse the install with a reason.
+
+## Data sources
+
+A plugin can be the **data source** of an existing area of the app: the shopping list, recipes, or a child's timetable. The app, the voice assistant and the Today screen keep working as before; they just read from your plugin. You provide a source by overriding a method of `Plugin` and declaring the capability in the manifest and the class.
+
+For events in the calendar see [Calendar plugins](#calendar-plugins); for Today cards, notifications, scheduled jobs and the other hooks see [Extension points](#extension-points).
+
+Rules that apply to every hook below:
+
+- **Every hook has a safe default** (nothing, empty, "not supported"). Override only what you provide.
+- **The hub calls hooks with a timeout** (15 s; the timetable 3 s, because Today waits for it) and **catches every exception**. The user sees "not reachable", never your error text and never a stack trace; details go to the admin log (warning level, so never put secrets in an exception message).
+- **Return plain data** (dicts, lists, strings, numbers). Unknown or malformed rows are dropped; texts are shortened to their field's length.
+- Hooks are `async`, except `shopping_connector`. Do not block the event loop: use `httpx.AsyncClient`.
+- **Setup:** the plugin must be *active* (all required settings set). Admins choose a single source for shopping under *Administration → Sources per area*; recipe sources and timetable plugins are offered as soon as they are active.
+
+### 1. Shopping list: capability `shopping`
+
+```python
+from app.plugins import Plugin, ShoppingConnector          # ShoppingConnector lives in app.plugins.sources
+
+
+class GrocyList(ShoppingConnector):
+    async def list_items(self):                            # all items, open and checked
+        return [{"uid": "17", "summary": "Milk", "status": "needs_action", "description": "2 l"}]
+
+    async def add(self, summary, user_id=None, description=None) -> bool: ...
+    async def set_done(self, uid, done) -> bool: ...        # check / uncheck
+    async def delete(self, uid) -> bool: ...                # False = not found (HTTP 404)
+    async def rename(self, uid, summary) -> bool:           # optional
+        return False
+
+
+class GrocyPlugin(Plugin):
+    def shopping_connector(self, db):                       # not async; db is a short-lived session
+        return GrocyList()                                  # None = not supported
+```
+
+Items are dicts `{uid, summary, status, description?, amount?}`. `status` is `needs_action` (open) or `completed` (checked); `uid` is any string that is stable for the item; `amount` is shown as the description when there is none. Only `list_items`, `add`, `set_done` and `delete` are required; `rename` is optional (without it, equal recipe ingredients are listed one by one instead of merged into one entry).
+
+When an admin chooses your plugin under *Sources per area → Shopping*, **everything** uses it: the shopping screen (list, add, check, delete, suggestions from recently checked items), template lists ("apply to shopping list"), recipe ingredients (also the week's shopping list), voice ("add milk") and the open-items counter on Today. Open entries are merged with new recipe ingredients as on the hub list. Do not keep `db` after `shopping_connector` returns; it is meant for reading hub-side data and is closed afterwards.
+
+Failures: reading fails softly (`{"status": "unavailable", "groups": []}`, the app shows its offline banner); a failing write answers HTTP 502 with a short generic text.
+
+### 2. Recipes: capability `meal_planning`
+
+```python
+class GrocyPlugin(Plugin):
+    async def recipe_search(self, query: str, limit: int) -> list[dict]:
+        return [{"id": "42", "name": "Potato gratin", "thumbnail": "/api/plugins/grocy/img/42",
+                 "url": "https://grocy.example.org/recipe/42", "minutes": 45}]
+
+    async def recipe(self, recipe_id: str) -> dict:
+        return {"id": "42", "name": "Potato gratin", "image": "/api/plugins/grocy/img/42",
+                "url": "https://grocy.example.org/recipe/42", "servings": 4, "minutes": 45,
+                "ingredients": ["500 g potatoes", "200 ml cream"], "steps": ["Slice", "Bake 40 minutes"]}
+
+    async def recipe_to_shopping(self, recipe_ids: list[str], user_id: int | None = None) -> int | None:
+        ...  # optional: put the ingredients on the plugin's own list, return how many recipes went in
+```
+
+The plugin appears next to Mealie and Cookidoo as **Recipe from \<name\>** (`GET /api/recipe-sources` lists every active plugin that overrides `recipe_search`): search (at least 3 characters), recipe quick view, **plan on a day**, and **ingredients to the shopping list**. `recipe_search` returns at most `limit` rows (30); `id` can be any string, it is passed back to `recipe`. `thumbnail`, `image` and `url` may be absolute `https://` addresses or **hub-relative** routes of your plugin (see [images](#4-images-from-an-internal-server)). `servings` and `minutes` are optional numbers; `ingredients` and `steps` are plain text lines.
+
+- **Planning** is stored by the hub (`meal_plan` rows with the plugin id and your recipe id), so your plugin needs no calendar. A planned recipe shows in the week and on Today like a Mealie recipe, can be removed, and its ingredients are included when the week's shopping list is generated. If the plugin is removed or switched off, its entries are hidden (and stay stored).
+- **Ingredients:** without `recipe_to_shopping` (or when it returns `None`) the hub puts the ingredient lines of `recipe()` on *its* shopping list, merged like other recipes. With `recipe_to_shopping` the plugin's own list is used instead. Return the number of recipes handled, or `None` to let the hub do it.
+- Mealie and Cookidoo are unchanged; built-in sources are not plugins of this kind.
+
+### 3. Timetable: capability `timetable`
+
+```python
+class SchoolPlugin(Plugin):
+    async def timetable(self, child, start: date, end: date, db) -> list[dict]:
+        # child.id (hub user), child.name, child.person_id (the identifier a parent mapped)
+        return [{"date": "2026-10-20", "start": "08:00", "end": "08:45", "title": "Maths",
+                 "kind": "school", "location": "R204", "status": "cancelled",
+                 "note": "Teacher ill", "teacher": "Ms Smith", "period": 1}]
+
+    async def timetable_people(self) -> list[dict]:      # optional: enables a dropdown in the app
+        return [{"id": "1234", "name": "Mia Muster"}]
+```
+
+`timetable` is called with the hub child (`ChildRef`: `id`, `name`, `person_id`), a date range of one calendar week at most (inclusive) and a database session. Fields of a lesson: `date` (`YYYY-MM-DD`, inside the range), `start` and `end` (`HH:MM`, 24 h, `end` not before `start`), `title` (80 characters), `kind` (`school` default, `sport`, `music`, `club`, `other`), `location`, `teacher`, `note` (what changed, shown under the lesson), `period` (number of the lesson, used for "1st-2nd period cancelled") and `status`:
+
+| `status` | Shown as |
+|---|---|
+| `normal` | a lesson |
+| `cancelled` | struck through and marked; on Today as "1st-2nd period cancelled" (or "School cancelled") |
+| `substitution`, `changed` | highlighted with the note; on Today counted as "N substitutions" |
+
+**Mapping children to people.** *Timetable → menu → Timetable sources* (parents only) lets a parent choose per child which plugin provides the timetable and who the child is there. With `timetable_people` the person is a dropdown; the chosen id is validated against the list (HTTP 422 otherwise). Without it, the parent types the identifier as text. The mapping is stored in `timetable_sources`. `GET/PUT /api/timetable/sources` is the API behind it, see [timetable](timetable.md#plugin-timetables).
+
+**Merge rules.** For a day the plugin returns lessons for, those **replace the child's manual `school` entries**; manual sports, music and clubs stay. A day the plugin returns **nothing** for (holidays, weekends, the plugin is down) shows the manual entries as before, so return nothing, not a placeholder, for days without lessons. Results are cached for 60 seconds.
+
+### 4. Images from an internal server
+
+A plugin that shows pictures from a server inside the home network (a photo library, a camera) must not hand its address or API key to the app. `proxy_image` fetches the image inside the hub and answers from the plugin's own, authenticated route:
+
+```python
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from app.core.security import get_current_user
+from app.plugins import get_setting
+from app.plugins.api import proxy_image
+
+router = APIRouter(prefix="/api/plugins/photos")
+
+
+@router.get("/thumb/{asset_id}")
+async def thumb(asset_id: str, request: Request, _=Depends(get_current_user)):
+    if not asset_id.isalnum():                       # you build the URL: validate every part you put in it
+        raise HTTPException(404)
+    base = str(get_setting("PHOTOS_URL")).rstrip("/")
+    return await proxy_image(f"{base}/api/assets/{asset_id}/thumbnail",
+                             {"x-api-key": get_setting("PHOTOS_API_KEY")}, request=request)
+```
+
+`proxy_image(url, headers=None, max_bytes=5_000_000, allowed_types=("image/jpeg", "image/png", "image/webp"), *, request=None, timeout=10.0, max_age=86400, verify=True) -> Response`
+
+- The type is checked by **magic bytes**, not by the server's `Content-Type`; anything else is refused (415). More than `max_bytes` is refused while streaming (413). Redirects are not followed. Other failures give 404 (not found there) or 502; the text never contains the address or the headers.
+- The answer has `Cache-Control: private, max-age=<max_age>` and an `ETag`; pass `request` to answer a matching `If-None-Match` with 304.
+- Use it only for the plugin's own addresses. Never build the URL from unchecked user input (the hub can reach your whole network).
+
+**Showing the image in the app.** Return the route in your data as a hub-relative path (`/api/plugins/photos/thumb/abc`) in `thumbnail`, `image` or `url` fields that the app displays as pictures (recipe thumbnails and images, plan entries). The app loads paths that start with `/` **with the login** and keeps them in memory; absolute addresses load directly, as before. In the app, the widget is `HubImage` (`app/lib/widgets/hub_image.dart`).
 
 ## Tasks: where a task lands
 

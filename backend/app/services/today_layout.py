@@ -30,13 +30,25 @@ BUILTIN: List[dict] = [
     {"id": "stars", "visible": True, "size": "full"},  # kids mode; the app hides it for people without stars use
 ]
 KNOWN = {c["id"] for c in BUILTIN}
+MAX_PLUGIN_CARDS = 60  # most dynamic cards a layout keeps
+
+
+def is_valid_id(card_id) -> bool:
+    """A built-in card, or ``plugin:<plugin id>:<card id>`` of an active plugin."""
+    from app.plugins.hooks import is_plugin_card_id
+
+    return isinstance(card_id, str) and (card_id in KNOWN or is_plugin_card_id(card_id))
 
 
 def normalize(cards: list) -> List[dict]:
-    """Drops unknown ids and duplicates, appends missing cards with their built-in defaults."""
+    """Drops unknown ids and duplicates, appends missing cards with their built-in defaults.
+
+    Plugin cards (``plugin:<plugin id>:<card id>``) stay only while their plugin is active. The cards a plugin
+    shows are not known here (they depend on the person); the app appends new ones at the end.
+    """
     out, seen = [], set()
     for c in cards or []:
-        if not isinstance(c, dict) or c.get("id") not in KNOWN or c["id"] in seen:
+        if not isinstance(c, dict) or not is_valid_id(c.get("id")) or c["id"] in seen:
             continue
         seen.add(c["id"])
         out.append({"id": c["id"], "visible": bool(c.get("visible", True)),

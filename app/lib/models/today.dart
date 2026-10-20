@@ -1,6 +1,7 @@
 import 'birthday.dart';
 import 'calendar_event.dart';
 import 'common.dart';
+import 'plugin_card.dart';
 import 'task.dart';
 import 'timetable.dart';
 import '../l10n/l10n.dart';
@@ -79,6 +80,7 @@ class TodayData {
   final SourceResult<TodayHouseState> house;
   final List<Birthday> birthdays;
   final List<TodayTimetableChild> timetable;
+  final List<PluginCardData> pluginCards; // cards that installed plugins add
 
   const TodayData({
     required this.date,
@@ -92,6 +94,7 @@ class TodayData {
     this.house = const SourceResult(status: SourceStatus.notConfigured),
     this.birthdays = const [],
     this.timetable = const [],
+    this.pluginCards = const [],
   });
 
   factory TodayData.fromJson(Map<String, dynamic> json) {
@@ -117,6 +120,7 @@ class TodayData {
           ? SourceResult.fromJson(house, TodayHouseState.fromJson)
           : const SourceResult(status: SourceStatus.notConfigured),
       timetable: parseTodayTimetable(json['timetable']),
+      pluginCards: PluginCardData.listFromJson(json['plugin_cards']),
     );
   }
 }

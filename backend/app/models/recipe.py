@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Column, DateTime, Integer, String, Text
 
 from app.core.database import Base
 
@@ -36,5 +36,9 @@ class MealPlanEntry(Base):
     meal_type = Column(String, default="dinner")  # breakfast | lunch | dinner
     recipe_id = Column(Integer, nullable=True)
     custom_title = Column(String, nullable=True)  # falls kein Rezept verknüpft
+    # Recipe of an external plugin planned in the hub: plugin id, the plugin's recipe id, image/url/minutes for display
+    source = Column(String(40), nullable=True, index=True)
+    external_id = Column(String(200), nullable=True)
+    meta = Column(JSON, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)

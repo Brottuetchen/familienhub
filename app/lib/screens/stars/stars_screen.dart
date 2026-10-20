@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../models/plugin_card.dart';
 import '../../models/stars.dart';
 import '../../providers/providers.dart';
 import '../../services/api_client.dart';
@@ -121,7 +122,7 @@ class _StarsScreenState extends ConsumerState<StarsScreen> {
             subtitle: '${r.userName} · ${l10n.starsCount(r.price)}',
             primary: l10n.starsApprove,
             secondary: l10n.starsDecline,
-            onPrimary: () => _do(() => api.decideRewardRequest(r.id, approve: true)),
+            onPrimary: () => _approve(r.id),
             onSecondary: () => _do(() => api.decideRewardRequest(r.id, approve: false)),
           ),
         for (final a in o.awards)
@@ -181,14 +182,33 @@ class _StarsScreenState extends ConsumerState<StarsScreen> {
     ];
   }
 
+  /// Approving can run the reward's plugin action; its outcome is shown, a failure never undoes the approval.
+  Future<void> _approve(int id) async {
+    RewardActionResult? outcome;
+    final ok = await runAction(context, () async {
+      outcome = await ref.read(apiClientProvider).decideRewardRequest(id, approve: true);
+    });
+    if (!mounted) return;
+    final r = outcome;
+    if (ok && r != null) showInfo(context, r.ok ? l10n.rewardActionDone(r.message) : l10n.rewardActionFailed(r.message));
+    await _reload();
+  }
+
   Future<void> _editReward(StarReward? reward) async {
     final api = ref.read(apiClientProvider);
-    final result = await showDialog<({String title, int price})>(
+    // Actions come from plugins; without any (or when they cannot be read) the form simply has no such field
+    final choices = api.rewardActionChoices().catchError((Object _) => const <RewardActionChoice>[]);
+    final result = await showDialog<_RewardEdit>(
       context: context,
-      builder: (_) => _RewardDialog(reward: reward),
+      builder: (_) => _RewardDialog(reward: reward, choices: choices),
     );
     if (result == null || !mounted) return;
-    await _do(() => api.saveReward(id: reward?.id, title: result.title, price: result.price));
+    await _do(() => api.saveReward(
+        id: reward?.id,
+        title: result.title,
+        price: result.price,
+        action: result.action,
+        setAction: result.actionChanged));
   }
 
   Future<void> _openPerson(StarPerson p) async {
@@ -201,10 +221,15 @@ class _StarsScreenState extends ConsumerState<StarsScreen> {
   }
 }
 
+/// What the reward dialog returns: the new values, and the plugin action if the parent changed it.
+typedef _RewardEdit = ({String title, int price, RewardActionRef? action, bool actionChanged});
+
 /// Add or edit a reward. Owns its text controllers, so they live as long as the dialog animates.
+/// [choices] are the actions of active plugins; with none (and none set) the form has no action field.
 class _RewardDialog extends StatefulWidget {
   final StarReward? reward;
-  const _RewardDialog({this.reward});
+  final Future<List<RewardActionChoice>> choices;
+  const _RewardDialog({this.reward, required this.choices});
 
   @override
   State<_RewardDialog> createState() => _RewardDialogState();
@@ -213,11 +238,56 @@ class _RewardDialog extends StatefulWidget {
 class _RewardDialogState extends State<_RewardDialog> {
   late final _title = TextEditingController(text: widget.reward?.title ?? '');
   late final _price = TextEditingController(text: widget.reward == null ? '' : '${widget.reward!.price}');
+  final Map<String, TextEditingController> _params = {};
+  final Map<String, String> _picked = {}; // select and switch values by parameter key
+  List<RewardActionChoice> _choices = const [];
+  String? _selected; // "plugin/action" or null (no action)
+  bool _touched = false; // the parent changed the action or one of its values
+  String? _paramError;
+
+  RewardActionRef? get _current => widget.reward?.action;
+
+  static String _id(String plugin, String action) => '$plugin/$action';
+
+  RewardActionChoice? get _choice => _choices.where((c) => _id(c.plugin, c.id) == _selected).firstOrNull;
+
+  @override
+  void initState() {
+    super.initState();
+    final current = _current;
+    if (current != null) _selected = _id(current.plugin, current.action);
+    widget.choices.then((list) {
+      if (!mounted) return;
+      setState(() {
+        _choices = list;
+        _prepare(preset: current?.params ?? const {});
+      });
+    });
+  }
+
+  void _prepare({Map<String, String> preset = const {}}) {
+    for (final c in _params.values) {
+      c.dispose();
+    }
+    _params.clear();
+    _picked.clear();
+    for (final p in _choice?.params ?? const <RewardActionParam>[]) {
+      final start = preset[p.key] ?? p.defaultValue ?? (p.type == 'bool' ? 'false' : '');
+      if (p.type == 'text' || p.type == 'number') {
+        _params[p.key] = TextEditingController(text: start);
+      } else {
+        _picked[p.key] = start.isEmpty && p.options.isNotEmpty ? p.options.first.$1 : start;
+      }
+    }
+  }
 
   @override
   void dispose() {
     _title.dispose();
     _price.dispose();
+    for (final c in _params.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -225,14 +295,119 @@ class _RewardDialogState extends State<_RewardDialog> {
     final price = int.tryParse(_price.text.trim());
     final title = _title.text.trim();
     if (price == null || price < 1 || title.isEmpty) return;
-    Navigator.pop(context, (title: title, price: price));
+    RewardActionRef? action;
+    final choice = _choice;
+    if (choice != null) {
+      final values = <String, String>{};
+      for (final p in choice.params) {
+        final v = (_params[p.key]?.text ?? _picked[p.key] ?? '').trim();
+        if (v.isEmpty && p.required && p.type != 'bool') {
+          setState(() => _paramError = l10n.rewardActionParamMissing(p.label));
+          return;
+        }
+        if (p.type == 'number' && v.isNotEmpty && double.tryParse(v) == null) {
+          setState(() => _paramError = l10n.rewardActionParamNumber(p.label));
+          return;
+        }
+        if (v.isNotEmpty) values[p.key] = v;
+      }
+      action = RewardActionRef(plugin: choice.plugin, action: choice.id, params: values);
+    }
+    // An action whose plugin is off is kept as long as the parent leaves it alone
+    final keepUnavailable = _selected != null && choice == null && _current != null;
+    Navigator.pop(context, (
+      title: title,
+      price: price,
+      action: keepUnavailable ? null : action,
+      actionChanged: _touched && !keepUnavailable,
+    ));
+  }
+
+  Widget _paramField(RewardActionParam p) {
+    switch (p.type) {
+      case 'bool':
+        return SwitchListTile(
+          key: Key('reward-param-${p.key}'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(p.label),
+          subtitle: p.help.isEmpty ? null : Text(p.help),
+          value: _picked[p.key] == 'true',
+          onChanged: (v) => setState(() {
+            _picked[p.key] = v ? 'true' : 'false';
+            _touched = true;
+          }),
+        );
+      case 'select':
+        return DropdownButtonFormField<String>(
+          key: Key('reward-param-${p.key}'),
+          isExpanded: true,
+          initialValue: p.options.any((o) => o.$1 == _picked[p.key]) ? _picked[p.key] : null,
+          decoration: InputDecoration(labelText: p.required ? '${p.label} *' : p.label, helperText: p.help.isEmpty ? null : p.help),
+          items: [for (final o in p.options) DropdownMenuItem(value: o.$1, child: Text(o.$2, overflow: TextOverflow.ellipsis))],
+          onChanged: (v) => setState(() {
+            _picked[p.key] = v ?? '';
+            _touched = true;
+          }),
+        );
+      default:
+        return TextField(
+          key: Key('reward-param-${p.key}'),
+          controller: _params[p.key],
+          keyboardType: p.type == 'number'
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : TextInputType.text,
+          decoration: InputDecoration(labelText: p.required ? '${p.label} *' : p.label, helperText: p.help.isEmpty ? null : p.help),
+          onChanged: (_) => _touched = true,
+        );
+    }
+  }
+
+  List<Widget> _actionSection() {
+    final current = _current;
+    final unavailable = current != null && _selected == _id(current.plugin, current.action) && _choice == null;
+    if (_choices.isEmpty && current == null) return const [];
+    return [
+      const SizedBox(height: 16),
+      DropdownButtonFormField<String?>(
+        key: const Key('reward-action'),
+        isExpanded: true,
+        initialValue: _selected,
+        decoration: InputDecoration(labelText: l10n.rewardAction, helperText: l10n.rewardActionHint, helperMaxLines: 3),
+        items: [
+          DropdownMenuItem<String?>(value: null, child: Text(l10n.rewardActionNone)),
+          if (current != null && _choice == null)
+            DropdownMenuItem<String?>(
+                value: _id(current.plugin, current.action),
+                child: Text('${current.label.isEmpty ? current.action : current.label} (${l10n.rewardActionUnavailable})',
+                    overflow: TextOverflow.ellipsis)),
+          for (final c in _choices)
+            DropdownMenuItem<String?>(
+                value: _id(c.plugin, c.id), child: Text('${c.label} · ${c.pluginName}', overflow: TextOverflow.ellipsis)),
+        ],
+        onChanged: (v) => setState(() {
+          _selected = v;
+          _touched = true;
+          _paramError = null;
+          _prepare(preset: v == null || current == null || _id(current.plugin, current.action) != v ? const {} : current.params);
+        }),
+      ),
+      if (unavailable)
+        Padding(padding: const EdgeInsets.only(top: 8), child: Text(l10n.rewardActionPluginOff, key: const Key('reward-action-off'))),
+      for (final p in _choice?.params ?? const <RewardActionParam>[])
+        Padding(padding: const EdgeInsets.only(top: 8), child: _paramField(p)),
+      if (_paramError != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(_paramError!, key: const Key('reward-action-error'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(widget.reward == null ? l10n.addReward : l10n.rewardTitle),
         content: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             TextField(key: const Key('reward-title'), controller: _title, decoration: InputDecoration(labelText: l10n.rewardTitle)),
             const SizedBox(height: 12),
             TextField(
@@ -241,6 +416,7 @@ class _RewardDialogState extends State<_RewardDialog> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(labelText: l10n.rewardPrice),
             ),
+            ..._actionSection(),
           ]),
         ),
         actions: [

@@ -28,6 +28,7 @@ import '../models/task.dart';
 import '../models/today.dart';
 import '../models/timetable.dart';
 import '../models/today_layout.dart';
+import '../models/plugin_card.dart';
 import '../models/stars.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
@@ -708,6 +709,17 @@ class ApiClient {
               body: {'child_id': childId, 'from_week': from, 'to_week': to})) as Map)['copied'] as num)
           .toInt();
 
+  /// A calendar week (Monday first) with real dates: manual entries merged with the lessons of the child's plugin.
+  Future<TimetableWeek> timetableWeek(int childId, DateTime start) async => TimetableWeek.fromJson(
+      (await _send('GET', '/api/timetable/week?child_id=$childId&start=${_dateOnly(start)}')) as Map<String, dynamic>);
+
+  Future<TimetableSources> timetableSources() async =>
+      TimetableSources.fromJson((await _send('GET', '/api/timetable/sources')) as Map<String, dynamic>);
+
+  /// [sources]: one `{child_id, plugin_id, person_id}` per child; an empty plugin or person removes the mapping.
+  Future<TimetableSources> saveTimetableSources(List<Map<String, dynamic>> sources) async => TimetableSources.fromJson(
+      (await _send('PUT', '/api/timetable/sources', body: {'sources': sources})) as Map<String, dynamic>);
+
   /// [abReference]: any day inside an A week (null = no A/B weeks); [holidayFeed]: calendar subscription id.
   Future<void> saveTimetableSettings({DateTime? abReference, String? holidayFeed}) =>
       _send('PUT', '/api/timetable/settings', body: {
@@ -769,16 +781,31 @@ class ApiClient {
 
   Future<void> cancelRewardRequest(int id) => _send('POST', '/api/stars/requests/$id/cancel', replayOn401: false);
 
-  Future<void> decideRewardRequest(int id, {required bool approve}) =>
-      _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+  /// Approving can run a plugin action of the reward: its outcome comes back (null if the reward has none).
+  Future<RewardActionResult?> decideRewardRequest(int id, {required bool approve}) async {
+    final res = await _send('POST', '/api/stars/requests/$id/${approve ? 'approve' : 'decline'}', replayOn401: false);
+    return res is Map ? RewardActionResult.fromJson(res['action_result']) : null;
+  }
+
+  /// Actions of active plugins a parent can attach to a reward.
+  Future<List<RewardActionChoice>> rewardActionChoices() async =>
+      RewardActionChoice.listFromJson(await _send('GET', '/api/stars/reward-actions'));
 
   Future<void> decideStarEntry(int id, {required bool confirm}) =>
       _send('POST', '/api/stars/ledger/$id/${confirm ? 'confirm' : 'reject'}', replayOn401: false);
 
-  Future<void> saveReward({int? id, required String title, required int price, bool? active}) => id == null
-      ? _send('POST', '/api/stars/rewards', replayOn401: false, body: {'title': title, 'price': price})
-      : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false,
-          body: {'title': title, 'price': price, if (active != null) 'active': active});
+  /// [setAction]: also send [action] when editing (null removes the action; left out it stays as it is).
+  Future<void> saveReward(
+          {int? id, required String title, required int price, bool? active, RewardActionRef? action, bool setAction = false}) =>
+      id == null
+          ? _send('POST', '/api/stars/rewards',
+              replayOn401: false, body: {'title': title, 'price': price, if (action != null) 'action': action.toJson()})
+          : _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {
+              'title': title,
+              'price': price,
+              if (active != null) 'active': active,
+              if (setAction) 'action': action?.toJson(),
+            });
 
   Future<void> setRewardActive(int id, bool active) =>
       _send('PATCH', '/api/stars/rewards/$id', replayOn401: false, body: {'active': active});
@@ -1424,6 +1451,36 @@ class ApiClient {
       return _avatarCache[url] = res.bodyBytes;
     } catch (_) {
       return null; // offline: Initialen statt Bild
+    }
+  }
+
+  /// Picture of a plugin's Today card (a hub path below /api/plugins/, loaded with the login). Not cached: the
+  /// same path may show something else tomorrow. Null when it cannot be loaded.
+  Future<Uint8List?> pluginImageBytes(String path) async {
+    if (!path.startsWith('/api/plugins/')) return null;
+    try {
+      final res = await _raw('GET', path);
+      if (res.statusCode != 200 || !(res.headers['content-type'] ?? '').startsWith('image/')) return null;
+      return res.bodyBytes;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  final _imageCache = <String, Uint8List>{};
+
+  /// Image from a hub route (for example a plugin that proxies a photo server), loaded with the login. Kept in
+  /// memory for this session, the 60 newest images; null when it cannot be loaded (offline, not an image).
+  Future<Uint8List?> imageBytes(String path) async {
+    final cached = _imageCache.remove(path);
+    if (cached != null) return _imageCache[path] = cached; // move to the end: most recently used
+    try {
+      final res = await _raw('GET', path);
+      if (res.statusCode != 200 || !(res.headers['content-type'] ?? '').startsWith('image/')) return null;
+      if (_imageCache.length >= 60) _imageCache.remove(_imageCache.keys.first);
+      return _imageCache[path] = res.bodyBytes;
+    } catch (_) {
+      return null;
     }
   }
 

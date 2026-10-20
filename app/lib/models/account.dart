@@ -223,6 +223,7 @@ Map<String, String> get notificationCategories => <String, String>{
   'media': l10n.catMedia,
   'documents': l10n.documents,
   'stars': l10n.catStars,
+  'plugins': l10n.catPlugins,
   'system': l10n.catSystem,
 };
 

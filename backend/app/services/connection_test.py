@@ -178,6 +178,12 @@ TESTERS: Dict[str, Callable[[Dict[str, str]], Awaitable[Result]]] = {
 
 async def run(plugin, values: Optional[Dict[str, str]]) -> Result:
     v = resolve(plugin, values)
+    if getattr(plugin, "has_test", False):  # the plugin's own test (``Plugin.test_settings``) wins
+        from app.plugins.hooks import run_test_settings
+
+        own = await run_test_settings(plugin, v)
+        if own is not None:
+            return own
     tester = TESTERS.get(plugin.id)
     try:
         return await (tester(v) if tester else _reachable(plugin, v))

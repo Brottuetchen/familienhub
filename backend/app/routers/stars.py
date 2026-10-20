@@ -6,7 +6,7 @@ Children read their own balance, ask for rewards and cancel their own open reque
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -16,6 +16,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user, require_min_role
 from app.models.stars import StarLedger, StarRequest, StarReward
 from app.models.user import ROLE_CHILD, ROLE_PARTNER, User
+from app.services import reward_actions
 from app.services import stars as svc
 
 router = APIRouter(prefix="/api/stars", tags=["stars"])
@@ -28,15 +29,24 @@ class SettingsIn(BaseModel):
     confirm_tasks: bool
 
 
+class ActionIn(BaseModel):
+    """A plugin action for a reward (``GET /api/stars/reward-actions`` lists the choices)."""
+    plugin: str = Field(min_length=1, max_length=32)
+    action: str = Field(min_length=1, max_length=64)
+    params: Dict[str, Any] = Field(default_factory=dict, max_length=20)
+
+
 class RewardIn(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     price: int = Field(ge=1, le=svc.MAX_PRICE)
+    action: Optional[ActionIn] = None
 
 
 class RewardPatch(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=120)
     price: Optional[int] = Field(None, ge=1, le=svc.MAX_PRICE)
     active: Optional[bool] = None
+    action: Optional[ActionIn] = None  # sent as null: removes the action; left out: unchanged
 
 
 class RequestIn(BaseModel):
@@ -131,14 +141,28 @@ def list_rewards(user: User = Depends(_member), db: Session = Depends(get_db)):
     q = db.query(StarReward).order_by(StarReward.price, StarReward.id)
     if not svc.is_parent(user):
         q = q.filter(StarReward.active == True)  # noqa: E712
-    return {"items": [svc.reward_dict(r) for r in q.all()]}
+    parent = svc.is_parent(user)
+    return {"items": [svc.reward_dict(r, parent=parent) for r in q.all()]}
+
+
+@router.get("/reward-actions")
+def reward_action_choices(_: User = Depends(_parent)):
+    """Actions that active plugins offer for rewards, with the parameter fields a parent fills in."""
+    return {"items": reward_actions.available()}
 
 
 @router.post("/rewards", status_code=201)
 def add_reward(body: RewardIn, user: User = Depends(_parent), db: Session = Depends(get_db)):
     if not body.title.strip():
         raise HTTPException(422, "Titel fehlt")
-    return svc.reward_dict(svc.create_reward(db, body.title, body.price, user))
+    action = body.action.model_dump() if body.action else None
+    if action:
+        reward_actions.checked(action)  # a bad action must not leave a reward behind
+    reward = svc.create_reward(db, body.title, body.price, user)
+    if action:
+        reward_actions.attach(reward, action)
+        db.commit()
+    return svc.reward_dict(reward, parent=True)
 
 
 @router.patch("/rewards/{reward_id}")
@@ -154,8 +178,10 @@ def edit_reward(reward_id: int, body: RewardPatch, _: User = Depends(_parent), d
         reward.price = body.price
     if body.active is not None:
         reward.active = body.active
+    if "action" in body.model_fields_set:
+        reward_actions.attach(reward, body.action.model_dump() if body.action else None)
     db.commit()
-    return svc.reward_dict(reward)
+    return svc.reward_dict(reward, parent=True)
 
 
 @router.delete("/rewards/{reward_id}", status_code=204)
@@ -199,7 +225,17 @@ def list_requests(status: Optional[str] = None, user_id: Optional[int] = None, u
 async def approve_request(req_id: int, user: User = Depends(_parent), db: Session = Depends(get_db)):
     req = svc.decide_request(db, req_id, True, user)
     await _notify(req.user_id, "Belohnung bewilligt", f"{req.title}: {svc.display(user)} hat zugestimmt", "/stars")
-    return svc.request_dict(req)
+    # The approval is committed. The plugin action of the reward (if any) runs now and can no longer undo it.
+    action = await reward_actions.run_for_request(db, req, user)
+    out = svc.request_dict(req)
+    if action is not None:
+        out["action_result"] = action
+        if action["ok"]:
+            await _notify(user.id, "Belohnungs-Aktion ausgeführt", f"{req.title}: {action['message']}", "/stars")
+            await _notify(req.user_id, "Belohnung eingelöst", f"{req.title}: {action['message']}", "/stars")
+        else:
+            await _notify(user.id, "Belohnungs-Aktion fehlgeschlagen", f"{req.title}: {action['message']}", "/stars")
+    return out
 
 
 @router.post("/requests/{req_id}/decline")

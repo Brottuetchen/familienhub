@@ -111,6 +111,12 @@ async def run_scheduler() -> None:
                     await asyncio.to_thread(backup.run_auto_if_due)
             except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
                 logger.warning("nightly backup failed: %s", type(exc).__name__)
+            try:
+                from app.plugins.jobs import run_due
+
+                await run_due()  # plugin jobs run in their own tasks; this only starts the due ones
+            except Exception as exc:  # noqa: BLE001 - must never stop the reminder loop
+                logger.warning("plugin jobs failed: %s", type(exc).__name__)
             ticks += 1
             if ticks % SEERR_EVERY == 0:
                 try:

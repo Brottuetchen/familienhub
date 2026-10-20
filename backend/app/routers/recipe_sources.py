@@ -31,16 +31,21 @@ def _services() -> Dict[str, Any]:
 
 def _errors() -> tuple:
     from app.services.cookidoo import CookidooUnavailable
+    from app.plugins.sources import PluginSourceError
     from app.services.mealie import MealieUnavailable
 
-    return (CookidooUnavailable, MealieUnavailable)
+    return (CookidooUnavailable, MealieUnavailable, PluginSourceError)
 
 
 def _source(source_id: str):
     from app.plugins.registry import plugin_registry
+    from app.plugins.sources import recipe_service
 
     service = _services().get(source_id)
-    if service is None or not plugin_registry.serves("meal_planning", source_id):
+    if service is not None and plugin_registry.serves("meal_planning", source_id):
+        return service
+    service = recipe_service(source_id)  # an installed plugin with capability meal_planning
+    if service is None:
         raise HTTPException(409, "Diese Rezeptquelle ist nicht aktiv")
     return service
 
@@ -49,7 +54,10 @@ def _source(source_id: str):
 async def list_sources(_: User = Depends(get_current_user)):
     from app.plugins.registry import plugin_registry
 
-    return [{"id": p.id, "name": p.name} for p in plugin_registry.providers("meal_planning") if p.id in _services()]
+    from app.plugins.sources import recipe_plugins
+
+    built_in = [p for p in plugin_registry.providers("meal_planning") if p.id in _services()]
+    return [{"id": p.id, "name": p.name} for p in built_in + recipe_plugins()]
 
 
 @router.get("/{source_id}/search")

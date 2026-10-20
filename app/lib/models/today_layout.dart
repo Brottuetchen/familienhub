@@ -1,3 +1,5 @@
+import 'plugin_card.dart';
+
 /// Arrangement of the "Today" screen: ordered cards with visibility and size.
 class TodayCard {
   final String id;
@@ -41,7 +43,7 @@ class TodayLayout {
     final seen = <String>{};
     final out = <TodayCard>[
       for (final c in cards)
-        if (knownIds.contains(c.id) && seen.add(c.id)) c,
+        if ((knownIds.contains(c.id) || isPluginCardId(c.id)) && seen.add(c.id)) c,
     ];
     out.addAll(builtin.cards.where((c) => !seen.contains(c.id)));
     return TodayLayout(out, source: source);
@@ -57,6 +59,13 @@ class TodayLayout {
     ];
     final source = json['source'];
     return normalize(cards, source: source is String ? source : 'user');
+  }
+
+  /// Cards that plugins show now but the saved layout does not know yet are added at the end, visible.
+  TodayLayout withPluginCards(Iterable<String> keys) {
+    final have = {for (final c in cards) c.id};
+    final extra = [for (final k in keys) if (have.add(k)) TodayCard(k)];
+    return extra.isEmpty ? this : TodayLayout([...cards, ...extra], source: source);
   }
 
   /// What the screen shows. Without any saved layout, plain themes keep their original single column.

@@ -11,6 +11,7 @@ import '../../models/task.dart';
 import '../../models/themes.dart' show hexColor;
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
+import '../../widgets/hub_image.dart';
 import '../more/notifications_screen.dart';
 import 'today_layout_editor.dart';
 import '../tasks/habitica_tasks.dart';
@@ -515,8 +516,7 @@ class MealWeekStrip extends ConsumerWidget {
                         ),
                       ),
                       child: entry?.image != null
-                          ? Image.network(entry!.image!,
-                              fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.restaurant, size: 20))
+                          ? HubImage(url: entry!.image, placeholder: const Icon(Icons.restaurant, size: 20))
                           : Icon(entry == null ? Icons.remove : Icons.restaurant,
                               size: 20, color: theme.colorScheme.onSurfaceVariant),
                     ),

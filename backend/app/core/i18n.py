@@ -411,6 +411,14 @@ EN: Dict[str, str] = {
     "z. B. https://ntfy.sh oder http://ntfy.lan:8093": "e.g. https://ntfy.sh or http://ntfy.lan:8093",    # --- plugin installer (admin) ---
     "Aufgaben": "Tasks",
     "Termine": "Events",
+    "Stundenplan": "Timetable",
+    "Bildquelle nicht erreichbar": "Image source not reachable",
+    "Bild nicht gefunden": "Image not found",
+    "Bild zu groß": "Image too large",
+    "Kein erlaubtes Bildformat": "Not an allowed image format",
+    "Plugin nicht erreichbar": "Plugin not reachable",
+    "Plugin antwortet nicht rechtzeitig": "Plugin did not answer in time",
+    "Plugin lieferte keine Liste": "Plugin returned no list",
     "Einkauf": "Shopping",
     "Essensplan-Quelle (zusätzlich zum eigenen Plan)": "Meal plan source (in addition to the own plan)",
     "Rezepte suchen und einplanen": "Search and plan recipes",
@@ -561,6 +569,19 @@ EN: Dict[str, str] = {
         "Address: https://github.com/<owner>/<repository> (optionally /tree/<branch>)",
     "Die Plugin-ID im Repository („{found}“) weicht vom Store-Eintrag („{expected}“) ab":
         "The plugin id in the repository (“{found}”) differs from the store entry (“{expected}”)",
+    # --- plugin extension points (docs/plugins.md) ---
+    "Belohnungs-Aktion ausgeführt": "Reward action done",
+    "Belohnungs-Aktion fehlgeschlagen": "Reward action failed",
+    "Belohnung eingelöst": "Reward redeemed",
+    "Diese Aktion ist nicht verfügbar (Plugin nicht aktiv?)": "This action is not available (plugin not active?)",
+    "Unbekannter Parameter der Aktion": "Unknown parameter of the action",
+    "Ungültiger Wert für einen Parameter der Aktion": "Invalid value for a parameter of the action",
+    "Pflichtparameter der Aktion fehlt": "A required parameter of the action is missing",
+    "Das Plugin der Belohnungs-Aktion ist nicht aktiv": "The plugin of the reward action is not active",
+    "Die Aktion ist fehlgeschlagen oder hat zu lange gedauert": "The action failed or took too long",
+    "Die Aktion ist fehlgeschlagen": "The action failed",
+    "Zeitüberschreitung – Adresse und Netzwerk prüfen": "Timed out – check the address and the network",
+    "Der Test des Plugins ist fehlgeschlagen": "The plugin's test failed",
 }
 
 # Texts of installed plugins: German source text -> English (from the manifest's {"de": …, "en": …} values)

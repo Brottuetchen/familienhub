@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/hub_style.dart';
 import '../../l10n/l10n.dart';
+import '../../models/plugin_card.dart';
 import '../../models/today_layout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
@@ -19,13 +20,32 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
   List<TodayCard>? _edited;
   bool _busy = false;
 
+  /// Cards that installed plugins show today: they are listed here (new ones at the end, visible) with their title.
+  List<PluginCardData> get _pluginCards => ref.read(todayProvider).valueOrNull?.data.pluginCards ?? const [];
+
   List<TodayCard> get _cards => _edited ??= [
         ...(ref.read(todayLayoutProvider).valueOrNull?.data ?? TodayLayout.builtin)
             .forStyle(bento: HubStyle.of(context).bento)
+            .withPluginCards([for (final c in _pluginCards) c.key])
             .cards,
       ];
 
-  static String _label(String id) => switch (id) {
+  String _label(String id) {
+    if (isPluginCardId(id)) {
+      final card = _pluginCards.where((c) => c.key == id).firstOrNull;
+      return card == null ? id.split(':').last : card.title;
+    }
+    return _builtinLabel(id);
+  }
+
+  /// Which plugin a card comes from, shown under its title.
+  String? _source(String id) {
+    if (!isPluginCardId(id)) return null;
+    final card = _pluginCards.where((c) => c.key == id).firstOrNull;
+    return card == null || card.pluginName.isEmpty ? null : l10n.pluginCardFrom(card.pluginName);
+  }
+
+  static String _builtinLabel(String id) => switch (id) {
         'tasks' => l10n.tabTasks,
         'shopping' => l10n.shoppingList,
         'events' => l10n.tabCalendar,
@@ -40,6 +60,7 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
 
   /// Cards of switched-off modules are not offered; they keep their place at the end when saving.
   bool _available(String id) {
+    if (isPluginCardId(id)) return _pluginCards.any((c) => c.key == id);
     final modules = ref.read(appModulesProvider);
     return switch (id) {
       'tasks' => modules.has('tasks'),
@@ -141,7 +162,17 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
                       child: Icon(Icons.drag_handle, semanticLabel: l10n.dragToReorder),
                     ),
                   ),
-                  Expanded(child: Text(_label(c.id), style: Theme.of(context).textTheme.titleMedium)),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(_label(c.id), style: Theme.of(context).textTheme.titleMedium),
+                      if (_source(c.id) != null)
+                        Text(_source(c.id)!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    ]),
+                  ),
                   if (bento)
                     IconButton(
                       key: Key('layout-size-${c.id}'),

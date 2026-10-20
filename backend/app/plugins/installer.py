@@ -525,6 +525,14 @@ async def _activate(app, db, user_id, row, manifest, link, sha, to_store, stagin
                     logger.warning("Vorherige Version von %s nicht ladbar: %s", plugin_id, exc)
         raise
     _rmtree(old)
+    # The plugin's own connection test, with the values the admin just entered (nothing is saved yet). A failing
+    # test does not undo the installation: the admin sees the message and can fix the settings.
+    connection_test = None
+    if plugin.has_test:
+        from app.plugins.hooks import run_test_settings
+        from app.services import connection_test as ct
+
+        connection_test = await run_test_settings(plugin, ct.resolve(plugin, to_store))
     for stale in (plugins_dir() / "src").glob(f"{plugin_id}-*"):
         if stale.name != f"{plugin_id}-{sha}":
             _rmtree(stale)
@@ -542,7 +550,7 @@ async def _activate(app, db, user_id, row, manifest, link, sha, to_store, stagin
     audit.warning("Plugin %s %s installiert (%s, Commit %s, Nutzer %s)", plugin_id, manifest["version"],
                   "Update" if update else "neu", short_sha(sha), user_id)
     return {"id": plugin_id, "version": manifest["version"], "sha": sha, "updated": update,
-            "restart_required": native, "active": plugin.active}
+            "restart_required": native, "active": plugin.active, "connection_test": connection_test}
 
 
 async def remove_plugin(app: FastAPI, db: Session, user_id: Optional[int], plugin_id: str) -> Dict[str, Any]:

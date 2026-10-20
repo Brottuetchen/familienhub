@@ -165,15 +165,19 @@ class CreateUserDialogState extends ConsumerState<CreateUserDialog> {
     super.dispose();
   }
 
+  /// Usernames are stored lowercase; capitals are accepted and lowered instead of silently blocking "Create".
+  String get _usernameValue => _username.text.trim().toLowerCase();
+  bool get _usernameOk => RegExp(r'^[a-z0-9._-]{2,40}$').hasMatch(_usernameValue);
+
   bool get _valid =>
-      RegExp(r'^[a-z0-9._-]{2,40}$').hasMatch(_username.text.trim()) &&
+      _usernameOk &&
       _email.text.contains('@') &&
       _password.text.length >= 10;
 
   Future<void> _save() async {
     setState(() => _busy = true);
     final ok = await runAction(context, () => ref.read(apiClientProvider).createAdminUser(
-          username: _username.text.trim(),
+          username: _usernameValue,
           email: _email.text.trim(),
           password: _password.text,
           fullName: _name.text.trim(),
@@ -191,11 +195,18 @@ class CreateUserDialogState extends ConsumerState<CreateUserDialog> {
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(key: const Key('new-user-username'), controller: _username, autocorrect: false,
-              decoration: InputDecoration(labelText: l10n.username, helperText: l10n.usernameHint),
+              decoration: InputDecoration(
+                labelText: l10n.username,
+                helperText: l10n.usernameHint,
+                errorText: _username.text.trim().isEmpty || _usernameOk ? null : l10n.usernameInvalid,
+              ),
               onChanged: (_) => setState(() {})),
+          const SizedBox(height: 12),
           TextField(controller: _name, decoration: InputDecoration(labelText: l10n.name)),
+          const SizedBox(height: 12),
           TextField(key: const Key('new-user-email'), controller: _email, keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(labelText: l10n.email), onChanged: (_) => setState(() {})),
+          const SizedBox(height: 12),
           TextField(key: const Key('new-user-password'), controller: _password, obscureText: true,
               decoration: InputDecoration(labelText: l10n.initialPassword, helperText: l10n.min10Chars),
               onChanged: (_) => setState(() {})),
