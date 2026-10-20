@@ -39,6 +39,7 @@ Database migrations run automatically on start (Alembic).
 
 - Run it behind a reverse proxy with HTTPS (Nginx Proxy Manager, Traefik, Caddy). The container listens on port 8000.
 - The app asks for the address on first start.
+- Under a path prefix or in the Home Assistant sidebar: see [Home Assistant and sub-paths](home-assistant.md).
 - For access from outside, a VPN (e.g. WireGuard) is safer than exposing the hub publicly.
 
 ## Public beta installations

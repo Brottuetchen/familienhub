@@ -17,5 +17,5 @@ Map<String, String> startQuery() => const {};
 /// Entfernt Query-Parameter aus der Adresszeile, ohne neu zu laden.
 void clearStartQuery() {}
 
-/// Herkunft der Seite, z. B. `https://hub.example.org` (nur Web).
-String? pageOrigin() => null;
+/// Server address of the web app incl. a sub-path prefix, e.g. `https://hub.example.org` (web only).
+String? pageBaseUrl() => null;

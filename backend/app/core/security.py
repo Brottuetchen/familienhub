@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.database import get_db
+from app.core.ingress import cookie_path
 from app.models.api_token import TOKEN_PREFIX
 from app.models.user import (
     ROLE_ADMIN,
@@ -304,12 +305,14 @@ async def get_current_admin_user(current_user: User = Depends(get_current_user))
 # === Cookies ===
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    path = cookie_path()
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         secure=settings.secure_cookies,
         samesite="lax",
+        path=path,
         max_age=settings.access_token_expire_minutes * 60,
     )
     response.set_cookie(
@@ -318,13 +321,14 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         httponly=True,
         secure=settings.secure_cookies,
         samesite="lax",
+        path=path,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
     )
 
 
 def clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
+    response.delete_cookie(key="access_token", path=cookie_path())
+    response.delete_cookie(key="refresh_token", path=cookie_path())
 
 
 # === Aktions-Token für Knöpfe in Mitteilungen ===

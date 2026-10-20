@@ -6,6 +6,8 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+import 'page_base_url.dart';
+
 @JS('JSON.stringify')
 external JSString _stringify(JSAny? value);
 
@@ -29,7 +31,7 @@ Uint8List _base64UrlDecode(String input) {
   return base64Decode(s);
 }
 
-/// Fragt (bei [prompt]) die Erlaubnis ab, registriert `/push-sw.js` und liefert das Abo als JSON.
+/// Fragt (bei [prompt]) die Erlaubnis ab, registriert `push-sw.js` (relativ zur Basis-URL der Seite) und liefert das Abo als JSON.
 /// Muss bei [prompt] direkt aus einem Tipp heraus aufgerufen werden (iOS verlangt eine Nutzeraktion).
 Future<Map<String, dynamic>?> subscribeWebPush(String vapidPublicKey, {bool prompt = true}) async {
   if (!webPushSupported) return null;
@@ -40,7 +42,7 @@ Future<Map<String, dynamic>?> subscribeWebPush(String vapidPublicKey, {bool prom
     if (permission != 'granted') return null;
   }
   final container = web.window.navigator.serviceWorker;
-  await container.register('/push-sw.js'.toJS).toDart;
+  await container.register('push-sw.js'.toJS).toDart;
   final reg = await container.ready.toDart;
   var sub = await reg.pushManager.getSubscription().toDart;
   sub ??= await reg.pushManager
@@ -75,4 +77,5 @@ void clearStartQuery() {
   web.window.history.replaceState(null, '', rest);
 }
 
-String? pageOrigin() => web.window.location.origin;
+/// Server address of the web app: the page's base URL, which includes the Home Assistant ingress prefix.
+String? pageBaseUrl() => serverBaseFromPage(web.document.baseURI);
