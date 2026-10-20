@@ -8,6 +8,8 @@
 
 <img src="docs/screenshots/de/today-light.png" width="23%" alt="Heute"> <img src="docs/screenshots/de/today-dark.png" width="23%" alt="Heute, dunkel"> <img src="docs/screenshots/de/calendar-light.png" width="23%" alt="Termine"> <img src="docs/screenshots/de/calendar-dark.png" width="23%" alt="Termine, dunkel">
 
+📖 **[Dokumentation (Website, englisch)](https://brottuetchen.github.io/familienhub/)**
+
 [Installation](#installation) · [Was es kann](#was-es-kann) · [Umfeld](#umfeld) · [Roadmap](docs/roadmap.md) · [Mitmachen](#mitmachen) · [English](README.md)
 
 </div>
