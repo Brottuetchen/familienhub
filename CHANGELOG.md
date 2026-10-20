@@ -2,6 +2,32 @@
 
 All notable changes per release. Versions follow the Git tags (`v1.0.0-beta.2` → image `ghcr.io/brottuetchen/familienhub:1.0.0-beta.2`).
 
+## [1.0.0-beta.3]
+
+Plugins can now do much more, and the store lists the first seven official plugins.
+
+### New
+- **Seven official plugins** in *Administration → Store*. Each asks for its addresses and credentials during installation and has a connection test. See the [store](https://github.com/Brottuetchen/familienhub-store#currently-listed).
+  - **Immich:** "On this day" photos on the Today screen.
+  - **WebUntis:** the children's timetable, with a push for cancellations and substitutions.
+  - **Screen time:** internet time as a reward. Unlocks a device on a Fritz!Box, AdGuard Home or Pi-hole and locks it again.
+  - **DWD:** official weather warnings and the pollen forecast, with a push for warnings.
+  - **Departures:** the next departures at your stop, with delays and walking time.
+  - **Grocy:** Grocy as the shopping list, expiring stock on Today.
+  - **Tandoor:** Tandoor as a recipe source next to Cookidoo.
+- **Plugin extension points:** plugins can add Today cards, calendars, scheduled jobs, push notifications, reward actions ("unlock internet for 30 minutes"), a shopping list, a recipe source and a timetable. See [plugins](docs/plugins.md).
+- **Connection test while installing:** a plugin can check the entered values before they are saved.
+
+### Fixed
+- The server could freeze under load because signing in blocked the event loop. (#36)
+- Create person: usernames with capital letters are accepted (stored in lower case), an invalid username is explained, and the fields no longer overlap.
+- `min_hub_version` compares pre-releases correctly. Hubs still on 1.0.0-beta.2 list the new plugins anyway; installed there, the plugins stay inactive and say that they need 1.0.0-beta.3.
+
+### Upgrading from 1.0.0-beta.2
+1. Download a backup in Administration first.
+2. `FAMILIENHUB_VERSION=1.0.0-beta.3 docker compose pull && FAMILIENHUB_VERSION=1.0.0-beta.3 docker compose up -d`
+3. Three new database migrations run on start. No new settings.
+
 ## [1.0.0-beta.2]
 
 The second public beta: eleven new features. The first public installs also brought a few fixes.
