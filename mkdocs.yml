@@ -59,6 +59,7 @@ nav:
   - Home: index.md
   - Getting started:
       - Install and set up: getting-started.md
+      - Home Assistant add-on: home-assistant.md
   - Features:
       - Calendar, tasks and your phone: calendar.md
       - Recipe import: recipe-import.md
