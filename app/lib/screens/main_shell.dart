@@ -10,6 +10,7 @@ import '../services/background.dart';
 import '../services/home_widgets.dart';
 import '../services/widget_access.dart';
 import '../widgets/hub_background.dart';
+import '../widgets/hub_nav_bar.dart';
 import 'calendar/calendar_screen.dart';
 import 'meals/meals_screen.dart';
 import 'meals/recipe_import_screen.dart';
@@ -143,7 +144,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
       );
     }
-    final bar = NavigationBar(
+    final bar = HubNavBar(
       selectedIndex: index,
       onDestinationSelected: select,
       destinations: [
