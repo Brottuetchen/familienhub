@@ -136,6 +136,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     secure_cookies: bool = False
+    # Sub-path hosting (docs/home-assistant.md). ROOT_PATH: fixed prefix such as /hub. TRUST_INGRESS_HEADER: honour
+    # Home Assistant's X-Ingress-Path, but only from INGRESS_PROXY_IPS (the ingress gateway).
+    root_path: str = ""
+    trust_ingress_header: bool = False
+    ingress_proxy_ips: str = "172.30.32.2"
     cors_origins: str = ""  # leer = nur gleiche Herkunft; "*" erlaubt alle, dann aber ohne Anmelde-Cookies
 
     # --- OIDC (z. B. Authentik) ---

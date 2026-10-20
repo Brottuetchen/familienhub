@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -156,11 +156,36 @@ async def limit_body_size(request, call_next):
     return await call_next(request)
 
 
+# Home Assistant shows the add-on in an iframe of its own origin: allow exactly that, and only for requests that
+# arrive through the trusted ingress gateway
+INGRESS_FRAME_HEADERS = {
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+}
+
+
+@app.middleware("http")
+async def path_prefix(request, call_next):
+    """Remember the sub-path prefix of this request (cookie paths, redirects), see core/ingress.py."""
+    from app.core import ingress
+
+    token = ingress.current_prefix.set(ingress.resolve_prefix(request))
+    try:
+        return await call_next(request)
+    finally:
+        ingress.current_prefix.reset(token)
+
+
 @app.middleware("http")
 async def security_headers(request, call_next):
     """Schutz gegen Einbetten (Clickjacking), MIME-Raten und Referrer-Lecks. Eigene Header einer Antwort bleiben."""
+    from app.core import ingress
+
     response = await call_next(request)
-    for key, value in SECURITY_HEADERS.items():
+    headers = SECURITY_HEADERS
+    if ingress.ingress_header_prefix(request):
+        headers = {**SECURITY_HEADERS, **INGRESS_FRAME_HEADERS}
+    for key, value in headers.items():
         response.headers.setdefault(key, value)
     return response
 
@@ -214,23 +239,38 @@ def mount_frontend(target: FastAPI, directory: Path) -> bool:
 
     from fastapi.responses import HTMLResponse, JSONResponse
 
+    from app.core.ingress import resolve_prefix
+
     if not (directory / "index.html").exists():
         return False
     no_cache = {"Cache-Control": "no-cache"}
 
     @target.get("/", response_class=HTMLResponse, include_in_schema=False)
     @target.get("/index.html", response_class=HTMLResponse, include_in_schema=False)
-    async def serve_index():
+    async def serve_index(request: Request):
         content = (directory / "index.html").read_text(encoding="utf-8")
+        prefix = resolve_prefix(request)
+        if prefix:
+            # Sub-path hosting: the prefix is validated (core/ingress.py) and escaped anyway
+            content = content.replace('<base href="/">', f'<base href="{html.escape(prefix)}/">')
         name = html.escape(settings.app_name)
         content = content.replace("<title>Familienhub</title>", f"<title>{name}</title>")
         content = content.replace('content="Familienhub"', f'content="{name}"')
         return HTMLResponse(content=content, headers=no_cache)
 
     @target.get("/manifest.json", response_class=JSONResponse, include_in_schema=False)
-    async def serve_manifest():
+    async def serve_manifest(request: Request):
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         manifest["name"] = manifest["short_name"] = settings.app_name
+        prefix = resolve_prefix(request)
+        if prefix:
+            # Root-relative URLs of the manifest move below the prefix
+            manifest["id"] = manifest["start_url"] = manifest["scope"] = f"{prefix}/"
+            if isinstance(manifest.get("share_target"), dict) and str(manifest["share_target"].get("action", "")).startswith("/"):
+                manifest["share_target"]["action"] = prefix + manifest["share_target"]["action"]
+            for shortcut in manifest.get("shortcuts", []):
+                if str(shortcut.get("url", "")).startswith("/"):
+                    shortcut["url"] = prefix + shortcut["url"]
         return JSONResponse(content=manifest, headers=no_cache)
 
     @target.get("/push-sw.js", include_in_schema=False)

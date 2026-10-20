@@ -74,8 +74,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   Future<void> start() async {
     final revision = ++_revision;
-    // Web-App: Server ist immer die Seite selbst
-    final origin = kIsWeb ? webp.pageOrigin() : null;
+    // Web app: the server is always the page itself, including a sub-path prefix (Home Assistant ingress)
+    final origin = kIsWeb ? webp.pageBaseUrl() : null;
     if (origin != null && await api.store.baseUrl() != origin) {
       if (!mounted || revision != _revision) return;
       await api.setServer(origin);
