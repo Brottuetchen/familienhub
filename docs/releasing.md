@@ -87,3 +87,7 @@ The `docs/` folder is published as a website at <https://brottuetchen.github.io/
 One-time setup by the repository owner: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Until this is set, the deploy job fails; the build check on pull requests works regardless.
 
 To preview locally: `pip install -r docs/requirements.txt && mkdocs serve`. Links from a page to files outside `docs/` must be absolute GitHub URLs, otherwise the strict build fails.
+
+## Wiki
+
+The [GitHub wiki](https://github.com/Brottuetchen/familienhub/wiki) holds German how-tos, FAQ and troubleshooting for families. Its pages live in [`wiki/`](https://github.com/Brottuetchen/familienhub/tree/main/wiki) in this repository and are changed through pull requests like any other file. On every push to `main` that touches `wiki/`, the `Wiki` workflow copies the folder into the wiki. Edits made in the wiki web UI are overwritten by the next sync, so keep wiki editing restricted to collaborators (*Settings → Features → Wikis*).
