@@ -1,6 +1,6 @@
 # Translations (maintainer setup)
 
-The app's UI texts are ARB files in `app/lib/l10n/`. German (`app_de.arb`) is the template; other languages are `app_<code>.arb`. Community members translate on Hosted Weblate; Weblate sends pull requests. Contributor instructions are in [CONTRIBUTING](../CONTRIBUTING.md#translations).
+The app's UI texts are ARB files in `app/lib/l10n/`. German (`app_de.arb`) is the template; other languages are `app_<code>.arb`. Community members translate on Hosted Weblate; Weblate sends pull requests. Contributor instructions are in [CONTRIBUTING](https://github.com/Brottuetchen/familienhub/blob/main/CONTRIBUTING.md#translations).
 
 This page is the checklist for the repository owner. The Weblate project needs the owner's account, so it cannot be created from the repository.
 
@@ -62,7 +62,7 @@ Notes:
 - Keep the default checks on (placeholders, plurals, trailing punctuation).
 
 ## 7. After creating the project
-- Replace the placeholder in [CONTRIBUTING](../CONTRIBUTING.md#translations) and in the READMEs' "Help translate" line with the project URL, `https://hosted.weblate.org/projects/familienhub/` (optionally the status badge `https://hosted.weblate.org/widget/familienhub/app/svg-badge.svg` linked to that URL).
+- Replace the placeholder in [CONTRIBUTING](https://github.com/Brottuetchen/familienhub/blob/main/CONTRIBUTING.md#translations) and in the READMEs' "Help translate" line with the project URL, `https://hosted.weblate.org/projects/familienhub/` (optionally the status badge `https://hosted.weblate.org/widget/familienhub/app/svg-badge.svg` linked to that URL).
 - Announce the project (issue #25 can then be closed) and label some issues `good first issue` / `translation`.
 - Do not store the Weblate API token or any other secret in the repository.
 
