@@ -8,7 +8,7 @@ import '../../models/today_layout.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 
-/// Arrange "Today": drag to reorder, switch cards on or off, toggle half width (bento themes).
+/// Arrange "Today": drag to reorder, switch cards on or off, toggle half width.
 class TodayLayoutEditor extends ConsumerStatefulWidget {
   const TodayLayoutEditor({super.key});
 
@@ -93,7 +93,6 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
   @override
   Widget build(BuildContext context) {
     final api = ref.read(apiClientProvider);
-    final bento = HubStyle.of(context).bento;
     final isAdmin = ref.watch(sessionProvider.select((s) => s.user?.isAdmin ?? false));
     final shown = [for (final c in _cards) if (_available(c.id)) c];
     return Scaffold(
@@ -105,7 +104,7 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           header: Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(bento ? l10n.customiseTodayHintBento : l10n.customiseTodayHint,
+            child: Text(l10n.customiseTodayHintBento,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           footer: Padding(
@@ -173,7 +172,6 @@ class _TodayLayoutEditorState extends ConsumerState<TodayLayoutEditor> {
                                 ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ]),
                   ),
-                  if (bento)
                     IconButton(
                       key: Key('layout-size-${c.id}'),
                       tooltip: c.half ? l10n.sizeHalfTapForFull : l10n.sizeFullTapForHalf,

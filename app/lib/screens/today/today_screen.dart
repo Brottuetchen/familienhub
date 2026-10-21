@@ -40,9 +40,9 @@ class TodayScreen extends ConsumerWidget {
               final layout = (ref.watch(todayLayoutProvider).valueOrNull?.data ?? TodayLayout.builtin)
                   .forStyle(bento: style.bento)
                   .withPluginCards([for (final c in result.data.pluginCards) c.key]); // new ones: at the end
-              // Half size only has an effect in the bento layout on a narrow screen
+              // Half-size cards sit side by side, works with any theme
               final halves = {
-                if (style.bento) for (final c in layout.cards) if (c.half) c.id,
+                for (final c in layout.cards) if (c.half) c.id,
               };
               final cards = _cards(context, ref, result.data, online: online, compact: halves);
               for (final c in result.data.pluginCards) {
@@ -60,7 +60,7 @@ class TodayScreen extends ConsumerWidget {
               Widget body;
               if (isWide(context)) {
                 body = _TwoColumns(children: _accented([for (final (w, _) in shown) w]));
-              } else if (style.bento) {
+              } else if (halves.isNotEmpty) {
                 body = _bento(shown);
               } else {
                 body = Column(children: [for (final c in _accented([for (final (w, _) in shown) w])) ...[c, const SizedBox(height: 12)]]);

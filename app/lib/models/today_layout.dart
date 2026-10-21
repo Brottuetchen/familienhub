@@ -4,7 +4,7 @@ import 'plugin_card.dart';
 class TodayCard {
   final String id;
   final bool visible;
-  final bool half; // two half cards sit side by side (bento themes only)
+  final bool half; // two half cards sit side by side
   const TodayCard(this.id, {this.visible = true, this.half = false});
 
   TodayCard copyWith({bool? visible, bool? half}) =>
@@ -68,10 +68,13 @@ class TodayLayout {
     return extra.isEmpty ? this : TodayLayout([...cards, ...extra], source: source);
   }
 
-  /// What the screen shows. Without any saved layout, plain themes keep their original single column.
+  /// What the screen shows. Without any saved layout, non-bento themes use a different default order
+  /// but keep half-size flags so the user can still use tile layout with any theme.
   TodayLayout forStyle({required bool bento}) {
     if (bento || source != 'builtin') return this;
-    return TodayLayout([for (final id in _legacyList) TodayCard(id)], source: source);
+    // Legacy order for themes that don't default to bento, but preserve half flags from builtin
+    final byId = {for (final c in cards) c.id: c};
+    return TodayLayout([for (final id in _legacyList) byId[id] ?? TodayCard(id)], source: source);
   }
 
   Map<String, dynamic> toJson() => {'cards': [for (final c in cards) c.toJson()]};
