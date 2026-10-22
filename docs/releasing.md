@@ -50,7 +50,7 @@ Important: the iOS IPA is **unsigned** and must be signed by the installer's App
 ### Afterwards
 
 - Bump the [Home Assistant add-on](https://github.com/Brottuetchen/familienhub-ha-addon) to the new image tag (its README lists the steps).
-- The stable `v1.0.0` tag should follow real external-installation tests, not just successful CI.
+- `v1.0.0` is the first stable tag. Later stable tags follow the same rule: real installs, not CI alone.
 
 ## Make a release
 

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: October 2026. Familienhub is in public beta and runs daily in its first household. Open work is tracked as [issues](https://github.com/Brottuetchen/familienhub/issues); ideas and questions go to [Discussions](https://github.com/Brottuetchen/familienhub/discussions).
+Status: October 2026. Familienhub 1.0.0 is the current stable release and runs daily in its first household. Open work is tracked as [issues](https://github.com/Brottuetchen/familienhub/issues); ideas and questions go to [Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 
 ## Done
 
@@ -38,23 +38,24 @@ Status: October 2026. Familienhub is in public beta and runs daily in its first 
 
 **Apps**
 - Android app with widgets and quick actions, web app (PWA), iOS app for sideloading, offline queue
+- Bottom navigation labels stay on one line with wide theme fonts ([#29](https://github.com/Brottuetchen/familienhub/issues/29))
 
 **Ecosystem**
 - Home Assistant add-on as an experimental repository ([familienhub-ha-addon](https://github.com/Brottuetchen/familienhub-ha-addon), part of [#23](https://github.com/Brottuetchen/familienhub/issues/23))
+- The hub serves under a path prefix (`X-Ingress-Path` or `ROOT_PATH`), which is what Home Assistant ingress needs ([#28](https://github.com/Brottuetchen/familienhub/issues/28), [Home Assistant](home-assistant.md))
+- Documentation website: <https://brottuetchen.github.io/familienhub/> ([#26](https://github.com/Brottuetchen/familienhub/issues/26))
 
 ## In progress / next
 
 - **Kiosk mode** for a wall tablet: first as the web app with its own account ([#5](https://github.com/Brottuetchen/familienhub/issues/5))
-- **Run under a sub-path** so the Home Assistant add-on can use ingress and the sidebar ([#28](https://github.com/Brottuetchen/familienhub/issues/28))
+- **Home Assistant add-on sidebar:** the hub's sub-path support is in 1.0.0; the add-on still has to enable ingress ([#28](https://github.com/Brottuetchen/familienhub/issues/28))
 - **Public demo instance**, planned on the Oracle Cloud free tier ([#22](https://github.com/Brottuetchen/familienhub/issues/22))
 - **One-click install** beyond the add-on: Unraid, TrueNAS, Proxmox ([#23](https://github.com/Brottuetchen/familienhub/issues/23))
 - **iOS widgets and TestFlight**, which need the Apple Developer licence and are the funding goal ([#9](https://github.com/Brottuetchen/familienhub/issues/9))
-- **Bug:** floating bottom navigation labels wrap with wide fonts ([#29](https://github.com/Brottuetchen/familienhub/issues/29))
 
 ## Later
 
 - **F-Droid build** without Firebase ([#24](https://github.com/Brottuetchen/familienhub/issues/24))
-- **Documentation website** ([#26](https://github.com/Brottuetchen/familienhub/issues/26))
 - **iOS push via APNs**, once the project has an Apple Developer account (until then: ntfy or the web app)
 - **More sources:** Grocy, Vikunja/Todoist, Google and Microsoft
 - **Small follow-ups from the docs:**

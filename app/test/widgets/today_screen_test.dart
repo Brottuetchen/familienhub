@@ -41,8 +41,9 @@ void main() {
     await tester.pumpWidget(appWith(backend.api(), const TodayScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Elternabend'), findsOneWidget);
-    expect(find.text('19:30'), findsOneWidget);
+    // Half-width events use the compact line, so the time and title share one text.
+    expect(find.textContaining('Elternabend'), findsOneWidget);
+    expect(find.textContaining('19:30'), findsOneWidget);
     expect(find.text('Steuer machen'), findsOneWidget);
     expect(find.text('überfällig'), findsOneWidget);
     expect(find.text('Linsencurry'), findsOneWidget);
@@ -65,7 +66,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<Tooltip>(find.byKey(const Key('read-status'))).message, startsWith('Offline, Stand '));
-    expect(find.text('Elternabend'), findsOneWidget);
+    expect(find.textContaining('Elternabend'), findsOneWidget);
   });
 
   testWidgets('shows hint when tasks source is unavailable', (tester) async {
@@ -80,6 +81,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aufgaben gerade nicht verfügbar'), findsOneWidget);
-    expect(find.text('Elternabend'), findsOneWidget);
+    expect(find.textContaining('Elternabend'), findsOneWidget);
   });
 }

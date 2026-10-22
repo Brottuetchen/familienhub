@@ -179,8 +179,10 @@ String isoWeekOf(DateTime day) {
 }
 
 /// Montag der Woche von [day].
-DateTime mondayOf(DateTime day) =>
-    DateTime(day.year, day.month, day.day).subtract(Duration(days: day.weekday - 1));
+DateTime mondayOf(DateTime day) {
+  final d = DateTime(day.year, day.month, day.day);
+  return DateTime(d.year, d.month, d.day - (d.weekday - 1));
+}
 
 /// Uniform recipe details for the quick view (`/api/recipe-sources/{source}/recipes/{id}`).
 /// [status] is `ok` or `unavailable`; then [error] says why and the other fields are empty.

@@ -82,8 +82,9 @@ Every item links to its documentation.
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# Pin a version; change this value when you want to upgrade.
-FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
+# Stable image (:latest). Pin a release to upgrade on your own schedule:
+# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+docker compose up -d
 ```
 
 No configuration needed. Open `http://<host>:8000` in a browser (or enter that address in the app): the first person to open a new hub creates the admin account, then the setup wizard does the rest. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true` (see [security](docs/security.md#first-admin-and-secret-key)). Details, reverse proxy, building from source and backups: [getting started](docs/getting-started.md).
@@ -92,7 +93,7 @@ No configuration needed. Open `http://<host>:8000` in a browser (or enter that a
 
 [![Add repository to my Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBrottuetchen%2Ffamilienhub-ha-addon)
 
-The add-on runs the hub inside Home Assistant (SQLite, data in `/data`) and opens on port 8000. The hub can run under the Home Assistant ingress prefix ([details](docs/home-assistant.md)); the sidebar entry arrives with an add-on release that enables it ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). More in the [add-on repository](https://github.com/Brottuetchen/familienhub-ha-addon).
+The add-on runs the hub inside Home Assistant (SQLite, data in `/data`) and opens on port 8000. The hub already serves under an ingress prefix ([details](docs/home-assistant.md)). The sidebar entry still needs an add-on release that turns ingress on ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). More in the [add-on repository](https://github.com/Brottuetchen/familienhub-ha-addon).
 
 ### Apps
 
@@ -151,7 +152,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 ## Status
 
-Familienhub is in public beta (`v1.0.0-beta.2`) and has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome. What changed: [changelog](CHANGELOG.md).
+Familienhub **1.0.0** is the current stable release. It has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome. What changed: [changelog](CHANGELOG.md).
 
 ## Support
 

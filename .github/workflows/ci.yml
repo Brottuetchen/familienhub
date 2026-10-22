@@ -47,3 +47,25 @@ jobs:
         run: |
           python tools/check_arb.py --self-test
           python tools/check_arb.py
+
+  # Same gate as .forgejo/workflows/ci.yml (flutter analyze + flutter test).
+  # Flutter 3.47.7 matches the release and iOS workflows.
+  app:
+    name: Flutter
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.7"
+          channel: stable
+          cache: true
+      - name: Dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+      - name: Test
+        run: flutter test
