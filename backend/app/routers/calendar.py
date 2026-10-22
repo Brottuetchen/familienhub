@@ -379,7 +379,7 @@ async def move_event(data: MoveEventRequest, current_user: User = Depends(requir
                      db: Session = Depends(get_db)):
     """Copies an event into another writable calendar and removes it from the source.
 
-    Complex CalDAV rules that the hub cannot write back are rejected, so a move never drops a recurrence.
+    CalDAV rules the hub cannot write back are rejected, so a move never drops a recurrence.
     """
     if data.from_calendar_id == data.to_calendar_id:
         raise HTTPException(status_code=422, detail="Der Termin liegt schon in diesem Kalender")
@@ -420,7 +420,7 @@ async def _load_movable(db: Session, user: User, data: MoveEventRequest) -> Dict
         raise HTTPException(502, "Kalender gerade nicht erreichbar") from exc
     if not ev:
         raise HTTPException(404, "Termin nicht gefunden")
-    if ev.get("recurrence") == "complex" or not ev.get("start") or not ev.get("end"):
+    if ev.get("recurrence") == "unsupported" or not ev.get("start") or not ev.get("end"):
         raise HTTPException(422, "Diesen Termin kann der Hub nicht vollständig verschieben")
     return ev
 

@@ -6,13 +6,17 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 
 Patch release. The image tag `latest` points here.
 
+### Added
+- Move a calendar event into another writable calendar.
+- Named lists for shopping and tasks. A template can become its own list. Assign the list or a single item to a person.
+
 ### Fixed
 - Meal plan and calendar: next and previous week step by calendar days. A step of seven times 24 hours crossed the autumn clock change and landed on the previous evening, so the view stayed in the same ISO week.
 
 ### Upgrading from 1.0.0
 1. Download a backup in Administration first.
 2. `docker compose pull && docker compose up -d` (that follows `:latest`), or pin this release: `FAMILIENHUB_VERSION=1.0.1 docker compose pull && FAMILIENHUB_VERSION=1.0.1 docker compose up -d`
-3. No database migrations and no new settings.
+3. Startup applies the `named_lists` migration. No new settings.
 4. Install the new Android APK or iOS IPA from this release. The web app updates with the server image.
 
 ## [1.0.0]
