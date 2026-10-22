@@ -16,13 +16,13 @@ Familienhub besteht aus **einem Container** (Server und Web-App) plus **PostgreS
    curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
    ```
 
-2. **Version festlegen.** Solange es nur Beta-Versionen gibt, existiert das Image-Tag `latest` nicht (es kommt erst mit einem stabilen Release). Die aktuelle Beta steht auf der [Release-Seite](https://github.com/Brottuetchen/familienhub/releases/latest). Am einfachsten merkt ihr sie euch in einer `.env`-Datei neben der `docker-compose.yml`:
+2. **Version.** Das stabile Release ist **1.0.0**, und `latest` zeigt darauf. Ohne weitere Angabe reicht Schritt 3. Wer eine Version festnageln will, schreibt sie in eine `.env` neben der `docker-compose.yml`:
 
    ```bash
-   echo "FAMILIENHUB_VERSION=1.0.0-beta.3" > .env
+   echo "FAMILIENHUB_VERSION=1.0.0" > .env
    ```
 
-   (Beispiel; nehmt die Version, die auf der Release-Seite steht.) Alternativ nur für einen Aufruf: `FAMILIENHUB_VERSION=1.0.0-beta.3 docker compose up -d`.
+   Die aktuelle Version steht auf der [Release-Seite](https://github.com/Brottuetchen/familienhub/releases/latest). Eine Beta ist nie `latest`: dafür `FAMILIENHUB_VERSION` auf genau diese Beta setzen.
 
 3. Starten:
 

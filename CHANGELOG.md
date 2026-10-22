@@ -1,6 +1,18 @@
 # Changelog
 
-All notable changes per release. Versions follow the Git tags (`v1.0.0-beta.2` → image `ghcr.io/brottuetchen/familienhub:1.0.0-beta.2`).
+All notable changes per release. Versions follow the Git tags (`v1.0.0` → image `ghcr.io/brottuetchen/familienhub:1.0.0`).
+
+## [1.0.0]
+
+First stable release. The image tag `latest` points here. Functionally this is [1.0.0-beta.4](#100-beta4) plus one fix.
+
+### Fixed
+- Today layout: half-width tiles work with every theme. The half/full toggle is always shown; themes without `layout: bento` no longer drop the half flag.
+
+### Upgrading from 1.0.0-beta.4
+1. Download a backup in Administration first.
+2. `docker compose pull && docker compose up -d` (that follows `:latest`), or pin this release: `FAMILIENHUB_VERSION=1.0.0 docker compose pull && FAMILIENHUB_VERSION=1.0.0 docker compose up -d`
+3. No database migrations and no new settings.
 
 ## [1.0.0-beta.4]
 

@@ -82,8 +82,9 @@ Die ausführliche Doku ist auf Englisch; die Links unten führen dorthin.
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# Öffentliche Beta: Version explizit angeben; :latest gibt es erst mit einem stabilen Release.
-FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
+# Stabiles Image (:latest). Eine Version festnageln, wenn ihr selbst entscheidet, wann aktualisiert wird:
+# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+docker compose up -d
 ```
 
 Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen (oder die Adresse in der App eintragen): Wer einen neuen Hub zuerst öffnet, legt das Admin-Konto an, danach führt der Einrichtungs-Assistent durch den Rest. Ist der Hub vor der Einrichtung aus dem Internet erreichbar, `SETUP_REQUIRE_CODE=true` setzen (siehe [Sicherheit](docs/security.md#first-admin-and-secret-key), englisch). Mehr dazu (Reverse-Proxy, Selbst bauen, Sicherung) im [Einstieg](docs/getting-started.md) (englisch).
@@ -92,7 +93,7 @@ Es ist keine Konfiguration nötig. Dann `http://<host>:8000` im Browser öffnen 
 
 [![Repository zu meinem Home Assistant hinzufügen](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBrottuetchen%2Ffamilienhub-ha-addon)
 
-Das Add-on betreibt den Hub in Home Assistant (SQLite, Daten in `/data`) und ist auf Port 8000 erreichbar. Einen Eintrag in der Home-Assistant-Seitenleiste gibt es noch nicht ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). Mehr im [Add-on-Repository](https://github.com/Brottuetchen/familienhub-ha-addon).
+Das Add-on betreibt den Hub in Home Assistant (SQLite, Daten in `/data`) und ist auf Port 8000 erreichbar. Der Hub kann bereits unter einem Ingress-Pfad laufen ([Details](docs/home-assistant.md), englisch). Den Eintrag in der Home-Assistant-Seitenleiste liefert erst ein Add-on-Release, das Ingress einschaltet ([#28](https://github.com/Brottuetchen/familienhub/issues/28)). Mehr im [Add-on-Repository](https://github.com/Brottuetchen/familienhub-ha-addon).
 
 ### Apps
 
@@ -151,7 +152,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 ## Status
 
-Familienhub ist in der öffentlichen Beta (`v1.0.0-beta.2`) und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen. Was sich geändert hat: [Changelog](CHANGELOG.md) (englisch).
+Familienhub **1.0.0** ist das aktuelle stabile Release und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen. Was sich geändert hat: [Changelog](CHANGELOG.md) (englisch).
 
 ## Unterstützen
 

@@ -7,11 +7,12 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 ```bash
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
-# Current public beta; :latest is reserved for stable releases.
-FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
+# Stable image (:latest). Pin a release to upgrade on your own schedule:
+# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+docker compose up -d
 ```
 
-This pulls the prebuilt image and needs no configuration beyond pinning the current beta (Docker Compose v2.24 or newer). For anonymous pulls, the GitHub Container Registry package must be public. The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](https://github.com/Brottuetchen/familienhub/blob/main/.env.example) and edit it before the first start.
+This pulls the prebuilt image and needs no configuration (Docker Compose v2.24 or newer). For anonymous pulls, the GitHub Container Registry package must be public. The secret key is generated on first start and kept in the `familienhub_data` volume; the database password defaults to a value that is only reachable inside the compose network. Optional settings (port, plugins, OIDC, a different database password) go into a `.env` file next to `docker-compose.yml`: copy [`.env.example`](https://github.com/Brottuetchen/familienhub/blob/main/.env.example) and edit it before the first start.
 
 Open `http://<host>:8000` in a browser, or enter that address in the app. A new hub shows **Set up**:
 1. The first person to open the hub creates the admin account. No code is needed, and this works only while no admin exists. **If the hub is reachable from the internet before you have done this, set `SETUP_REQUIRE_CODE=true` in `.env` first:** the hub then logs a setup code (`docker compose logs familienhub | grep -i code`) that is valid only while no admin exists and changes on every restart and after ten wrong attempts. Alternative without a code: `docker compose exec familienhub python -m scripts.create_admin`.
@@ -42,15 +43,15 @@ Database migrations run automatically on start (Alembic).
 - Under a path prefix or in the Home Assistant sidebar: see [Home Assistant and sub-paths](home-assistant.md).
 - For access from outside, a VPN (e.g. WireGuard) is safer than exposing the hub publicly.
 
-## Public beta installations
+## Pinning a version
 
-For a pre-release, either download the `docker-compose.yml` **attached to that exact GitHub release**, or set `FAMILIENHUB_VERSION` to the advertised beta version before running Docker Compose. The default `:latest` container tag is published with a stable release, not with a beta.
+`docker compose up -d` follows the stable `:latest` tag (1.0.0). To stay on one release until you choose to upgrade, set `FAMILIENHUB_VERSION` in `.env` or for a single command:
 
 ```bash
-FAMILIENHUB_VERSION=1.0.0-beta.2 docker compose up -d
+FAMILIENHUB_VERSION=1.0.0 docker compose up -d
 ```
 
-Do not use the default `latest`-based quick start from the repository until a stable release exists. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.
+Pre-releases are not published as `:latest`. For a pre-release, set `FAMILIENHUB_VERSION` to that exact version, or download the `docker-compose.yml` attached to that GitHub release. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.
 
 ## 3. Get the apps
 
