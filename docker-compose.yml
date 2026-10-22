@@ -1,6 +1,6 @@
 # Familienhub: backend + web app + PostgreSQL.
-# Stable release: docker compose up -d (uses :latest, currently 1.0.0).
-# Pin a release to upgrade on your own schedule, e.g. FAMILIENHUB_VERSION=1.0.0 docker compose up -d.
+# Stable release: docker compose up -d (uses :latest, currently 1.0.1).
+# Pin a release to upgrade on your own schedule, e.g. FAMILIENHUB_VERSION=1.0.1 docker compose up -d.
 # Optional settings go into a .env file next to this one (see .env.example).
 # Building from source instead of pulling the image: see docker-compose.dev.yml.
 # The Android/iOS app connects to the same address (http(s)://<host>:8000 or behind a reverse proxy).

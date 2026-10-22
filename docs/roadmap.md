@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: October 2026. Familienhub 1.0.0 is the current stable release and runs daily in its first household. Open work is tracked as [issues](https://github.com/Brottuetchen/familienhub/issues); ideas and questions go to [Discussions](https://github.com/Brottuetchen/familienhub/discussions).
+Status: October 2026. Familienhub 1.0.1 is the current stable release and runs daily in its first household. Open work is tracked as [issues](https://github.com/Brottuetchen/familienhub/issues); ideas and questions go to [Discussions](https://github.com/Brottuetchen/familienhub/discussions).
 
 ## Done
 

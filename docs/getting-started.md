@@ -8,7 +8,7 @@ Familienhub is one Docker container (FastAPI backend, which also serves the web 
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
 # Stable image (:latest). Pin a release to upgrade on your own schedule:
-# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+# FAMILIENHUB_VERSION=1.0.1 docker compose up -d
 docker compose up -d
 ```
 
@@ -45,10 +45,10 @@ Database migrations run automatically on start (Alembic).
 
 ## Pinning a version
 
-`docker compose up -d` follows the stable `:latest` tag (1.0.0). To stay on one release until you choose to upgrade, set `FAMILIENHUB_VERSION` in `.env` or for a single command:
+`docker compose up -d` follows the stable `:latest` tag (1.0.1). To stay on one release until you choose to upgrade, set `FAMILIENHUB_VERSION` in `.env` or for a single command:
 
 ```bash
-FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+FAMILIENHUB_VERSION=1.0.1 docker compose up -d
 ```
 
 Pre-releases are not published as `:latest`. For a pre-release, set `FAMILIENHUB_VERSION` to that exact version, or download the `docker-compose.yml` attached to that GitHub release. Check that the image is publicly accessible and the relevant GitHub Actions build has finished.

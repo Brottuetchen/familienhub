@@ -83,7 +83,7 @@ Die ausführliche Doku ist auf Englisch; die Links unten führen dorthin.
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
 # Stabiles Image (:latest). Eine Version festnageln, wenn ihr selbst entscheidet, wann aktualisiert wird:
-# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+# FAMILIENHUB_VERSION=1.0.1 docker compose up -d
 docker compose up -d
 ```
 
@@ -152,7 +152,7 @@ Die Quelle jedes Bereichs wählt der Admin im Einrichtungs-Assistenten oder unte
 
 ## Status
 
-Familienhub **1.0.0** ist das aktuelle stabile Release und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen. Was sich geändert hat: [Changelog](CHANGELOG.md) (englisch).
+Familienhub **1.0.1** ist das aktuelle stabile Release und wird seit Oktober 2026 täglich vom ersten Haushalt genutzt. Rechnet mit Ecken und Kanten; Issues und Ideen sind willkommen. Was sich geändert hat: [Changelog](CHANGELOG.md) (englisch).
 
 ## Unterstützen
 
