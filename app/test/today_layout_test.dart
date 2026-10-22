@@ -64,7 +64,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(_y(tester, 'today-tasks'), lessThan(_y(tester, 'today-meals')));
     expect(_y(tester, 'today-meals'), lessThan(_y(tester, 'today-shopping')));
-    expect(_y(tester, 'today-shopping'), lessThan(_y(tester, 'today-events')));
+    // Built-in layout keeps shopping and events at half width, so they share a row.
+    expect(_y(tester, 'today-shopping'), _y(tester, 'today-events'));
+    expect(tester.getTopLeft(find.byKey(const Key('today-shopping'))).dx,
+        lessThan(tester.getTopLeft(find.byKey(const Key('today-events'))).dx));
   });
 
   testWidgets('a hidden card is not shown', (tester) async {

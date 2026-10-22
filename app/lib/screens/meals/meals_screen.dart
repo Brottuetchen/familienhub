@@ -23,7 +23,10 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
 
   String get _week => isoWeekOf(_monday);
 
-  void _shiftWeek(int weeks) => setState(() => _monday = _monday.add(Duration(days: 7 * weeks)));
+  // Calendar days, not 24-hour steps: a 7-day Duration crosses the autumn clock change
+  // and lands on the day before (midnight plus 168 hours is still the previous evening).
+  void _shiftWeek(int weeks) =>
+      setState(() => _monday = DateTime(_monday.year, _monday.month, _monday.day + 7 * weeks));
 
   Future<void> _reload() async {
     await ref.read(mealsProvider(_week).notifier).refresh();
@@ -179,7 +182,8 @@ class _MealsScreenState extends ConsumerState<MealsScreen> {
 
   Future<void> _toShoppingList() async {
     try {
-      final message = await ref.read(apiClientProvider).mealsToShoppingList(start: _monday, end: _monday.add(const Duration(days: 6)));
+      final message = await ref.read(apiClientProvider).mealsToShoppingList(
+          start: _monday, end: DateTime(_monday.year, _monday.month, _monday.day + 6));
       if (mounted) showInfo(context, message);
     } catch (e) {
       if (mounted) showError(context, e);
