@@ -4,7 +4,7 @@ This wiki is **German-first** (practical how-tos for families). The reference do
 
 **Familienhub** is a self-hosted family hub: one Docker container (FastAPI backend that also serves the Flutter web app) plus PostgreSQL. Tasks, shopping list, meals, calendar, reminders, kids mode (stars and rewards), birthdays and a children's timetable work on their own. Plugins connect what you already run (Nextcloud, Home Assistant, Paperless, Mealie, Grocy, Immich, ...). Apps: Android (APK), web app (PWA), iOS (sideload; push via ntfy). German and English UI.
 
-Status: 1.0.0 is the current stable release. See the [latest release](https://github.com/Brottuetchen/familienhub/releases/latest).
+Status: 1.0.1 is the current stable release. See the [latest release](https://github.com/Brottuetchen/familienhub/releases/latest).
 
 ## Reference documentation
 

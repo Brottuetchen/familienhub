@@ -83,7 +83,7 @@ Every item links to its documentation.
 mkdir familienhub && cd familienhub
 curl -fsSLO https://raw.githubusercontent.com/Brottuetchen/familienhub/main/docker-compose.yml
 # Stable image (:latest). Pin a release to upgrade on your own schedule:
-# FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+# FAMILIENHUB_VERSION=1.0.1 docker compose up -d
 docker compose up -d
 ```
 
@@ -152,7 +152,7 @@ Admins choose the source of each area in the setup wizard or under *Administrati
 
 ## Status
 
-Familienhub **1.0.0** is the current stable release. It has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome. What changed: [changelog](CHANGELOG.md).
+Familienhub **1.0.1** is the current stable release. It has been used daily by its first household since October 2026. Expect rough edges; issues and ideas are welcome. What changed: [changelog](CHANGELOG.md).
 
 ## Support
 

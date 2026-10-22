@@ -7,13 +7,14 @@
 1. **Backup herunterladen:** *Mehr → Verwaltung → Backup → Backup herunterladen*. Bewahrt die Datei wie ein Passwort auf, siehe [Backup und Wiederherstellen](Backup-und-Wiederherstellen).
 2. **Changelog lesen:** [CHANGELOG.md](https://github.com/Brottuetchen/familienhub/blob/main/CHANGELOG.md) (Englisch). Dort steht auch, ob neue Einstellungen dazukommen.
 3. **Neue Version ziehen und starten.**
-   - Stabiles Release (aktuell **1.0.0**): `docker compose pull && docker compose up -d` folgt dem Tag `latest`.
-   - Eine Version festnageln: `FAMILIENHUB_VERSION` in der `.env` ändern (zum Beispiel auf `1.0.0`) und denselben Befehl ausführen.
-   - Eine Beta: `FAMILIENHUB_VERSION` auf genau diese Beta setzen. `latest` zeigt nie auf eine Beta. Ohne Eintrag in der `.env`, einmalig für diesen Aufruf:
+   - Stabiles Release (aktuell **1.0.1**): `docker compose pull && docker compose up -d` folgt dem Tag `latest`.
+   - Eine Version festnageln: `FAMILIENHUB_VERSION` in der `.env` ändern (zum Beispiel auf `1.0.1`) und denselben Befehl ausführen. Ohne Eintrag in der `.env`, einmalig für diesen Aufruf:
 
      ```bash
-     FAMILIENHUB_VERSION=1.0.0 docker compose pull && FAMILIENHUB_VERSION=1.0.0 docker compose up -d
+     FAMILIENHUB_VERSION=1.0.1 docker compose pull && FAMILIENHUB_VERSION=1.0.1 docker compose up -d
      ```
+
+   - Eine Beta: `FAMILIENHUB_VERSION` auf genau diese Beta setzen. `latest` zeigt nie auf eine Beta.
 4. Die **Datenbank-Migrationen laufen beim Start automatisch** (Alembic). Prüft mit `docker compose logs -f familienhub`, dass der Start ohne Fehler durchläuft.
 5. App aktualisieren: neue APK von der [Release-Seite](https://github.com/Brottuetchen/familienhub/releases/latest), siehe [Apps installieren](Apps-installieren).
 
