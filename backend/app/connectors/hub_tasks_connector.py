@@ -79,6 +79,7 @@ class HubTasksConnector:
             q = db.query(HubTask)
             if not include_done:
                 q = q.filter(HubTask.done == False)  # noqa: E712
+            q = q.filter(HubTask.list_id.is_(None))  # named lists have their own screen
             q = q.filter(or_(HubTask.family == True, HubTask.created_by == me, HubTask.assignee_id == me))  # noqa: E712
             items = []
             for t in q.order_by(HubTask.created_at).all():

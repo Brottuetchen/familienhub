@@ -9,6 +9,7 @@ import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 import '../templates/templates_screen.dart';
+import '../lists/named_lists_screen.dart';
 
 /// Zuletzt eingegebene Artikel als Vorschläge (lokal, weil `/api/shopping/recent` noch leer ist).
 class RecentItems {
@@ -122,11 +123,19 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
           ),
           PopupMenuButton<String>(
             key: const Key('shopping-menu'),
-            onSelected: (v) => v == 'save'
-                ? saveShoppingAsTemplate(context, ref)
-                : Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => const TemplatesScreen(target: TemplateTarget.shopping))),
+            onSelected: (v) {
+              if (v == 'save') {
+                saveShoppingAsTemplate(context, ref);
+              } else if (v == 'lists') {
+                Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => const NamedListsScreen(kind: 'shopping')));
+              } else {
+                Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => const TemplatesScreen(target: TemplateTarget.shopping)));
+              }
+            },
             itemBuilder: (_) => [
+              PopupMenuItem(value: 'lists', child: Text(l10n.namedLists)),
               PopupMenuItem(value: 'templates', child: Text(l10n.templates)),
               if (ref.read(canEditProvider)) PopupMenuItem(value: 'save', child: Text(l10n.templateSaveShopping)),
             ],

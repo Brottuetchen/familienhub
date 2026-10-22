@@ -93,4 +93,13 @@ mixin CalendarApi on ApiClientBase {
 
   /// Only events of the hub's family calendar can be deleted here.
   Future<void> deleteEvent(int id) => _send('DELETE', '/api/calendar/events/$id');
+
+  /// Copies the event into [toCalendarId] and removes it from the source.
+  Future<void> moveEvent({required String fromCalendarId, required String toCalendarId, int? eventId, String? uid}) =>
+      _send('POST', '/api/calendar/move', body: {
+        'from_calendar_id': fromCalendarId,
+        'to_calendar_id': toCalendarId,
+        if (eventId != null) 'event_id': eventId,
+        if (uid != null) 'uid': uid,
+      });
 }

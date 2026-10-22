@@ -45,6 +45,30 @@ class EventDetailsSheet extends ConsumerWidget {
     }
   }
 
+  Future<void> _move(BuildContext context, WidgetRef ref) async {
+    final cals = ref.read(calendarsProvider).valueOrNull ?? const <CalendarInfo>[];
+    final from = event.calendarId ?? (event.source == 'hub' ? 'hub' : null);
+    final targets = [for (final c in cals) if (c.writable && c.id != from) c];
+    if (from == null || targets.isEmpty) {
+      showInfo(context, l10n.moveEventNone);
+      return;
+    }
+    final picked = await showDialog<CalendarInfo>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.moveEventTo),
+        children: [for (final c in targets) SimpleDialogOption(onPressed: () => Navigator.pop(ctx, c), child: Text(c.name))],
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    if (await runAction(context, () => ref.read(apiClientProvider).moveEvent(
+          fromCalendarId: from, toCalendarId: picked.id, eventId: event.id, uid: event.uid))) {
+      ref.invalidate(eventsProvider);
+      ref.invalidate(eventsRangeProvider);
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -82,6 +106,12 @@ class EventDetailsSheet extends ConsumerWidget {
         if (editable) ...[
           const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.spaceBetween, children: [
+            FilledButton.tonalIcon(
+              key: const Key('event-move'),
+              icon: const Icon(Icons.drive_file_move_outline),
+              label: Text(l10n.moveEvent),
+              onPressed: () => _move(context, ref),
+            ),
             FilledButton.tonalIcon(
               key: const Key('event-edit'),
               icon: const Icon(Icons.edit_outlined),

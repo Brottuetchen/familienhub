@@ -9,7 +9,7 @@ from app.models.caldav import CalDAVAccount, TaskList
 from app.models.notification_log import NotificationLog
 from app.models.ntfy import NtfyTarget
 from app.models.seerr_notice import SeerrNotice
-from app.models.hub import HubEvent, HubShoppingItem, HubTask
+from app.models.hub import HubEvent, HubShoppingItem, HubTask, NamedList
 from app.models.list_template import ListTemplate, ListTemplateItem
 from app.models.event_alarm import EventAlarmSent
 from app.models.birthday import Birthday, GiftIdea
@@ -44,6 +44,7 @@ __all__ = [
     "HubEvent",
     "HubShoppingItem",
     "HubTask",
+    "NamedList",
     "NtfyTarget",
     "Feedback",
     "Invite",

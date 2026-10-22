@@ -14,13 +14,18 @@ def _item(i: HubShoppingItem) -> Dict[str, Any]:
 
 
 def _id(uid: str) -> Optional[int]:
-    return int(uid) if uid.isdecimal() else None
+    return int(uid) if str(uid).isdigit() else None
+
+
+def _main(db):
+    """The grocery list. Named lists (packing list, …) stay on their own."""
+    return db.query(HubShoppingItem).filter(HubShoppingItem.list_id.is_(None))
 
 
 class HubShopping:
     async def groups(self) -> Dict[str, Any]:
         with SessionLocal() as db:
-            items = db.query(HubShoppingItem).order_by(HubShoppingItem.done, HubShoppingItem.created_at).all()
+            items = _main(db).order_by(HubShoppingItem.done, HubShoppingItem.created_at).all()
             out = [_item(i) for i in items]
         from app.services import shopping_recipes
 
@@ -29,7 +34,7 @@ class HubShopping:
 
     async def open_items(self) -> List[Dict[str, Any]]:
         with SessionLocal() as db:
-            rows = db.query(HubShoppingItem).filter(HubShoppingItem.done == False).order_by(  # noqa: E712
+            rows = _main(db).filter(HubShoppingItem.done == False).order_by(  # noqa: E712
                 HubShoppingItem.created_at).all()
             return [{"uid": str(i.id), "summary": i.summary} for i in rows]
 
@@ -72,7 +77,7 @@ class HubShopping:
     async def recent(self) -> List[str]:
         """Recently ticked-off items as suggestions, newest first, without duplicates."""
         with SessionLocal() as db:
-            done = (db.query(HubShoppingItem).filter(HubShoppingItem.done == True)  # noqa: E712
+            done = (_main(db).filter(HubShoppingItem.done == True)  # noqa: E712
                     .order_by(HubShoppingItem.completed_at.desc()).limit(200).all())
             seen, out = set(), []
             for i in done:
@@ -83,4 +88,4 @@ class HubShopping:
 
     async def open_count(self) -> int:
         with SessionLocal() as db:
-            return db.query(HubShoppingItem).filter(HubShoppingItem.done == False).count()  # noqa: E712
+            return _main(db).filter(HubShoppingItem.done == False).count()  # noqa: E712

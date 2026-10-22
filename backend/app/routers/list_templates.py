@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -206,3 +206,23 @@ async def apply_to_tasks(template_id: int, data: ApplyIn, user: User = Depends(r
             failed += 1
             logger.warning("Task from template not created: %s", type(exc).__name__)
     return {"status": "ok" if not failed else "partial", "created": created, "failed": failed}
+
+
+class ApplyListIn(BaseModel):
+    name: str = Field(max_length=120)
+    kind: Literal["shopping", "tasks"]
+    assignee_id: Optional[int] = None
+    item_ids: Optional[List[int]] = Field(None, max_length=MAX_ITEMS)
+
+
+@router.post("/{template_id}/apply/list", status_code=201)
+def apply_as_list(template_id: int, data: ApplyListIn, user: User = Depends(get_current_user),
+                  db: Session = Depends(get_db)):
+    """Creates a separate list. Does not add to the main shopping or task list."""
+    from app.routers.lists import _out, _partner, add_from_template
+
+    if data.kind == "tasks":
+        _partner(user)
+    items = _chosen(_get(db, template_id), ApplyIn(item_ids=data.item_ids))
+    row = add_from_template(db, user, data.kind, data.name, data.assignee_id, items)
+    return _out(db, row, with_items=True)

@@ -1875,5 +1875,17 @@
   "timetableSourceOwn": "Nur eigene Einträge",
   "timetableSourcePlugin": "Quelle",
   "timetableSourcePerson": "Person im Plugin",
-  "timetableSourceIdentifier": "Kennung im Plugin"
+  "timetableSourceIdentifier": "Kennung im Plugin",
+  "moveEvent": "Verschieben",
+  "moveEventTo": "In welchen Kalender?",
+  "moveEventNone": "Kein anderer beschreibbarer Kalender",
+  "namedLists": "Listen",
+  "namedListNew": "Neue Liste",
+  "namedListName": "Name der Liste",
+  "namedListsEmpty": "Noch keine Liste",
+  "assignPerson": "Zuordnen",
+  "nobody": "Niemand",
+  "allPeople": "Alle",
+  "templateApplyAsList": "Als eigene Liste",
+  "listCreated": "Liste angelegt"
 }

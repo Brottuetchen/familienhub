@@ -41,6 +41,7 @@ part 'api_today.dart';
 part 'api_timetable.dart';
 part 'api_tasks.dart';
 part 'api_shopping.dart';
+part 'api_lists.dart';
 part 'api_meals.dart';
 part 'api_calendar.dart';
 part 'api_family.dart';
@@ -716,6 +717,7 @@ class ApiClient extends ApiClientBase
         TimetableApi,
         TasksApi,
         ShoppingApi,
+        ListsApi,
         MealsApi,
         CalendarApi,
         FamilyApi,

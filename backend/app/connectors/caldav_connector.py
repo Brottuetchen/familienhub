@@ -164,6 +164,18 @@ class CalDAVConnector(BaseConnector):
         caldav_cache.clear_reads()
         return True
 
+    async def read_event(self, calendar_url: str, uid: str):
+        return await asyncio.to_thread(self._read_event_sync, calendar_url, uid)
+
+    def _read_event_sync(self, calendar_url: str, uid: str):
+        ev = self._event_by_uid(calendar_url, uid)
+        if ev is None:
+            return None
+        comp = ev.icalendar_component
+        data = _component_to_event(comp, "", None)
+        data["recurrence"] = _simple_recurrence(comp)
+        return data
+
     async def get_today(self) -> List[Dict[str, Any]]:
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         events = await self.get_events(days_ahead=1, start=today)
@@ -384,6 +396,23 @@ def calendar_color(cal: Any) -> Optional[str]:
     if value is None:  # some servers key the answer differently; match by tag suffix
         value = next((v for k, v in props.items() if str(k).endswith("calendar-color")), None)
     return normalize_color(value)
+
+
+def _simple_recurrence(comp: Any) -> str:
+    """none/daily/weekly/monthly/yearly, or complex when the hub cannot round-trip the rule."""
+    if comp.get("recurrence-id") and not comp.get("rrule"):
+        return "complex"
+    rrule = comp.get("rrule")
+    if not rrule:
+        return "none"
+    keys = {str(k).upper() for k in rrule.keys()}
+    if keys - {"FREQ"}:
+        return "complex"
+    freq = rrule.get("FREQ")
+    if isinstance(freq, (list, tuple)):
+        freq = freq[0] if freq else None
+    freq = str(freq or "").lower()
+    return freq if freq in {"daily", "weekly", "monthly", "yearly"} else "complex"
 
 
 def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> Dict[str, Any]:

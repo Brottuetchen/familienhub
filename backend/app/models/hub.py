@@ -21,6 +21,8 @@ class HubTask(Base):
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     # Personal tasks belong to the assignee (or the creator); family tasks may have an assignee too.
     assignee_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    # Set only for a named list (packing list, …). Those tasks stay out of the main views.
+    list_id = Column(Integer, ForeignKey("named_lists.id", ondelete="CASCADE"), nullable=True, index=True)
     recurrence = Column(String(16), nullable=False, default="none")
     rotation = Column(JSON, nullable=False, default=list)
     successor_uid = Column(String(64), nullable=True)  # set once a household task has created its next turn
@@ -35,8 +37,24 @@ class HubShoppingItem(Base):
     summary = Column(String(200), nullable=False)
     done = Column(Boolean, nullable=False, default=False)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # None = the main shopping list. A named list (packing list, …) stays separate.
+    list_id = Column(Integer, ForeignKey("named_lists.id", ondelete="CASCADE"), nullable=True, index=True)
+    assignee_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime, nullable=True)
+
+
+class NamedList(Base):
+    """A separate shopping or task list, optionally created from a template."""
+
+    __tablename__ = "named_lists"
+
+    id = Column(Integer, primary_key=True)
+    kind = Column(String(16), nullable=False)  # shopping | tasks
+    name = Column(String(120), nullable=False)
+    assignee_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class ShoppingItemRecipes(Base):
