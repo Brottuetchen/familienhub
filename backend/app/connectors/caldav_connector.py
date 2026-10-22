@@ -399,20 +399,20 @@ def calendar_color(cal: Any) -> Optional[str]:
 
 
 def _simple_recurrence(comp: Any) -> str:
-    """none/daily/weekly/monthly/yearly, or complex when the hub cannot round-trip the rule."""
+    """none/daily/weekly/monthly/yearly, or unsupported when the hub cannot round-trip the rule."""
     if comp.get("recurrence-id") and not comp.get("rrule"):
-        return "complex"
+        return "unsupported"
     rrule = comp.get("rrule")
     if not rrule:
         return "none"
     keys = {str(k).upper() for k in rrule.keys()}
     if keys - {"FREQ"}:
-        return "complex"
+        return "unsupported"
     freq = rrule.get("FREQ")
     if isinstance(freq, (list, tuple)):
         freq = freq[0] if freq else None
     freq = str(freq or "").lower()
-    return freq if freq in {"daily", "weekly", "monthly", "yearly"} else "complex"
+    return freq if freq in {"daily", "weekly", "monthly", "yearly"} else "unsupported"
 
 
 def _component_to_event(comp: Any, cal_name: str, cal_color: Optional[str]) -> Dict[str, Any]:
