@@ -2,8 +2,12 @@ part of 'api_client.dart';
 
 /// Named shopping and task lists. Items here are not on the main lists.
 mixin ListsApi on ApiClientBase {
-  Future<List<Map<String, dynamic>>> namedLists(String kind, {int? assigneeId}) async {
-    final query = assigneeId == null ? 'kind=$kind' : 'kind=$kind&assignee_id=$assigneeId';
+  Future<List<Map<String, dynamic>>> namedLists(String kind, {int? assigneeId, bool withItems = false}) async {
+    final query = [
+      'kind=$kind',
+      if (assigneeId != null) 'assignee_id=$assigneeId',
+      if (withItems) 'with_items=true',
+    ].join('&');
     final json = await _send('GET', '/api/lists?$query') as Map<String, dynamic>;
     return ((json['items'] as List?) ?? const []).whereType<Map<String, dynamic>>().toList();
   }

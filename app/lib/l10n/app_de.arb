@@ -1887,5 +1887,25 @@
   "nobody": "Niemand",
   "allPeople": "Alle",
   "templateApplyAsList": "Als eigene Liste",
-  "listCreated": "Liste angelegt"
+  "listCreated": "Liste angelegt",
+  "mainList": "Allgemein",
+  "namedListHeading": "-Liste {name} (von {person})",
+  "@namedListHeading": {
+    "placeholders": {
+      "name": {},
+      "person": {}
+    }
+  },
+  "namedListHeadingPlain": "-Liste {name}",
+  "@namedListHeadingPlain": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "assignedItem": "(zugeordnet {name})",
+  "@assignedItem": {
+    "placeholders": {
+      "name": {}
+    }
+  }
 }

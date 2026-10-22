@@ -129,11 +129,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           PopupMenuButton<String>(
             key: const Key('tasks-menu'),
             onSelected: (v) => Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => v == 'lists'
-                    ? const NamedListsScreen(kind: 'tasks')
-                    : const TemplatesScreen(target: TemplateTarget.tasks))),
+                builder: (_) => const TemplatesScreen(target: TemplateTarget.tasks))),
             itemBuilder: (_) => [
-              PopupMenuItem(value: 'lists', child: Text(l10n.namedLists)),
               PopupMenuItem(value: 'templates', child: Text(l10n.templates)),
             ],
           )],

@@ -6,137 +6,25 @@ import '../../models/account.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
 
-/// Shopping or task lists that stay off the main list. Filter by person, assign the list or one item.
-class NamedListsScreen extends ConsumerStatefulWidget {
+/// Named lists inside the shopping or task overview. Filter stays on that screen.
+class NamedListSections extends ConsumerStatefulWidget {
   final String kind;
-  const NamedListsScreen({super.key, required this.kind});
+  final bool showDone;
+
+  const NamedListSections({super.key, required this.kind, this.showDone = false});
 
   @override
-  ConsumerState<NamedListsScreen> createState() => _NamedListsScreenState();
+  ConsumerState<NamedListSections> createState() => _NamedListSectionsState();
 }
 
-class _NamedListsScreenState extends ConsumerState<NamedListsScreen> {
-  int? _person; // null = all
+class _NamedListSectionsState extends ConsumerState<NamedListSections> {
+  int? _person;
   late Future<List<Map<String, dynamic>>> _lists = _load();
 
   Future<List<Map<String, dynamic>>> _load() =>
-      ref.read(apiClientProvider).namedLists(widget.kind, assigneeId: _person);
+      ref.read(apiClientProvider).namedLists(widget.kind, withItems: true);
 
   void _reload() => setState(() => _lists = _load());
-
-  Future<int?> _pickPerson({bool allowNone = true}) async {
-    final people = await ref.read(peopleProvider.future);
-    if (!mounted) return null;
-    return showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.assignPerson),
-        children: [
-          if (allowNone) SimpleDialogOption(onPressed: () => Navigator.pop(ctx, 0), child: Text(l10n.nobody)),
-          for (final p in people) SimpleDialogOption(onPressed: () => Navigator.pop(ctx, p.id), child: Text(p.displayName)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _create() async {
-    final name = await _askName(l10n.namedListNew, '');
-    if (name == null || !mounted) return;
-    final person = await _pickPerson();
-    if (!mounted || person == null) return;
-    final ok = await runAction(context, () => ref.read(apiClientProvider).createNamedList(
-          widget.kind, name, assigneeId: person == 0 ? null : person));
-    if (ok) _reload();
-  }
-
-  Future<String?> _askName(String title, String initial) async {
-    final controller = TextEditingController(text: initial);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(labelText: l10n.namedListName)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: Text(l10n.save)),
-        ],
-      ),
-    );
-    controller.dispose();
-    return name == null || name.isEmpty ? null : name;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.namedLists),
-        actions: [
-          DropdownButton<int>(
-            value: _person ?? 0,
-            underline: const SizedBox.shrink(),
-            items: [
-              DropdownMenuItem(value: 0, child: Text(l10n.allPeople)),
-              for (final p in people) DropdownMenuItem(value: p.id, child: Text(p.displayName)),
-            ],
-            onChanged: (v) {
-              _person = v == null || v == 0 ? null : v;
-              _reload();
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _create, icon: const Icon(Icons.add), label: Text(l10n.namedListNew)),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _lists,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) return const Center(child: HubLoader());
-          if (snap.hasError) return ErrorView(error: snap.error!, onRetry: _reload);
-          final rows = snap.data ?? const [];
-          if (rows.isEmpty) return Center(child: Text(l10n.namedListsEmpty));
-          return ListView(children: [
-            for (final row in rows)
-              ListTile(
-                title: Text(row['name'] as String? ?? ''),
-                subtitle: Text(_personName(people, row['assignee_id'])),
-                onTap: () async {
-                  await Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => NamedListScreen(listId: row['id'] as int, kind: widget.kind)));
-                  _reload();
-                },
-              ),
-          ]);
-        },
-      ),
-    );
-  }
-}
-
-String _personName(List<Person> people, Object? id) {
-  final n = id is int ? id : int.tryParse('$id');
-  if (n == null) return l10n.nobody;
-  for (final p in people) {
-    if (p.id == n) return p.displayName;
-  }
-  return l10n.nobody;
-}
-
-class NamedListScreen extends ConsumerStatefulWidget {
-  final int listId;
-  final String kind;
-  const NamedListScreen({super.key, required this.listId, required this.kind});
-
-  @override
-  ConsumerState<NamedListScreen> createState() => _NamedListScreenState();
-}
-
-class _NamedListScreenState extends ConsumerState<NamedListScreen> {
-  late Future<Map<String, dynamic>> _list = _load();
-
-  Future<Map<String, dynamic>> _load() => ref.read(apiClientProvider).namedList(widget.listId);
-  void _reload() => setState(() => _list = _load());
 
   Future<int?> _pickPerson() async {
     final people = await ref.read(peopleProvider.future);
@@ -147,34 +35,20 @@ class _NamedListScreenState extends ConsumerState<NamedListScreen> {
         title: Text(l10n.assignPerson),
         children: [
           SimpleDialogOption(onPressed: () => Navigator.pop(ctx, 0), child: Text(l10n.nobody)),
-          for (final p in people) SimpleDialogOption(onPressed: () => Navigator.pop(ctx, p.id), child: Text(p.displayName)),
+          for (final p in people)
+            SimpleDialogOption(onPressed: () => Navigator.pop(ctx, p.id), child: Text(p.displayName)),
         ],
       ),
     );
   }
 
-  Future<void> _assignList() async {
-    final person = await _pickPerson();
-    if (person == null || !mounted) return;
-    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedList(
-          widget.listId, assigneeId: person == 0 ? null : person));
-    if (ok) _reload();
-  }
-
-  Future<void> _assignItem(String itemId) async {
-    final person = await _pickPerson();
-    if (person == null || !mounted) return;
-    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
-          widget.listId, itemId, assigneeId: person == 0 ? null : person));
-    if (ok) _reload();
-  }
-
-  Future<void> _add() async {
+  Future<String?> _ask(String title, String label) async {
     final controller = TextEditingController();
     final text = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(labelText: l10n.item)),
+        title: Text(title),
+        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(labelText: label)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
           FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: Text(l10n.save)),
@@ -182,52 +56,149 @@ class _NamedListScreenState extends ConsumerState<NamedListScreen> {
       ),
     );
     controller.dispose();
-    if (text == null || text.isEmpty || !mounted) return;
-    final ok = await runAction(context, () => ref.read(apiClientProvider).addNamedItem(widget.listId, text));
+    return text == null || text.isEmpty ? null : text;
+  }
+
+  Future<void> _create() async {
+    final name = await _ask(l10n.namedListNew, l10n.namedListName);
+    if (name == null || !mounted) return;
+    final person = await _pickPerson();
+    if (!mounted || person == null) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).createNamedList(
+          widget.kind, name, assigneeId: person == 0 ? null : person));
     if (ok) _reload();
+  }
+
+  String _who(List<Person> people, Object? id) {
+    final n = id is int ? id : int.tryParse('$id');
+    if (n == null) return '';
+    for (final p in people) {
+      if (p.id == n) return p.displayName;
+    }
+    return '';
   }
 
   @override
   Widget build(BuildContext context) {
     final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
-    return Scaffold(
-      appBar: AppBar(
-        title: FutureBuilder<Map<String, dynamic>>(
-          future: _list,
-          builder: (_, snap) => Text(snap.data?['name'] as String? ?? l10n.namedLists),
-        ),
-        actions: [
-          IconButton(tooltip: l10n.assignPerson, onPressed: _assignList, icon: const Icon(Icons.person_outline)),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: _add, child: const Icon(Icons.add)),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _list,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) return const Center(child: HubLoader());
-          if (snap.hasError) return ErrorView(error: snap.error!, onRetry: _reload);
-          final items = ((snap.data?['items'] as List?) ?? const []).whereType<Map<String, dynamic>>().toList();
-          if (items.isEmpty) return Center(child: Text(l10n.namedListsEmpty));
-          return ListView(children: [
-            for (final item in items)
-              CheckboxListTile(
-                value: item['done'] == true,
-                onChanged: (v) async {
-                  final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
-                        widget.listId, '${item['id']}', done: v == true));
-                  if (ok) _reload();
-                },
-                title: Text(item['summary'] as String? ?? ''),
-                subtitle: Text(_personName(people, item['assignee_id'])),
-                secondary: IconButton(
-                  tooltip: l10n.assignPerson,
-                  icon: const Icon(Icons.person_outline),
-                  onPressed: () => _assignItem('${item['id']}'),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _lists,
+      builder: (context, snap) {
+        final rows = (snap.data ?? const <Map<String, dynamic>>[]).where((row) {
+          if (_person == null) return true;
+          if (row['assignee_id'] == _person) return true;
+          return ((row['items'] as List?) ?? const []).whereType<Map<String, dynamic>>().any(
+              (i) => i['own_assignee'] == true && i['assignee_id'] == _person);
+        }).toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const SizedBox(width: 8),
+                DropdownButton<int>(
+                  key: Key('list-filter-${widget.kind}'),
+                  value: _person ?? 0,
+                  underline: const SizedBox.shrink(),
+                  items: [
+                    DropdownMenuItem(value: 0, child: Text(l10n.allPeople)),
+                    for (final p in people) DropdownMenuItem(value: p.id, child: Text(p.displayName)),
+                  ],
+                  onChanged: (v) => setState(() => _person = v == null || v == 0 ? null : v),
+                ),
+                const Spacer(),
+                TextButton(onPressed: _create, child: Text(l10n.namedListNew)),
+              ],
+            ),
+            if (snap.hasError)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextButton(onPressed: _reload, child: Text(l10n.retry)),
+              ),
+            for (final row in rows) _section(row, people),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _section(Map<String, dynamic> row, List<Person> people) {
+    final id = row['id'] as int;
+    final who = _who(people, row['assignee_id']);
+    final name = row['name'] as String? ?? '';
+    final items = ((row['items'] as List?) ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .where((i) => widget.showDone || i['done'] != true)
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          key: Key('named-list-$id'),
+          padding: const EdgeInsets.fromLTRB(16, 12, 4, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  who.isEmpty ? l10n.namedListHeadingPlain(name) : l10n.namedListHeading(name, who),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
-          ]);
-        },
-      ),
+              IconButton(tooltip: l10n.item, icon: const Icon(Icons.add), onPressed: () => _add(id)),
+              IconButton(
+                tooltip: l10n.assignPerson,
+                icon: const Icon(Icons.person_outline),
+                onPressed: () => _assignList(id),
+              ),
+            ],
+          ),
+        ),
+        for (var i = 0; i < items.length; i++) _item(id, i + 1, items[i], people),
+      ],
     );
+  }
+
+  Widget _item(int listId, int n, Map<String, dynamic> item, List<Person> people) {
+    final own = item['own_assignee'] == true ? _who(people, item['assignee_id']) : '';
+    final summary = item['summary'] as String? ?? '';
+    return CheckboxListTile(
+      key: Key('named-item-$listId-${item['id']}'),
+      value: item['done'] == true,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text(own.isEmpty ? '$n. $summary' : '$n. $summary ${l10n.assignedItem(own)}'),
+      secondary: IconButton(
+        tooltip: l10n.assignPerson,
+        icon: const Icon(Icons.person_outline),
+        onPressed: () => _assignItem(listId, '${item['id']}'),
+      ),
+      onChanged: (v) async {
+        final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
+              listId, '${item['id']}', done: v == true));
+        if (ok) _reload();
+      },
+    );
+  }
+
+  Future<void> _assignList(int id) async {
+    final person = await _pickPerson();
+    if (person == null || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedList(
+          id, assigneeId: person == 0 ? null : person));
+    if (ok) _reload();
+  }
+
+  Future<void> _assignItem(int listId, String itemId) async {
+    final person = await _pickPerson();
+    if (person == null || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
+          listId, itemId, assigneeId: person == 0 ? null : person));
+    if (ok) _reload();
+  }
+
+  Future<void> _add(int listId) async {
+    final text = await _ask(l10n.item, l10n.item);
+    if (text == null || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).addNamedItem(listId, text));
+    if (ok) _reload();
   }
 }

@@ -114,12 +114,13 @@ def _apply_list_assignee(db: Session, row: NamedList, new_id: Optional[int]) -> 
 
 @router.get("")
 def list_lists(kind: Literal["shopping", "tasks"], assignee_id: Optional[int] = None,
+               with_items: bool = False,
                _: User = Depends(get_current_user), db: Session = Depends(get_db)):
     q = db.query(NamedList).filter(NamedList.kind == kind)
     if assignee_id is not None:
         q = q.filter(NamedList.assignee_id == assignee_id)
     rows = q.order_by(NamedList.name, NamedList.id).all()
-    return {"items": [_out(db, r) for r in rows]}
+    return {"items": [_out(db, r, with_items=with_items) for r in rows]}
 
 
 @router.post("", status_code=201)

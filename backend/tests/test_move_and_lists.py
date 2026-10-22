@@ -152,3 +152,7 @@ def test_named_shopping_item_stays_off_the_main_list(client, auth, session):
     shopping = client.get("/api/shopping", headers=auth)
     summaries = [i["summary"] for g in shopping.json().get("groups", []) for i in g["items"]]
     assert "Sonnencreme" not in summaries
+    overview = client.get("/api/lists?kind=shopping&with_items=true", headers=auth)
+    assert overview.status_code == 200, overview.text
+    row = next(i for i in overview.json()["items"] if i["name"] == "Packliste")
+    assert [i["summary"] for i in row["items"]] == ["Sonnencreme"]

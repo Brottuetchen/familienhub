@@ -126,16 +126,12 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
             onSelected: (v) {
               if (v == 'save') {
                 saveShoppingAsTemplate(context, ref);
-              } else if (v == 'lists') {
-                Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => const NamedListsScreen(kind: 'shopping')));
               } else {
                 Navigator.of(context).push(MaterialPageRoute<void>(
                     builder: (_) => const TemplatesScreen(target: TemplateTarget.shopping)));
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(value: 'lists', child: Text(l10n.namedLists)),
               PopupMenuItem(value: 'templates', child: Text(l10n.templates)),
               if (ref.read(canEditProvider)) PopupMenuItem(value: 'save', child: Text(l10n.templateSaveShopping)),
             ],
@@ -160,6 +156,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
               children: [
                 SourceBanner(source: 'Home Assistant', status: data.status, error: data.error),
                 if (_byRecipe) ..._byRecipeView(data) else for (final group in data.groups) ..._group(group),
+                NamedListSections(kind: 'shopping', showDone: _showDone),
               ],
             );
           },
@@ -183,7 +180,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
             Icon(group.isRecipes ? Icons.menu_book_outlined : Icons.edit_note,
                 size: 18, color: group.isRecipes ? AppColors.cookidoo : null),
             const SizedBox(width: 8),
-            Text(group.title, style: Theme.of(context).textTheme.titleMedium),
+            Text(group.isRecipes ? group.title : l10n.mainList, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(width: 8),
             Text('${open.length}', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
@@ -197,8 +194,10 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
-      for (final item in visible)
-        group.isRecipes ? _tile(item, isDone(item)) : _deletable(item, isDone(item)),
+      for (var i = 0; i < visible.length; i++)
+        group.isRecipes
+            ? _tile(visible[i], isDone(visible[i]))
+            : _deletable(visible[i], isDone(visible[i]), index: i + 1),
     ];
   }
 
@@ -249,11 +248,11 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
     ];
   }
 
-  Widget _tile(ShoppingItem item, bool done, {String? scope}) => CheckboxListTile(
+  Widget _tile(ShoppingItem item, bool done, {String? scope, int? index}) => CheckboxListTile(
         key: Key(scope == null ? 'item-${item.uid}' : 'item-$scope-${item.uid}'),
         value: done,
         controlAffinity: ListTileControlAffinity.leading,
-        title: Text(item.summary,
+        title: Text(index == null ? item.summary : '$index. ${item.summary}',
             style: done ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
         subtitle: _subtitle(item),
         // Gemerkt, noch nicht gesendet: kleine Wolke
@@ -277,7 +276,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
 
   /// Nur freie Artikel lassen sich wegwischen; Rezeptzutaten kommen aus Cookidoo.
   // Löschen ab Kind; Gäste dürfen nur hinzufügen und abhaken
-  Widget _deletable(ShoppingItem item, bool done, {String? scope}) => item.localOnly || !ref.watch(canActProvider) ? _tile(item, done, scope: scope) : Dismissible(
+  Widget _deletable(ShoppingItem item, bool done, {String? scope, int? index}) => item.localOnly || !ref.watch(canActProvider) ? _tile(item, done, scope: scope, index: index) : Dismissible(
         key: Key(scope == null ? 'dismiss-${item.uid}' : 'dismiss-$scope-${item.uid}'),
         direction: DismissDirection.endToStart,
         background: Container(
@@ -291,7 +290,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
           setState(() => _gone.add(item.uid));
           showInfo(context, l10n.removedTitle(item.summary));
         },
-        child: _tile(item, done, scope: scope),
+        child: _tile(item, done, scope: scope, index: index),
       );
 }
 
