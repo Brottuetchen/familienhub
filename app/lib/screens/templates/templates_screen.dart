@@ -202,6 +202,38 @@ class _TemplateApplySheetState extends ConsumerState<TemplateApplySheet> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _applyAsList() async {
+    if (_picked.isEmpty) {
+      showInfo(context, l10n.templateNothingSelected);
+      return;
+    }
+    final controller = TextEditingController(text: widget.template.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.templateApplyAsList),
+        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(labelText: l10n.namedListName)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: Text(l10n.save)),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (name == null || name.isEmpty || !mounted) return;
+    final all = _picked.length == widget.template.items.length;
+    final kind = widget.target == TemplateTarget.shopping ? 'shopping' : 'tasks';
+    setState(() => _busy = true);
+    final ok = await runAction(context, () => ref.read(apiClientProvider).applyTemplateAsList(
+          widget.template.id, name: name, kind: kind, itemIds: all ? null : _picked.toList()));
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (!ok) return;
+    final messenger = ScaffoldMessenger.of(context);
+    Navigator.pop(context);
+    messenger.showSnackBar(SnackBar(content: Text(l10n.listCreated)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = widget.template;
@@ -249,6 +281,14 @@ class _TemplateApplySheetState extends ConsumerState<TemplateApplySheet> {
               key: const Key('template-apply'),
               onPressed: _busy ? null : _apply,
               child: Text(shopping ? l10n.templateApplyShopping : l10n.templateApplyTasks),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: OutlinedButton(
+              key: const Key('template-apply-list'),
+              onPressed: _busy ? null : _applyAsList,
+              child: Text(l10n.templateApplyAsList),
             ),
           ),
         ],

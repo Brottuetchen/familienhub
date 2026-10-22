@@ -55,4 +55,14 @@ mixin ShoppingApi on ApiClientBase {
   Future<TemplateApplied> applyTemplateToTasks(int id, {List<int>? itemIds, bool family = false}) async =>
       TemplateApplied.fromJson(await _send('POST', '/api/templates/$id/apply/tasks',
           body: {'item_ids': itemIds, if (family) 'list': 'family'}) as Map<String, dynamic>);
+
+  /// Own list. Does not add the items to the main shopping or task list.
+  Future<Map<String, dynamic>> applyTemplateAsList(int id,
+          {required String name, required String kind, List<int>? itemIds, int? assigneeId}) async =>
+      await _send('POST', '/api/templates/$id/apply/list', body: {
+        'name': name,
+        'kind': kind,
+        if (itemIds != null) 'item_ids': itemIds,
+        if (assigneeId != null) 'assignee_id': assigneeId,
+      }) as Map<String, dynamic>;
 }

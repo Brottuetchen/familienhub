@@ -1166,5 +1166,17 @@
   "timetableSourceOwn": "Own entries only",
   "timetableSourcePlugin": "Source",
   "timetableSourcePerson": "Person in the plugin",
-  "timetableSourceIdentifier": "Identifier in the plugin"
+  "timetableSourceIdentifier": "Identifier in the plugin",
+  "moveEvent": "Move",
+  "moveEventTo": "Which calendar?",
+  "moveEventNone": "No other writable calendar",
+  "namedLists": "Lists",
+  "namedListNew": "New list",
+  "namedListName": "List name",
+  "namedListsEmpty": "No list yet",
+  "assignPerson": "Assign",
+  "nobody": "Nobody",
+  "allPeople": "All",
+  "templateApplyAsList": "As its own list",
+  "listCreated": "List created"
 }

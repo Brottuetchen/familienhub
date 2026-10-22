@@ -367,6 +367,89 @@ async def create_event(
         )
 
 
+class MoveEventRequest(BaseModel):
+    from_calendar_id: str = Field(max_length=60)
+    to_calendar_id: str = Field(max_length=60)
+    event_id: Optional[int] = None
+    uid: Optional[str] = Field(default=None, max_length=255)
+
+
+@router.post("/move")
+async def move_event(data: MoveEventRequest, current_user: User = Depends(require_min_role(ROLE_PARTNER)),
+                     db: Session = Depends(get_db)):
+    """Copies an event into another writable calendar and removes it from the source.
+
+    Complex CalDAV rules that the hub cannot write back are rejected, so a move never drops a recurrence.
+    """
+    if data.from_calendar_id == data.to_calendar_id:
+        raise HTTPException(status_code=422, detail="Der Termin liegt schon in diesem Kalender")
+    payload = await _load_movable(db, current_user, data)
+    created = await create_event(EventCreateRequest(
+        title=payload["title"], start=payload["start"], end=payload["end"], all_day=payload["all_day"],
+        calendar_id=data.to_calendar_id, location=payload.get("location"), notes=payload.get("notes"),
+        recurrence=payload["recurrence"], alarm_minutes=payload.get("alarm_minutes"),
+    ), current_user, db)
+    try:
+        await _delete_moved_from(db, current_user, data)
+    except HTTPException:
+        await _rollback_move(db, current_user, data.to_calendar_id, created)
+        raise
+    return {"moved": True, "event": created}
+
+
+async def _load_movable(db: Session, user: User, data: MoveEventRequest) -> Dict[str, Any]:
+    if data.from_calendar_id == "hub":
+        if data.event_id is None:
+            raise HTTPException(422, "Termin nicht gefunden")
+        from app.models.hub import HubEvent
+
+        row = db.get(HubEvent, data.event_id)
+        if row is None:
+            raise HTTPException(404, "Termin nicht gefunden")
+        ev = _hub_event(row)
+        return {"title": ev["title"], "start": ev["start"], "end": ev["end"], "all_day": ev["all_day"],
+                "location": ev.get("location"), "notes": ev.get("notes"),
+                "recurrence": ev.get("recurrence") or "none", "alarm_minutes": ev.get("alarm_minutes")}
+    if not data.from_calendar_id.startswith("caldav:") or not data.uid:
+        raise HTTPException(422, "In diesen Kalender kann der Hub nicht schreiben")
+    url = await _own_calendar_url(db, user, data.from_calendar_id)
+    try:
+        ev = await connector_for_user(db, user).read_event(url, data.uid)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("CalDAV-Termin nicht gelesen: %s", type(exc).__name__)
+        raise HTTPException(502, "Kalender gerade nicht erreichbar") from exc
+    if not ev:
+        raise HTTPException(404, "Termin nicht gefunden")
+    if ev.get("recurrence") == "complex" or not ev.get("start") or not ev.get("end"):
+        raise HTTPException(422, "Diesen Termin kann der Hub nicht vollständig verschieben")
+    return ev
+
+
+async def _delete_moved_from(db: Session, user: User, data: MoveEventRequest) -> None:
+    if data.from_calendar_id == "hub":
+        await delete_event(data.event_id, user, db)
+        return
+    url = await _own_calendar_url(db, user, data.from_calendar_id)
+    try:
+        ok = await connector_for_user(db, user).delete_event(url, data.uid)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("CalDAV-Termin nach dem Verschieben nicht gelöscht: %s", type(exc).__name__)
+        raise HTTPException(502, "Verschieben abgebrochen, der Termin bleibt im alten Kalender") from exc
+    if not ok:
+        raise HTTPException(502, "Verschieben abgebrochen, der Termin bleibt im alten Kalender")
+
+
+async def _rollback_move(db: Session, user: User, calendar_id: str, created: Dict[str, Any]) -> None:
+    try:
+        if calendar_id == "hub" and created.get("id") is not None:
+            await delete_event(created["id"], user, db)
+        elif created.get("uid"):
+            url = await _own_calendar_url(db, user, calendar_id)
+            await connector_for_user(db, user).delete_event(url, created["uid"])
+    except Exception:  # noqa: BLE001 - the original error is the one the caller raises
+        logger.warning("Verschobene Kopie konnte nicht zurückgenommen werden")
+
+
 @router.delete("/events/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(event_id: int, current_user: User = Depends(require_min_role(ROLE_PARTNER)),
                        db: Session = Depends(get_db)):

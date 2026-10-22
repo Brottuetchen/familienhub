@@ -11,6 +11,7 @@ import '../main_shell.dart';
 import '../more/caldav_account_screen.dart';
 import '../../l10n/l10n.dart';
 import '../templates/templates_screen.dart';
+import '../lists/named_lists_screen.dart';
 
 part 'task_list.dart';
 part 'task_details.dart';
@@ -127,9 +128,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           }),
           PopupMenuButton<String>(
             key: const Key('tasks-menu'),
-            onSelected: (_) => Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => const TemplatesScreen(target: TemplateTarget.tasks))),
-            itemBuilder: (_) => [PopupMenuItem(value: 'templates', child: Text(l10n.templates))],
+            onSelected: (v) => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => v == 'lists'
+                    ? const NamedListsScreen(kind: 'tasks')
+                    : const TemplatesScreen(target: TemplateTarget.tasks))),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'lists', child: Text(l10n.namedLists)),
+              PopupMenuItem(value: 'templates', child: Text(l10n.templates)),
+            ],
           )],
         bottom: TabBar(
           controller: _tabs,
