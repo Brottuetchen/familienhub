@@ -111,6 +111,7 @@ class _TaskListState extends ConsumerState<_TaskList> {
                 ),
                 for (final t in done) _tile(t, names, habiticaEnabled, canAct),
               ],
+              NamedListSections(kind: 'tasks', showDone: ref.watch(showDoneTasksProvider)),
             ],
           );
         },

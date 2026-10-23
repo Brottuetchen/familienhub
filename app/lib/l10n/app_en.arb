@@ -1178,5 +1178,9 @@
   "nobody": "Nobody",
   "allPeople": "All",
   "templateApplyAsList": "As its own list",
-  "listCreated": "List created"
+  "listCreated": "List created",
+  "mainList": "General",
+  "namedListHeading": "-List {name} (from {person})",
+  "namedListHeadingPlain": "-List {name}",
+  "assignedItem": "(assigned to {name})"
 }
