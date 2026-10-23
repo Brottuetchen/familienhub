@@ -38,18 +38,17 @@ void main() {
     return backend;
   }
 
-  testWidgets('groups manual and recipes', (tester) async {
+  testWidgets('one list, no numbers, no source split', (tester) async {
     await pump(tester);
-    final manualHeader = tester.getTopLeft(find.byKey(const Key('group-manual')));
-    final recipeHeader = tester.getTopLeft(find.byKey(const Key('group-recipes')));
-    final milch = tester.getTopLeft(find.text('1. Milch'));
+    final header = tester.getTopLeft(find.byKey(const Key('group-manual')));
+    final milch = tester.getTopLeft(find.text('Milch'));
     final tomaten = tester.getTopLeft(find.text('Tomaten'));
 
     expect(find.text('Allgemein'), findsOneWidget);
-    expect(find.text('Aus Rezepten'), findsOneWidget);
-    // Milch steht unter „Freie Artikel“, Tomaten unter „Aus Rezepten“
-    expect(manualHeader.dy < milch.dy && milch.dy < recipeHeader.dy, isTrue);
-    expect(recipeHeader.dy < tomaten.dy, isTrue);
+    expect(find.text('Aus Rezepten'), findsNothing);
+    expect(find.byKey(const Key('group-recipes')), findsNothing);
+    expect(find.text('1. Milch'), findsNothing);
+    expect(header.dy < milch.dy && header.dy < tomaten.dy, isTrue);
   });
 
   testWidgets('recipe items cannot be deleted', (tester) async {
@@ -61,10 +60,10 @@ void main() {
     expect(backend.sent('DELETE', '/api/shopping/r1'), isEmpty);
 
     // Freie Artikel lassen sich wegwischen
-    await tester.drag(find.text('1. Milch'), const Offset(-500, 0));
+    await tester.drag(find.text('Milch'), const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(backend.sent('DELETE', '/api/shopping/m1'), hasLength(1));
-    expect(find.text('1. Milch'), findsNothing);
+    expect(find.text('Milch'), findsNothing);
   });
 
   testWidgets('checking a recipe item marks it done', (tester) async {
