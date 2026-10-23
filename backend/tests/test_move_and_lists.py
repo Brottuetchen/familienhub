@@ -70,6 +70,34 @@ def test_template_becomes_separate_assignable_list(client, auth, session):
     assert again.json()["items"][0]["assignee_id"] == sam.id  # individual assignment stays
 
 
+def test_private_list_shares_only_assigned_items(client, auth, session):
+    from app.core.security import create_access_token
+
+    sam = _person(session, "sam")
+    cara = _person(session, "cara")
+    created = client.post("/api/lists", headers=auth, json={"kind": "shopping", "name": "Nur Sam", "assignee_id": sam.id})
+    assert created.status_code == 201, created.text
+    list_id = created.json()["id"]
+    secret = client.post(f"/api/lists/{list_id}/items", headers=auth, json={"summary": "Geheim"})
+    shared = client.post(f"/api/lists/{list_id}/items", headers=auth, json={"summary": "Geteilt"})
+    assert secret.status_code == 201 and shared.status_code == 201
+    assigned = client.patch(f"/api/lists/{list_id}/items/{shared.json()['id']}", headers=auth, json={"assignee_id": cara.id})
+    assert assigned.status_code == 200, assigned.text
+
+    cara_auth = {"Authorization": f"Bearer {create_access_token({'sub': cara.username})}"}
+    listed = client.get("/api/lists?kind=shopping&with_items=true", headers=cara_auth)
+    assert listed.status_code == 200, listed.text
+    rows = [i for i in listed.json()["items"] if i["name"] == "Nur Sam"]
+    assert [i["summary"] for i in rows[0]["items"]] == ["Geteilt"]
+    assert rows[0]["mine"] is False
+    assert client.delete(f"/api/lists/{list_id}", headers=cara_auth).status_code == 404
+
+    sam_auth = {"Authorization": f"Bearer {create_access_token({'sub': sam.username})}"}
+    full = client.get(f"/api/lists/{list_id}", headers=sam_auth)
+    assert full.status_code == 200, full.text
+    assert {i["summary"] for i in full.json()["items"]} == {"Geheim", "Geteilt"}
+
+
 def _caldav_account(session):
     from app.core.crypto import encrypt
     from app.models.caldav import CalDAVAccount
