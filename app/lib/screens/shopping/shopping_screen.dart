@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/constants/colors.dart';
 import '../../models/common.dart';
 import '../../models/shopping.dart';
 import '../../providers/providers.dart';
@@ -155,7 +154,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
               padding: const EdgeInsets.only(bottom: 96),
               children: [
                 SourceBanner(source: 'Home Assistant', status: data.status, error: data.error),
-                if (_byRecipe) ..._byRecipeView(data) else for (final group in data.groups) ..._group(group),
+                if (_byRecipe) ..._byRecipeView(data) else ..._oneList(data),
                 NamedListSections(kind: 'shopping', showDone: _showDone),
               ],
             );
@@ -165,22 +164,25 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
     );
   }
 
-  List<Widget> _group(ShoppingGroup group) {
+  /// One list. Source groups stay in the payload so a recipe item cannot be swiped away; they are not headings.
+  List<Widget> _oneList(ShoppingData data) {
     bool isDone(ShoppingItem i) => _doneOverride[i.uid] ?? i.done;
-    final items = group.items.where((i) => !_gone.contains(i.uid)).toList();
-    final open = items.where((i) => !isDone(i)).toList();
-    final done = items.where(isDone).toList();
-    final visible = [...open, if (_showDone) ...done];
+    final rows = <(ShoppingItem, bool)>[
+      for (final g in data.groups)
+        for (final i in g.items)
+          if (!_gone.contains(i.uid)) (i, g.isRecipes),
+    ];
+    final open = rows.where((r) => !isDone(r.$1)).toList();
+    final visible = [...open, if (_showDone) ...rows.where((r) => isDone(r.$1))];
     return [
       Padding(
-        key: Key('group-${group.key}'),
+        key: const Key('group-manual'),
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
         child: Row(
           children: [
-            Icon(group.isRecipes ? Icons.menu_book_outlined : Icons.edit_note,
-                size: 18, color: group.isRecipes ? AppColors.cookidoo : null),
+            const Icon(Icons.edit_note, size: 18),
             const SizedBox(width: 8),
-            Text(group.isRecipes ? group.title : l10n.mainList, style: Theme.of(context).textTheme.titleMedium),
+            Text(l10n.mainList, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(width: 8),
             Text('${open.length}', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
@@ -189,15 +191,9 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
       if (visible.isEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: Text(
-            group.isRecipes ? l10n.noPlanIngredients : l10n.nothingOnList,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
+          child: Text(l10n.nothingOnList, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ),
-      for (var i = 0; i < visible.length; i++)
-        group.isRecipes
-            ? _tile(visible[i], isDone(visible[i]))
-            : _deletable(visible[i], isDone(visible[i]), index: i + 1),
+      for (final (item, locked) in visible) locked ? _tile(item, isDone(item)) : _deletable(item, isDone(item)),
     ];
   }
 
@@ -248,12 +244,11 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
     ];
   }
 
-  Widget _tile(ShoppingItem item, bool done, {String? scope, int? index}) => CheckboxListTile(
+  Widget _tile(ShoppingItem item, bool done, {String? scope}) => CheckboxListTile(
         key: Key(scope == null ? 'item-${item.uid}' : 'item-$scope-${item.uid}'),
         value: done,
         controlAffinity: ListTileControlAffinity.leading,
-        title: Text(index == null ? item.summary : '$index. ${item.summary}',
-            style: done ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
+        title: Text(item.summary, style: done ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
         subtitle: _subtitle(item),
         // Gemerkt, noch nicht gesendet: kleine Wolke
         secondary: item.pending
@@ -276,7 +271,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
 
   /// Nur freie Artikel lassen sich wegwischen; Rezeptzutaten kommen aus Cookidoo.
   // Löschen ab Kind; Gäste dürfen nur hinzufügen und abhaken
-  Widget _deletable(ShoppingItem item, bool done, {String? scope, int? index}) => item.localOnly || !ref.watch(canActProvider) ? _tile(item, done, scope: scope, index: index) : Dismissible(
+  Widget _deletable(ShoppingItem item, bool done, {String? scope}) => item.localOnly || !ref.watch(canActProvider) ? _tile(item, done, scope: scope) : Dismissible(
         key: Key(scope == null ? 'dismiss-${item.uid}' : 'dismiss-$scope-${item.uid}'),
         direction: DismissDirection.endToStart,
         background: Container(
@@ -290,7 +285,7 @@ class _ShoppingScreenState extends ConsumerState<ShoppingScreen> {
           setState(() => _gone.add(item.uid));
           showInfo(context, l10n.removedTitle(item.summary));
         },
-        child: _tile(item, done, scope: scope, index: index),
+        child: _tile(item, done, scope: scope),
       );
 }
 
