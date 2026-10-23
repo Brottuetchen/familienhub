@@ -1,7 +1,9 @@
 """Separate shopping and task lists (a packing list is not the grocery list).
 
-A list can be assigned to one person. An item keeps its own assignee when set;
-otherwise it follows the list. Items here never join the main shopping or task views.
+A list assigned to a person is private to them. Other people see only items
+assigned to them. A list with no assignee stays visible to the household.
+An item keeps its own assignee when set; otherwise it follows the list.
+Items here never join the main shopping or task views.
 """
 
 from __future__ import annotations
@@ -84,11 +86,28 @@ def _item_out(row: NamedList, item) -> dict:
             "assignee_id": own if own is not None else row.assignee_id, "own_assignee": own is not None}
 
 
-def _out(db: Session, row: NamedList, with_items: bool = False) -> dict:
-    body = {"id": row.id, "kind": row.kind, "name": row.name, "assignee_id": row.assignee_id}
+def _out(db: Session, row: NamedList, user: User, with_items: bool = False) -> Optional[dict]:
+    owned = _owner(user, row)
+    items = _items(db, row) if not owned or with_items else []
+    if not owned:
+        items = [i for i in items if i.assignee_id == user.id]
+        if not items:
+            return None
+    body = {"id": row.id, "kind": row.kind, "name": row.name, "assignee_id": row.assignee_id, "mine": owned}
     if with_items:
-        body["items"] = [_item_out(row, i) for i in _items(db, row)]
+        body["items"] = [_item_out(row, i) for i in items]
     return body
+
+
+def _owner(user: User, row: NamedList) -> bool:
+    if user.is_admin or (user.role or "") == ROLE_ADMIN:
+        return True
+    return row.assignee_id is None or row.assignee_id == user.id
+
+
+def _guard(user: User, row: NamedList) -> None:
+    if not _owner(user, row):
+        raise HTTPException(404, "Liste nicht gefunden")
 
 
 def _partner(user: User) -> None:
@@ -115,12 +134,12 @@ def _apply_list_assignee(db: Session, row: NamedList, new_id: Optional[int]) -> 
 @router.get("")
 def list_lists(kind: Literal["shopping", "tasks"], assignee_id: Optional[int] = None,
                with_items: bool = False,
-               _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+               user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     q = db.query(NamedList).filter(NamedList.kind == kind)
     if assignee_id is not None:
         q = q.filter(NamedList.assignee_id == assignee_id)
     rows = q.order_by(NamedList.name, NamedList.id).all()
-    return {"items": [_out(db, r, with_items=with_items) for r in rows]}
+    return {"items": [body for r in rows if (body := _out(db, r, user, with_items=with_items)) is not None]}
 
 
 @router.post("", status_code=201)
@@ -133,29 +152,34 @@ def create_list(data: ListIn, user: User = Depends(get_current_user), db: Sessio
     db.commit()
     db.refresh(row)
     _touch(row.kind)
-    return _out(db, row, with_items=True)
+    return _out(db, row, user, with_items=True)
 
 
 @router.get("/{list_id}")
-def get_list(list_id: int, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return _out(db, _get(db, list_id), with_items=True)
+def get_list(list_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    body = _out(db, _get(db, list_id), user, with_items=True)
+    if body is None:
+        raise HTTPException(404, "Liste nicht gefunden")
+    return body
 
 
 @router.patch("/{list_id}")
-def patch_list(list_id: int, data: ListPatch, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def patch_list(list_id: int, data: ListPatch, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     row = _get(db, list_id)
+    _guard(user, row)
     if "name" in data.model_fields_set and data.name is not None:
         row.name = _name(data.name)
     if "assignee_id" in data.model_fields_set:
         _apply_list_assignee(db, row, _person(db, data.assignee_id))
     db.commit()
     _touch(row.kind)
-    return _out(db, row, with_items=True)
+    return _out(db, row, user, with_items=True)
 
 
 @router.delete("/{list_id}", status_code=204)
-def delete_list(list_id: int, _: User = Depends(require_min_role(ROLE_PARTNER)), db: Session = Depends(get_db)):
+def delete_list(list_id: int, user: User = Depends(require_min_role(ROLE_PARTNER)), db: Session = Depends(get_db)):
     row = _get(db, list_id)
+    _guard(user, row)
     kind = row.kind
     for item in _items(db, row):
         db.delete(item)
@@ -181,6 +205,7 @@ def _find_item(db: Session, row: NamedList, item_id: str):
 @router.post("/{list_id}/items", status_code=201)
 def add_item(list_id: int, data: ItemIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     row = _get(db, list_id)
+    _guard(user, row)
     summary = _name(data.summary)[:200]
     assignee = _person(db, data.assignee_id) if "assignee_id" in data.model_fields_set else None
     if row.kind == "shopping":
@@ -200,10 +225,13 @@ def add_item(list_id: int, data: ItemIn, user: User = Depends(get_current_user),
 
 
 @router.patch("/{list_id}/items/{item_id}")
-def patch_item(list_id: int, item_id: str, data: ItemPatch, _: User = Depends(get_current_user),
+def patch_item(list_id: int, item_id: str, data: ItemPatch, user: User = Depends(get_current_user),
                db: Session = Depends(get_db)):
     row = _get(db, list_id)
     item = _find_item(db, row, item_id)
+    if not _owner(user, row):
+        if item.assignee_id != user.id or data.model_fields_set != {"done"}:
+            raise HTTPException(404, "Eintrag nicht gefunden")
     if data.summary is not None:
         text = _name(data.summary)[:200]
         if row.kind == "shopping":

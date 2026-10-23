@@ -225,4 +225,4 @@ def apply_as_list(template_id: int, data: ApplyListIn, user: User = Depends(get_
         _partner(user)
     items = _chosen(_get(db, template_id), ApplyIn(item_ids=data.item_ids))
     row = add_from_template(db, user, data.kind, data.name, data.assignee_id, items)
-    return _out(db, row, with_items=True)
+    return _out(db, row, user, with_items=True)

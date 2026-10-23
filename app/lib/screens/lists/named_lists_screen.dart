@@ -161,10 +161,10 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
             ),
             _plus(),
-            _menu(id, name),
+            if (row['mine'] != false) _menu(id, name),
           ],
         ),
-        for (final item in _visible(row)) _item(id, item, people),
+        for (final item in _visible(row)) _item(id, item, people, mine: row['mine'] != false),
       ],
     );
   }
@@ -184,15 +184,15 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
               child: Text(_title(name, who),
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
             ),
-            _menu(id, name),
+            if (row['mine'] != false) _menu(id, name),
           ],
         ),
-        for (final item in _visible(row)) _item(id, item, people),
+        for (final item in _visible(row)) _item(id, item, people, mine: row['mine'] != false),
       ],
     );
   }
 
-  Widget _item(int listId, Map<String, dynamic> item, List<Person> people) {
+  Widget _item(int listId, Map<String, dynamic> item, List<Person> people, {required bool mine}) {
     final own = item['own_assignee'] == true ? _who(people, item['assignee_id']) : '';
     final summary = item['summary'] as String? ?? '';
     return CheckboxListTile(
@@ -200,6 +200,14 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
       value: item['done'] == true,
       controlAffinity: ListTileControlAffinity.leading,
       title: Text(own.isEmpty ? summary : '$summary ${l10n.assignedItem(own)}'),
+      secondary: mine
+          ? IconButton(
+              key: Key('named-item-person-$listId-${item['id']}'),
+              tooltip: l10n.assignPerson,
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => _assignItem(listId, '${item['id']}'),
+            )
+          : null,
       onChanged: (v) async {
         final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
               listId, '${item['id']}', done: v == true));
@@ -229,6 +237,14 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
     );
     if (sure != true || !mounted) return;
     final ok = await runAction(context, () => ref.read(apiClientProvider).deleteNamedList(id));
+    if (ok) _reload();
+  }
+
+  Future<void> _assignItem(int listId, String itemId) async {
+    final person = await _pickPerson();
+    if (person == null || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
+          listId, itemId, assigneeId: person == 0 ? null : person));
     if (ok) _reload();
   }
 
