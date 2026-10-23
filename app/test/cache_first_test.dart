@@ -337,9 +337,9 @@ void main() {
       await tester.pump();
       expect(find.textContaining('Alt'), findsOneWidget);
       expect(find.byType(HubLoader), findsNothing);
-      pending.complete(jsonResponse(pageJson(path, 'Neu')));
+      pending.complete(jsonResponse(pageJson(path, 'Zx9')));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Neu'), findsOneWidget);
+      expect(find.textContaining('Zx9'), findsOneWidget);
       pending = Completer<http.Response>();
       var completed = false;
       final refresh = tester
@@ -349,7 +349,7 @@ void main() {
       await tester.pump();
       expect(requests, 2);
       expect(completed, isFalse);
-      expect(find.textContaining('Neu'), findsOneWidget);
+      expect(find.textContaining('Zx9'), findsOneWidget);
       // Einzige Ladeanzeige ist die des Herunterziehens (oben), keine ganzseitige
       expect(find.byType(HubLoader), findsOneWidget);
       expect(find.byKey(const Key('pull-refresh-loader')), findsOneWidget);

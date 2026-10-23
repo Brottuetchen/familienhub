@@ -42,10 +42,10 @@ void main() {
     await pump(tester);
     final manualHeader = tester.getTopLeft(find.byKey(const Key('group-manual')));
     final recipeHeader = tester.getTopLeft(find.byKey(const Key('group-recipes')));
-    final milch = tester.getTopLeft(find.text('Milch'));
+    final milch = tester.getTopLeft(find.text('1. Milch'));
     final tomaten = tester.getTopLeft(find.text('Tomaten'));
 
-    expect(find.text('Freie Artikel'), findsOneWidget);
+    expect(find.text('Allgemein'), findsOneWidget);
     expect(find.text('Aus Rezepten'), findsOneWidget);
     // Milch steht unter „Freie Artikel“, Tomaten unter „Aus Rezepten“
     expect(manualHeader.dy < milch.dy && milch.dy < recipeHeader.dy, isTrue);
@@ -61,10 +61,10 @@ void main() {
     expect(backend.sent('DELETE', '/api/shopping/r1'), isEmpty);
 
     // Freie Artikel lassen sich wegwischen
-    await tester.drag(find.text('Milch'), const Offset(-500, 0));
+    await tester.drag(find.text('1. Milch'), const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(backend.sent('DELETE', '/api/shopping/m1'), hasLength(1));
-    expect(find.text('Milch'), findsNothing);
+    expect(find.text('1. Milch'), findsNothing);
   });
 
   testWidgets('checking a recipe item marks it done', (tester) async {

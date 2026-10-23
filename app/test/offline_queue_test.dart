@@ -171,13 +171,13 @@ void main() {
     await tester.pumpWidget(appWith(api, const ShoppingScreen()));
     await tester.pumpAndSettle();
     b.offline = true;
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'Milch'));
+    await tester.tap(find.widgetWithText(CheckboxListTile, '1. Milch'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Ohne Netz gemerkt'), findsOneWidget);
     await tester.tap(find.byTooltip('Erledigte zeigen')); // abgehakte Artikel sind sonst ausgeblendet
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('pending-item-s1')), findsOneWidget);
-    expect(tester.widget<CheckboxListTile>(find.widgetWithText(CheckboxListTile, 'Milch')).value, isTrue);
+    expect(tester.widget<CheckboxListTile>(find.widgetWithText(CheckboxListTile, '2. Milch')).value, isTrue);
     expect(find.byKey(const Key('pending-changes')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('pending-changes')));
