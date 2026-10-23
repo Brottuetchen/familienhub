@@ -52,9 +52,10 @@ def test_habitica_only_select_refresh_create_and_minimal_edit(client, native):
             task = {**task, **body, "updatedAt": "v2"}
         return httpx.Response(200, json={"success": True, "data": task})
     http.route(path=f"/api/v3/tasks/{REMOTE_TASK}").mock(side_effect=response)
-    http.get("https://habitica.example/api/v3/tasks/user").respond(200, json={"success": True, "data": [task]})
+    http.get("https://habitica.example/api/v3/tasks/user").mock(
+        side_effect=lambda request: httpx.Response(200, json={"success": True, "data": [task]}))
     assert client.get("/api/habitica/tasks", headers=headers).json()["items"][0]["uid"] == REMOTE_TASK
-    assert client.get(f"/api/tasks?{query}", headers=headers).json()["items"] == []
+    assert client.get(f"/api/tasks?{query}", headers=headers).json()["items"][0]["uid"] == REMOTE_TASK
     selected = client.put(f"/api/tasks/{REMOTE_TASK}/selection?{query}", headers=headers, json={"selected": True})
     assert selected.status_code == 200, selected.text
     listed = client.get(f"/api/tasks?{query}", headers=headers).json()["items"][0]
@@ -213,6 +214,7 @@ def test_habitica_only_today_without_nextcloud_task_adapter(client, native, monk
     def forbidden(*args, **kwargs): raise AssertionError("Nextcloud ist kein Habitica-Unterbau")
     monkeypatch.setattr(NextcloudTasksConnector, "__init__", forbidden)
     remote = {"id": REMOTE_TASK, "userId": REMOTE_USER, "type": "daily", "text": "Nativ", "completed": True, "isDue": False}
+    http.get("https://habitica.example/api/v3/tasks/user").respond(200, json={"success": True, "data": [remote]})
     http.get(f"https://habitica.example/api/v3/tasks/{REMOTE_TASK}").respond(200, json={"success": True, "data": remote})
     assert client.put(f"/api/tasks/{REMOTE_TASK}/selection?{query}", headers=headers, json={"selected": True}).status_code == 200
     response = client.get("/api/today", headers=headers)

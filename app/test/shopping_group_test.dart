@@ -52,7 +52,7 @@ void main() {
   testWidgets('list view is the default and shows the merged hint', (tester) async {
     await pump(tester, backend());
     expect(find.byKey(const Key('recipe-group-none')), findsNothing);
-    expect(find.text('2 Zwiebeln + 200 g'), findsOneWidget);
+    expect(find.text('1. 2 Zwiebeln + 200 g'), findsOneWidget);
     expect(find.text('aus 2 Rezepten'), findsOneWidget);
   });
 

@@ -5,6 +5,7 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 ## [Unreleased]
 
 ### Changed
+- Habitica tasks show up in Meine without ticking each one in the account screen.
 - Named lists sit in the shopping and task overview, with the person filter on that screen.
 
 ## [1.0.1]

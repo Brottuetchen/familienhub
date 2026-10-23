@@ -188,17 +188,15 @@ class HabiticaConnector:
             return {"status": "not_configured", "error": None, "items": []}
         if view not in ("all", "mine"):
             return {"status": "ok", "error": None, "items": []}
-        items, errors = [], []
-        selections = self.db.query(HabiticaSelection).filter_by(user_id=self.user_id, account_ref=self.account_ref).all()
-        for selection in selections:
-            try:
-                remote = await self.get_task(selection.remote_id)
-                if include_done or not remote.get("completed") or remote["type"] == "daily":
-                    items.append(self.task(remote))
-            except (httpx.HTTPError, ValueError, KeyError, HTTPException) as exc:
-                logger.warning("Ausgewählte Habitica-Aufgabe nicht lesbar (%s)", type(exc).__name__, exc_info=True)
-                errors.append("Eine ausgewählte Habitica-Aufgabe ist nicht verfügbar oder wurde entfernt")
-        return {"status": "unavailable" if errors else "ok", "error": errors[0] if errors else None, "items": items}
+        listed = await self.available_tasks(include_done=include_done)
+        if listed["status"] != "ok":
+            return listed
+        items = []
+        for item in listed["items"]:
+            remote = item.get("native") or {}
+            if include_done or not remote.get("completed") or remote.get("type") == "daily":
+                items.append({k: v for k, v in item.items() if k != "selected"})
+        return {"status": "ok", "error": None, "items": items}
 
     async def mutation(self, operation_id, verb, target, body, perform):
         account = self.require(write=True)
