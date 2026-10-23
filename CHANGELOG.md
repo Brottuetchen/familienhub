@@ -2,6 +2,11 @@
 
 All notable changes per release. Versions follow the Git tags (`v1.0.1` → image `ghcr.io/brottuetchen/familienhub:1.0.1`).
 
+## [Unreleased]
+
+### Changed
+- Named lists sit in the shopping and task overview, with the person filter on that screen.
+
 ## [1.0.1]
 
 Patch release. The image tag `latest` points here.
