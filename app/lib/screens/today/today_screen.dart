@@ -73,8 +73,8 @@ class TodayScreen extends ConsumerWidget {
                     greeting: _greeting(user?.displayName),
                     unread: result.data.notificationsUnread,
                     status: ReadStatusIcon(result: result),
+                    filter: ref.watch(appModulesProvider).has('tasks') ? const TaskFilterBar() : null,
                   ),
-                  if (ref.watch(appModulesProvider).has('tasks')) const TaskFilterBar(),
                   Padding(padding: const EdgeInsets.all(16), child: body),
                 ],
               );

@@ -42,8 +42,8 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
     );
   }
 
-  Future<String?> _ask(String title, String label) async {
-    final controller = TextEditingController();
+  Future<String?> _ask(String title, String label, {String initial = ''}) async {
+    final controller = TextEditingController(text: initial);
     final text = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -78,6 +78,37 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
     return '';
   }
 
+  Widget _filter(List<Person> people) => DropdownButton<int>(
+        key: Key('list-filter-${widget.kind}'),
+        value: _person ?? 0,
+        underline: const SizedBox.shrink(),
+        items: [
+          DropdownMenuItem(value: 0, child: Text(l10n.allPeople)),
+          for (final p in people) DropdownMenuItem(value: p.id, child: Text(p.displayName)),
+        ],
+        onChanged: (v) => setState(() => _person = v == null || v == 0 ? null : v),
+      );
+
+  Widget _plus() => IconButton(tooltip: l10n.namedListNew, icon: const Icon(Icons.add), onPressed: _create);
+
+  String _title(String name, String who) => who.isEmpty ? name : '$name · $who';
+
+  Widget _menu(int id, String name) => PopupMenuButton<String>(
+        key: Key('named-list-menu-$id'),
+        onSelected: (v) {
+          if (v == 'item') _add(id);
+          if (v == 'person') _assignList(id);
+          if (v == 'rename') _rename(id, name);
+          if (v == 'delete') _delete(id, name);
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'item', child: Text(l10n.listEntry)),
+          PopupMenuItem(value: 'person', child: Text(l10n.assignPerson)),
+          PopupMenuItem(value: 'rename', child: Text(l10n.rename)),
+          PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
+        ],
+      );
+
   @override
   Widget build(BuildContext context) {
     final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
@@ -90,93 +121,115 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
           return ((row['items'] as List?) ?? const []).whereType<Map<String, dynamic>>().any(
               (i) => i['own_assignee'] == true && i['assignee_id'] == _person);
         }).toList();
+        final single = rows.length == 1 ? rows.first : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                const SizedBox(width: 8),
-                DropdownButton<int>(
-                  key: Key('list-filter-${widget.kind}'),
-                  value: _person ?? 0,
-                  underline: const SizedBox.shrink(),
-                  items: [
-                    DropdownMenuItem(value: 0, child: Text(l10n.allPeople)),
-                    for (final p in people) DropdownMenuItem(value: p.id, child: Text(p.displayName)),
-                  ],
-                  onChanged: (v) => setState(() => _person = v == null || v == 0 ? null : v),
-                ),
-                const Spacer(),
-                TextButton(onPressed: _create, child: Text(l10n.namedListNew)),
-              ],
-            ),
+            if (single == null)
+              Row(children: [const SizedBox(width: 8), _filter(people), const Spacer(), _plus()]),
             if (snap.hasError)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextButton(onPressed: _reload, child: Text(l10n.retry)),
               ),
-            for (final row in rows) _section(row, people),
+            if (single != null) _one(single, people) else for (final row in rows) _section(row, people),
           ],
         );
       },
     );
   }
 
-  Widget _section(Map<String, dynamic> row, List<Person> people) {
+  List<Map<String, dynamic>> _visible(Map<String, dynamic> row) => ((row['items'] as List?) ?? const [])
+      .whereType<Map<String, dynamic>>()
+      .where((i) => widget.showDone || i['done'] != true)
+      .toList();
+
+  Widget _one(Map<String, dynamic> row, List<Person> people) {
     final id = row['id'] as int;
-    final who = _who(people, row['assignee_id']);
     final name = row['name'] as String? ?? '';
-    final items = ((row['items'] as List?) ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .where((i) => widget.showDone || i['done'] != true)
-        .toList();
+    final who = _who(people, row['assignee_id']);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
+        Row(
           key: Key('named-list-$id'),
-          padding: const EdgeInsets.fromLTRB(16, 12, 4, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  who.isEmpty ? l10n.namedListHeadingPlain(name) : l10n.namedListHeading(name, who),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              IconButton(tooltip: l10n.item, icon: const Icon(Icons.add), onPressed: () => _add(id)),
-              IconButton(
-                tooltip: l10n.assignPerson,
-                icon: const Icon(Icons.person_outline),
-                onPressed: () => _assignList(id),
-              ),
-            ],
-          ),
+          children: [
+            const SizedBox(width: 8),
+            _filter(people),
+            Expanded(
+              child: Text(_title(name, who),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+            ),
+            _plus(),
+            _menu(id, name),
+          ],
         ),
-        for (var i = 0; i < items.length; i++) _item(id, i + 1, items[i], people),
+        for (final item in _visible(row)) _item(id, item, people),
       ],
     );
   }
 
-  Widget _item(int listId, int n, Map<String, dynamic> item, List<Person> people) {
+  Widget _section(Map<String, dynamic> row, List<Person> people) {
+    final id = row['id'] as int;
+    final name = row['name'] as String? ?? '';
+    final who = _who(people, row['assignee_id']);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          key: Key('named-list-$id'),
+          children: [
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(_title(name, who),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+            ),
+            _menu(id, name),
+          ],
+        ),
+        for (final item in _visible(row)) _item(id, item, people),
+      ],
+    );
+  }
+
+  Widget _item(int listId, Map<String, dynamic> item, List<Person> people) {
     final own = item['own_assignee'] == true ? _who(people, item['assignee_id']) : '';
     final summary = item['summary'] as String? ?? '';
     return CheckboxListTile(
       key: Key('named-item-$listId-${item['id']}'),
       value: item['done'] == true,
       controlAffinity: ListTileControlAffinity.leading,
-      title: Text(own.isEmpty ? '$n. $summary' : '$n. $summary ${l10n.assignedItem(own)}'),
-      secondary: IconButton(
-        tooltip: l10n.assignPerson,
-        icon: const Icon(Icons.person_outline),
-        onPressed: () => _assignItem(listId, '${item['id']}'),
-      ),
+      title: Text(own.isEmpty ? summary : '$summary ${l10n.assignedItem(own)}'),
       onChanged: (v) async {
         final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
               listId, '${item['id']}', done: v == true));
         if (ok) _reload();
       },
     );
+  }
+
+  Future<void> _rename(int id, String current) async {
+    final name = await _ask(l10n.rename, l10n.namedListName, initial: current);
+    if (name == null || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedList(id, name: name));
+    if (ok) _reload();
+  }
+
+  Future<void> _delete(int id, String name) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.delete),
+        content: Text(name),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.delete)),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+    final ok = await runAction(context, () => ref.read(apiClientProvider).deleteNamedList(id));
+    if (ok) _reload();
   }
 
   Future<void> _assignList(int id) async {
@@ -187,16 +240,8 @@ class _NamedListSectionsState extends ConsumerState<NamedListSections> {
     if (ok) _reload();
   }
 
-  Future<void> _assignItem(int listId, String itemId) async {
-    final person = await _pickPerson();
-    if (person == null || !mounted) return;
-    final ok = await runAction(context, () => ref.read(apiClientProvider).patchNamedItem(
-          listId, itemId, assigneeId: person == 0 ? null : person));
-    if (ok) _reload();
-  }
-
   Future<void> _add(int listId) async {
-    final text = await _ask(l10n.item, l10n.item);
+    final text = await _ask(l10n.listEntry, l10n.listEntry);
     if (text == null || !mounted) return;
     final ok = await runAction(context, () => ref.read(apiClientProvider).addNamedItem(listId, text));
     if (ok) _reload();
