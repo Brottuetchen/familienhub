@@ -1880,6 +1880,8 @@
   "moveEventTo": "In welchen Kalender?",
   "moveEventNone": "Kein anderer beschreibbarer Kalender",
   "namedLists": "Listen",
+  "rename": "Umbenennen",
+  "listEntry": "Eintrag",
   "namedListNew": "Neue Liste",
   "namedListName": "Name der Liste",
   "namedListsEmpty": "Noch keine Liste",
