@@ -109,34 +109,35 @@ class TodayHeader extends ConsumerWidget {
   final String greeting;
   final int unread;
   final Widget? status; // kleines Symbol: aktuell / lädt / offline
-  final Widget? filter;
-  const TodayHeader({super.key, required this.greeting, this.unread = 0, this.status, this.filter});
+  const TodayHeader({super.key, required this.greeting, this.unread = 0, this.status});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final style = HubStyle.of(context);
     final people = ref.watch(peopleProvider).valueOrNull ?? const <Person>[];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(greeting,
-                key: const Key('today-greeting'),
-                maxLines: 1,
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: style.titleWeight, height: 1.1)),
-          ),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(height: kMinInteractiveDimension, child: filter ?? const SizedBox.shrink()),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 12, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8), // first text line on the icons' centre line
+              child: SizedBox(
+                height: 32,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(greeting,
+                      key: const Key('today-greeting'),
+                      maxLines: 1,
+                      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: style.titleWeight, height: 1.1)),
+                ),
+              ),
             ),
-            if (status != null) status!,
+          ),
+          if (status != null) status!,
           IconButton(
             key: const Key('today-customise'),
             tooltip: l10n.customiseToday,
@@ -171,9 +172,8 @@ class TodayHeader extends ConsumerWidget {
                 ),
               ),
             ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -235,25 +235,19 @@ class TaskFilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(todayTaskFilterProvider);
-    return SizedBox(
-      height: kMinInteractiveDimension,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
-          child: Row(
-            children: [
-              for (final (view, label) in options)
-                StylePill(
-                  key: Key('today-filter-${view?.apiName ?? 'today'}'),
-                  label: label,
-                  selected: current == view,
-                  onTap: () => ref.read(todayTaskFilterProvider.notifier).state = view,
-                ),
-            ],
-          ),
-        ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Row(
+        children: [
+          for (final (view, label) in options)
+            StylePill(
+              key: Key('today-filter-${view?.apiName ?? 'today'}'),
+              label: label,
+              selected: current == view,
+              onTap: () => ref.read(todayTaskFilterProvider.notifier).state = view,
+            ),
+        ],
       ),
     );
   }

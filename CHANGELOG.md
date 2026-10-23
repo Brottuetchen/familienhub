@@ -9,7 +9,7 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 - Named lists sit in the shopping and task overview, with the person filter on that screen.
 - A named list is one line: name, person, and a menu to add, assign, rename or delete. Items are not numbered.
 - A list assigned to a person stays private. Others see only the items assigned to them.
-- The home greeting stays on one line. The task filter shares the icon row.
+- The home greeting shrinks so the name stays on one line. The task filter stays on its own row.
 
 ## [1.0.1]
 
