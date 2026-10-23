@@ -102,6 +102,30 @@ void main() {
     expect(_y(tester, 'today-shopping'), greaterThan(_y(tester, 'today-meals')));
   });
 
+  testWidgets('cookidoo label sits above the title in a half card', (tester) async {
+    await setScreenSize(tester, const Size(420, 2400));
+    const title = 'Feldsalat mit gebratenen Kräuterseitlingen und Kürbiskerndressing';
+    final b = _backend(layout: _layout([
+      ['meals', true, 'half'], ['shopping', true, 'half'],
+    ]));
+    b.json('GET', '/api/today', {
+      'date': '2026-10-19',
+      'events': [],
+      'tasks': {'status': 'ok', 'error': null, 'items': []},
+      'meals': [
+        {'title': title, 'source': 'cookidoo'}
+      ],
+      'shopping_open': 0,
+      'reminders': [],
+    });
+    await tester.pumpWidget(_app(b, spec: _bento));
+    await tester.pumpAndSettle();
+    final label = tester.getTopLeft(find.text('Cookidoo'));
+    final line = tester.getTopLeft(find.text(title));
+    expect(label.dy, lessThan(line.dy));
+    expect((line.dx - label.dx).abs(), lessThan(8));
+  });
+
   for (final status in [404, 500]) {
     testWidgets('layout endpoint failing with $status falls back silently', (tester) async {
       await setScreenSize(tester, const Size(420, 2400));

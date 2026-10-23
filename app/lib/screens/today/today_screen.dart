@@ -195,6 +195,8 @@ class TodayScreen extends ConsumerWidget {
                 leading: m.source == 'cookidoo' ? 'Cookidoo' : l10n.today,
                 leadingColor: m.source == 'cookidoo' ? AppColors.cookidoo : null,
                 text: m.title,
+                // Half card is ~160px; the 92px label column breaks the title mid-word.
+                stacked: compact.contains('meals') && !isWide(context),
               ),
             const SizedBox(height: 8),
             MealWeekStrip(onTap: () => go(AppTab.meals)),
@@ -263,26 +265,31 @@ class _Line extends StatelessWidget {
   final Color? leadingColor;
   final String text;
   final bool wide; // no leading column: the text takes the whole line
-  const _Line({required this.leading, required this.text, this.leadingColor, this.wide = false});
+  final bool stacked; // label above the text, for a half-width card
+  const _Line({required this.leading, required this.text, this.leadingColor, this.wide = false, this.stacked = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final label = Text(
+      leading,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: leadingColor ?? theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+    if (stacked) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [label, Text(text)]),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!wide)
-          SizedBox(
-            width: 92,
-            child: Text(
-              leading,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: leadingColor ?? theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+          SizedBox(width: 92, child: label),
           Expanded(child: Text(text)),
         ],
       ),
