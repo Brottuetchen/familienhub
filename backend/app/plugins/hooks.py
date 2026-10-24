@@ -36,6 +36,7 @@ CARD_ICONS = (
 DEFAULT_ICON = "extension"
 MAX_CARDS_PER_PLUGIN = 5
 MAX_LINES = 6
+MAX_SLIDES = 10
 MAX_TITLE, MAX_LINE, MAX_BADGE, MAX_LINK, MAX_IMAGE = 60, 160, 16, 500, 300
 CARD_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 PLUGIN_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
@@ -71,6 +72,24 @@ def valid_link(value: Any) -> Optional[str]:
     return value if re.match(r"^https://[^\s/?#@]+(/\S*)?$", value) else None
 
 
+def _slides(plugin_id: str, raw: Any) -> List[Dict[str, Any]]:
+    """Pictures the app shows as one swipeable card; a slide without a valid image is dropped."""
+    out: List[Dict[str, Any]] = []
+    for item in raw if isinstance(raw, list) else []:
+        image = valid_image(plugin_id, item.get("image")) if isinstance(item, dict) else None
+        if image is None:
+            continue
+        out.append({
+            "image": image,
+            "caption": _clean(item.get("caption"), MAX_LINE),
+            "secondary": _clean(item.get("secondary"), MAX_LINE),
+            "link": valid_link(item.get("link")),
+        })
+        if len(out) >= MAX_SLIDES:
+            break
+    return out
+
+
 def sanitize_card(plugin: Plugin, raw: Any) -> Optional[Dict[str, Any]]:
     """The card as the app gets it, or None if it is unusable (no id or nothing to show). Invalid optional
     fields are dropped, the card stays."""
@@ -101,6 +120,7 @@ def sanitize_card(plugin: Plugin, raw: Any) -> Optional[Dict[str, Any]]:
         "image": valid_image(plugin.id, raw.get("image")),
         "link": valid_link(raw.get("link")),
         "badge": _clean(raw.get("badge"), MAX_BADGE),
+        "slides": _slides(plugin.id, raw.get("slides")),
     }
 
 

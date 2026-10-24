@@ -7,6 +7,15 @@ class PluginCardLine {
   const PluginCardLine(this.text, [this.secondary]);
 }
 
+/// One picture of a swipeable plugin card, with an optional caption and link of its own.
+class PluginCardSlide {
+  final String image;
+  final String? caption;
+  final String? secondary;
+  final String? link;
+  const PluginCardSlide(this.image, {this.caption, this.secondary, this.link});
+}
+
 /// A card a plugin adds to "Today" (`plugin_cards` of `GET /api/today`). The server has validated and shortened
 /// everything; the image is a hub path below `/api/plugins/<id>/` that is loaded with the login.
 class PluginCardData {
@@ -21,6 +30,9 @@ class PluginCardData {
   final String? link;
   final String? badge;
 
+  /// Two or more pictures are shown as one swipeable card instead of [image].
+  final List<PluginCardSlide> slides;
+
   const PluginCardData({
     required this.key,
     required this.title,
@@ -31,11 +43,13 @@ class PluginCardData {
     this.image,
     this.link,
     this.badge,
+    this.slides = const [],
   });
 
   factory PluginCardData.fromJson(Map<String, dynamic> json) {
     String? text(Object? v) => v is String && v.trim().isNotEmpty ? v : null;
     final rawLines = json['lines'];
+    final rawSlides = json['slides'];
     return PluginCardData(
       key: text(json['key']) ?? '',
       plugin: text(json['plugin']) ?? '',
@@ -50,6 +64,13 @@ class PluginCardData {
       image: text(json['image']),
       link: text(json['link']),
       badge: text(json['badge']),
+      slides: [
+        if (rawSlides is List)
+          for (final s in rawSlides.whereType<Map>())
+            if (text(s['image']) != null)
+              PluginCardSlide(s['image'] as String,
+                  caption: text(s['caption']), secondary: text(s['secondary']), link: text(s['link'])),
+      ],
     );
   }
 

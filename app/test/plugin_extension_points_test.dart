@@ -180,6 +180,62 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('several pictures are one swipeable card with captions, dots and their own links', (tester) async {
+    final b = FakeBackend();
+    for (final n in [1, 2, 3]) {
+      b.on('GET', '/api/plugins/demo/img/$n.png', (_) => http.Response.bytes(_png, 200, headers: {'content-type': 'image/png'}));
+    }
+    final opened = <Uri>[];
+    final card = _card({
+      'lines': <Object>[],
+      'image': '/api/plugins/demo/img/1.png',
+      'slides': [
+        {'image': '/api/plugins/demo/img/1.png', 'caption': 'vor 1 Jahr', 'secondary': '24.10.2025',
+         'link': 'https://photos.example.org/photos/1'},
+        {'image': '/api/plugins/demo/img/2.png', 'caption': 'vor 3 Jahren', 'secondary': '24.10.2023',
+         'link': 'https://photos.example.org/photos/2'},
+        {'image': '/api/plugins/demo/img/3.png', 'caption': 'vor 5 Jahren', 'link': 'javascript:alert(1)'},
+      ],
+    });
+    await tester.pumpWidget(_cardApp(b, PluginCard(card: card, openUrl: (u) async => opened.add(u))));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(PluginCard), findsOneWidget);
+    expect(find.byKey(const Key('plugin-card-slides')), findsOneWidget);
+    expect(find.byKey(const Key('plugin-card-slide-dot-2')), findsOneWidget);
+    expect(find.text('vor 1 Jahr'), findsOneWidget);
+    expect(find.text('24.10.2025'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('plugin-card-image')).first);
+    expect(opened.single.toString(), 'https://photos.example.org/photos/1');
+
+    await tester.drag(find.byKey(const Key('plugin-card-slides')), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('vor 3 Jahren'), findsOneWidget);
+    expect(find.text('vor 1 Jahr'), findsNothing);
+
+    await tester.drag(find.byKey(const Key('plugin-card-slides')), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('vor 5 Jahren'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('plugin-card-image')).last);
+    expect(opened, hasLength(1)); // not https: nothing opens
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a single slide is shown as a normal picture', (tester) async {
+    final b = FakeBackend();
+    b.on('GET', '/api/plugins/demo/img/1.png', (_) => http.Response.bytes(_png, 200, headers: {'content-type': 'image/png'}));
+    final card = _card({
+      'image': '/api/plugins/demo/img/1.png',
+      'slides': [{'image': '/api/plugins/demo/img/1.png', 'caption': 'vor 1 Jahr'}],
+    });
+    await tester.pumpWidget(_cardApp(b, PluginCard(card: card)));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('plugin-card-slides')), findsNothing);
+    expect(find.byKey(const Key('plugin-card-image')), findsOneWidget);
+  });
+
   for (final scale in [1.0, 2.0]) {
     testWidgets('a plugin card with long texts fits 360 dp at text scale $scale', (tester) async {
       await setScreenSize(tester, const Size(360, 1600));
