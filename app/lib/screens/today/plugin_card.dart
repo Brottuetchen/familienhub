@@ -19,10 +19,7 @@ class PluginCard extends ConsumerWidget {
   final Future<void> Function(Uri uri)? openUrl;
   const PluginCard({super.key, required this.card, this.openUrl});
 
-  Uri? get _link {
-    final uri = Uri.tryParse(card.link ?? '');
-    return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty ? uri : null;
-  }
+  Uri? get _link => _httpsUri(card.link);
 
   Future<void> _open(Uri uri) =>
       (openUrl ?? (u) => launchUrl(u, mode: LaunchMode.externalApplication))(uri);
@@ -32,7 +29,8 @@ class PluginCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final link = _link;
-    final image = card.image;
+    final slides = card.slides.length >= 2 ? card.slides : const <PluginCardSlide>[];
+    final image = slides.isEmpty ? card.image : null;
     return SectionCard(
       key: Key('plugin-card-${card.key}'),
       icon: pluginCardIcon(card.icon),
@@ -60,6 +58,11 @@ class PluginCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (slides.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: card.lines.isEmpty ? 0 : 8),
+              child: _PluginCardSlides(slides: slides, label: card.title, open: _open),
+            ),
           if (image != null)
             Padding(
               padding: EdgeInsets.only(bottom: card.lines.isEmpty ? 0 : 8),
@@ -76,7 +79,7 @@ class PluginCard extends ConsumerWidget {
                 ],
               ),
             ),
-          if (card.lines.isEmpty && image == null) Text(l10n.pluginCardEmpty, style: muted),
+          if (card.lines.isEmpty && image == null && slides.isEmpty) Text(l10n.pluginCardEmpty, style: muted),
           if (link != null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -84,6 +87,89 @@ class PluginCard extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+Uri? _httpsUri(String? value) {
+  final uri = Uri.tryParse(value ?? '');
+  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty ? uri : null;
+}
+
+/// Two or more pictures in one card: swipe between them, dots show where you are. Tapping a picture opens its
+/// own link (if any).
+class _PluginCardSlides extends StatefulWidget {
+  final List<PluginCardSlide> slides;
+  final String label;
+  final Future<void> Function(Uri uri) open;
+  const _PluginCardSlides({required this.slides, required this.label, required this.open});
+
+  @override
+  State<_PluginCardSlides> createState() => _PluginCardSlidesState();
+}
+
+class _PluginCardSlidesState extends State<_PluginCardSlides> {
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final slides = widget.slides;
+    final current = slides[_page.clamp(0, slides.length - 1)];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            key: const Key('plugin-card-slides'),
+            controller: _controller,
+            itemCount: slides.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, i) {
+              final link = _httpsUri(slides[i].link);
+              final picture = _PluginCardImage(path: slides[i].image, label: slides[i].caption ?? widget.label);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: link == null ? picture : GestureDetector(onTap: () => widget.open(link), child: picture),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (current.caption != null) Text(current.caption!, key: const Key('plugin-card-slide-caption')),
+                  if (current.secondary != null) Text(current.secondary!, style: muted),
+                ],
+              ),
+            ),
+            for (var i = 0; i < slides.length; i++)
+              Container(
+                key: Key('plugin-card-slide-dot-$i'),
+                width: 7,
+                height: 7,
+                margin: const EdgeInsets.only(left: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: i == _page ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

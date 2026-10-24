@@ -90,7 +90,29 @@ def test_card_is_passed_on_with_plugin_and_key(make_plugin):
     assert card == {"key": "plugin:ext_demo:weather", "plugin": "ext_demo", "plugin_name": "Ext demo",
                     "id": "weather", "title": "Garbage", "icon": "delete_outline",
                     "lines": [{"text": "Paper tomorrow", "secondary": "6 am"}, {"text": "Plastic", "secondary": None}],
-                    "image": "/api/plugins/ext_demo/img/1.png", "link": "https://example.org/x", "badge": "2"}
+                    "image": "/api/plugins/ext_demo/img/1.png", "link": "https://example.org/x", "badge": "2",
+                    "slides": []}
+
+
+def test_slides_keep_valid_pictures_only_and_are_limited(make_plugin):
+    slides = [
+        {"image": "/api/plugins/ext_demo/img/1.png", "caption": "3 years ago", "secondary": "20.10.2023",
+         "link": "https://photos.example.org/photos/1"},
+        {"image": "/api/plugins/other/img.png", "caption": "foreign"},       # other plugin: dropped
+        {"image": "/api/plugins/ext_demo/img/2.png", "caption": "x\ny" * 100, "link": "http://insecure.example"},
+        "not a slide", {"caption": "no picture"},
+    ]
+    plugin = make_plugin()
+    card = hooks.sanitize_card(plugin, {**GOOD, "slides": slides})
+    assert [s["image"] for s in card["slides"]] == ["/api/plugins/ext_demo/img/1.png", "/api/plugins/ext_demo/img/2.png"]
+    assert card["slides"][0] == {"image": "/api/plugins/ext_demo/img/1.png", "caption": "3 years ago",
+                                 "secondary": "20.10.2023", "link": "https://photos.example.org/photos/1"}
+    second = card["slides"][1]
+    assert second["link"] is None and second["secondary"] is None and len(second["caption"]) <= hooks.MAX_LINE
+    assert "\n" not in second["caption"]
+    many = [{"image": f"/api/plugins/ext_demo/img/{i}.png"} for i in range(30)]
+    assert len(hooks.sanitize_card(plugin, {**GOOD, "slides": many})["slides"]) == hooks.MAX_SLIDES
+    assert hooks.sanitize_card(plugin, {**GOOD, "slides": "nope"})["slides"] == []
 
 
 @pytest.mark.parametrize("image", [

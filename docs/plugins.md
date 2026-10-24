@@ -326,6 +326,7 @@ class GrocyPlugin(Plugin):
 | `image` | optional. A hub-relative path that **must start with `/api/plugins/<your plugin id>/`**, no `..`, no `//`, no encoded dots or slashes, at most 300 characters. It is served by your own router, which already requires a login, and the app loads it with the person's login. Anything else is dropped (the card stays) |
 | `link` | optional, an `https://` address (opens outside the app), at most 500 characters; other schemes are dropped |
 | `badge` | optional, at most 16 characters |
+| `slides` | optional, for several pictures in **one** card (e.g. photos of the day): a list of at most 10 `{"image": str, "caption": str, "secondary": str, "link": str}`. `image` follows the rules of `image` above (slides without a valid one are dropped), `caption`/`secondary` at most 160 characters, `link` like `link`. With two or more slides the app shows one swipeable card with dots instead of `image`; tapping a picture opens its own link. Also set `image` to the first picture so older hubs still show one |
 
 At most 5 cards per plugin. Allowed icons: `extension info event schedule check_circle shopping_cart restaurant home school sports_soccer local_shipping cloud wb_sunny notifications favorite star book movie music_note directions_car directions_bus pets build eco water_drop bolt lock payments medication cake child_care fitness_center local_laundry_service delete_outline wifi thermostat photo celebration sync warning` (list in `backend/app/plugins/hooks.py`, `CARD_ICONS`).
 
