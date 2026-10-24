@@ -271,6 +271,28 @@ def parse_manifest(body: bytes) -> Dict[str, Any]:
     return validate_manifest(raw)
 
 
+def load_stored_manifest(text: str) -> Dict[str, Any]:
+    """Validate a manifest the hub stored itself (``validate_manifest`` output, defaults kept as strings).
+
+    Bool and number defaults go back to JSON types first, otherwise every stored manifest with such a default
+    would fail its own check on restart and update.
+    """
+    raw = json.loads(text)
+    for s in raw.get("settings", []) if isinstance(raw, dict) else []:
+        default = s.get("default") if isinstance(s, dict) else None
+        if not isinstance(default, str):
+            continue
+        if s.get("type") == "bool" and default in ("true", "false"):
+            s["default"] = default == "true"
+        elif s.get("type") == "number":
+            try:
+                number = float(default)
+            except ValueError:
+                continue
+            s["default"] = int(number) if number.is_integer() and "." not in default else number
+    return validate_manifest(raw)
+
+
 def _version_tuple(value: str) -> Optional[Tuple[int, ...]]:
     m = re.match(r"^(\d+(?:\.\d+)*)", value or "")
     return tuple(int(p) for p in m.group(1).split(".")) if m else None

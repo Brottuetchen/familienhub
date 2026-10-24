@@ -857,6 +857,30 @@ def test_startup_loads_installed_plugins_and_skips_broken_ones(client, auth, gh)
     assert client.get("/api/plugins/installed", headers=auth).json()["items"][0]["error"] is None
 
 
+def test_stored_bool_and_number_defaults_survive_restart_and_update(client, auth, gh):
+    # The record keeps defaults as strings ("false", "3"); restart and update must still accept it
+    m = manifest_dict()
+    m["settings"] += [
+        {"key": "DEMO_HUB_ARCHIVED", "label": "Archived", "type": "bool", "default": False},
+        {"key": "DEMO_HUB_MAX", "label": "Max", "type": "number", "default": 3, "required": False},
+        {"key": "DEMO_HUB_RATIO", "label": "Ratio", "type": "number", "default": 2.5, "required": False},
+    ]
+    gh.publish(SHA1, repo_files(manifest=m))
+    assert install(client, auth).status_code == 200
+    with SessionLocal() as db:
+        stored = json.loads(db.get(InstalledPlugin, "demo_hub").manifest)
+    assert [s["default"] for s in stored["settings"][-3:]] == ["false", "3", "2.5"]
+
+    installer.unload_plugin(app, "demo_hub")
+    installer.load_installed(app)
+    item = client.get("/api/plugins/installed", headers=auth).json()["items"][0]
+    assert item["loaded"] is True and item["error"] is None and item["name"] == "Demo-Plugin"
+
+    r = install(client, auth, settings_={})  # same commit again = update path
+    assert r.status_code == 200, r.text
+    assert client.get("/api/plugins/demo_hub/items", headers=auth).json()["status"] == "ok"
+
+
 def test_a_plugin_that_cannot_be_imported_at_startup_is_skipped(client, auth, gh):
     gh.publish(SHA1, repo_files())
     assert install(client, auth).status_code == 200

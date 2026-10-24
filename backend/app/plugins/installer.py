@@ -39,7 +39,7 @@ from app.models.installed_plugin import InstalledPlugin
 from app.plugins import archive, github
 from app.plugins.base import CAPABILITIES, as_plugin, get_setting
 from app.plugins.manifest import (MANIFEST_FILE, check_value, english, form_spec, german, hub_version_ok, localized,
-                                  parse_manifest, settings_for, validate_manifest)
+                                  load_stored_manifest, parse_manifest, settings_for)
 from app.plugins.registry import plugin_registry
 from app.services import config_store
 
@@ -420,7 +420,7 @@ def load_installed(app: FastAPI) -> None:
         if row.id in _loaded or plugin_registry.get(row.id) is not None:
             continue
         try:
-            manifest = validate_manifest(json.loads(row.manifest))
+            manifest = load_stored_manifest(row.manifest)
             folder = site_dir(row.id)
             if not folder.is_dir():
                 raise InstallError("Die Plugin-Dateien fehlen (Datenordner nicht dauerhaft?). Bitte neu installieren")
@@ -505,7 +505,7 @@ async def _activate(app, db, user_id, row, manifest, link, sha, to_store, stagin
                     store_source=None) -> Dict[str, Any]:
     plugin_id = manifest["id"]
     update = row is not None
-    old_manifest = validate_manifest(json.loads(row.manifest)) if update else None
+    old_manifest = load_stored_manifest(row.manifest) if update else None
     was_loaded = plugin_id in _loaded
     native = unload_plugin(app, plugin_id) if was_loaded else False
     _install_dir(plugin_id, staging, old, keep_old=update)
@@ -580,7 +580,7 @@ async def remove_plugin(app: FastAPI, db: Session, user_id: Optional[int], plugi
 
 def installed_view(row: InstalledPlugin, lang: str) -> Dict[str, Any]:
     try:
-        manifest = validate_manifest(json.loads(row.manifest))
+        manifest = load_stored_manifest(row.manifest)
         info = summary(manifest, lang)
     except ValueError:
         info = {"id": row.id, "name": row.id, "version": row.version, "description": "", "author": "",
