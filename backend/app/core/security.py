@@ -184,10 +184,17 @@ def _user_from_api_token(raw: str, db: Session, unauthorized: HTTPException, req
     if request is not None:
         scopes = token.scope_list
         request.state.api_token_scopes = scopes
-        # A scoped key (e.g. for a voice assistant) never reaches the normal API, only /api/voice
+        # A scoped key reaches /api/voice (checked per endpoint by require_scope) and the explicitly tagged
+        # normal-API routes (API_ROUTE_SCOPES); every other route is closed to it (default-deny).
         if scopes is not None and not request.url.path.startswith("/api/voice/"):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                                detail="This access key is limited to voice assistant use")
+            from app.models.api_token import API_ROUTE_SCOPES
+
+            route = request.scope.get("route")
+            needed = API_ROUTE_SCOPES.get((request.method.upper(), getattr(route, "path", "")))
+            if needed is None:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This access key does not cover this endpoint")
+            if needed not in scopes:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Access key lacks scope: {needed}")
     return user
 
 
