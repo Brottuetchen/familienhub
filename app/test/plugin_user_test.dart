@@ -54,6 +54,7 @@ FakeBackend _backend({bool tokenSet = false, String user = '', bool withPages = 
 Widget _app(FakeBackend b, Widget home, {List<Uri>? opened}) => ProviderScope(
       overrides: [
         apiClientProvider.overrideWithValue(b.api()),
+        inAppPluginPagesProvider.overrideWithValue(false), // these tests cover the external opener
         pageOpenerProvider.overrideWithValue((uri) async {
           opened?.add(uri);
           return true;
@@ -246,6 +247,7 @@ void main() {
     final opened = <Uri>[];
     final container = ProviderContainer(overrides: [
       apiClientProvider.overrideWithValue(b.api()),
+      inAppPluginPagesProvider.overrideWithValue(false),
       pageOpenerProvider.overrideWithValue((uri) async {
         opened.add(uri);
         return true;

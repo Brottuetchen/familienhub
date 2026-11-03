@@ -458,7 +458,7 @@ A built-in plugin or a plugin in a custom image declares them as `Plugin(persona
 
 ## Plugin pages
 
-A plugin can serve whole pages (HTML, JavaScript, images, audio, video) that the app opens in the browser: a monthly recap, a photo story, a statistics page. The page cannot use the app's login, so the hub hands out a **signed, short-lived link**.
+A plugin can serve whole pages (HTML, JavaScript, images, audio, video) that the app opens full screen: a monthly recap, a photo story, a statistics page. The page cannot use the app's login, so the hub hands out a **signed, short-lived link**.
 
 ```json
 "pages": [{"id": "monthly", "title": {"de": "Monatsrückblick", "en": "Monthly recap"}, "icon": "star"}]
@@ -480,6 +480,7 @@ async def page(self, user, page_id, path):
     return None   # not found -> 404
 ```
 
+- **In the app:** on Android and iOS the page opens in an **in-app WebView** (full screen, immersive, close button top-left, Android back goes back in the page history first). JavaScript is on and **audio/video may autoplay with sound** (no user gesture needed), so a story page can start its soundtrack. Keep the top-left corner free for the close button. Only the hub's own `/plugin-pages/<token>/` address is shown in the WebView; links to anything else open in the system browser. When the 15-minute link has expired (401/403/404/410), the app fetches a fresh link once and reloads the same sub-path. The web app opens the page in a new tab, where the browser's autoplay rules apply.
 - **Result:** `(content_type, bytes)` or `None` (404). The content type must look like `type/subtype` (an optional `; charset=…`); anything else, a non-`bytes` body, more than **20 MB**, an exception, or no answer within **20 s** is a 404 for the person (logged by type only). `Range` requests are answered by the hub, so audio and video can seek.
 - **Relative assets:** the page lives at `/plugin-pages/<token>/`, so a page can load `app.js` or `cover/1.jpg` with relative URLs (no leading slash); they come to `page()` with that `path`. Use `fetch("data.json")` for data, not `/api/...`: the page has no bearer token.
 - **Link:** the app calls `POST /api/plugin-pages/<plugin>/<page>/link` (logged in; optional body `{"path": "2026-10/index.html"}`), which returns `{"url": "/plugin-pages/<token>/<path>", "expires_in": 900}`. Only active plugins and declared pages get a link. The token is an HMAC-SHA256 (key derived from the hub secret, separate from the login tokens) over person, plugin, page and expiry, valid for **15 minutes**, checked in constant time. A link is **bound to the person** it was made for: `page()` receives that person, and a link stops working when the plugin is switched off or removed or the person is deactivated. After expiry the response is 410; the app opens a fresh link on every tap.
