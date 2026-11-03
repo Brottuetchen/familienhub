@@ -994,3 +994,80 @@ def test_default_compose_keeps_the_data_folder_in_a_volume():
 
 def test_env_example_documents_the_switch():
     assert "PLUGIN_INSTALL_ENABLED" in (APP_DIR.parents[1] / ".env.example").read_text()
+
+
+# --- Personal settings and pages of an installed plugin ---
+
+USER_FEATURES_CODE = textwrap.dedent('''
+    from app.plugins import Page, Plugin, Setting
+
+
+    class DemoPlugin(Plugin):
+        def __init__(self):
+            super().__init__(id="demo_hub", name="Demo",
+                              settings=(Setting("DEMO_HUB_URL", "Adresse"),),
+                              personal_settings=(Setting("DEMO_HUB_ME", "Ich"),
+                                                 Setting("DEMO_HUB_KEY", "Schluessel", secret=True)),
+                              pages=(Page("main", "Haupt"),))
+
+        async def page(self, user, page_id, path):
+            return "text/html", f"hello {user.id} {page_id} {path}".encode()
+''')
+
+
+def user_features_manifest(**extra):
+    m = manifest_dict("demo_hub", settings=[{"key": "DEMO_HUB_URL", "label": "Adresse", "type": "url"}],
+                      personal_settings=[
+                          {"key": "DEMO_HUB_ME", "label": {"de": "Ich", "en": "Me"}},
+                          {"key": "DEMO_HUB_KEY", "label": "Key", "type": "password"}],
+                      pages=[{"id": "main", "title": {"de": "Haupt", "en": "Main"}, "icon": "star"}], **extra)
+    return m
+
+
+def test_installed_plugin_gets_personal_settings_and_pages_from_its_manifest(client, auth, gh):
+    from app.models.plugin_user_setting import PluginUserSetting
+
+    gh.publish(SHA1, repo_files(manifest=user_features_manifest(), code=USER_FEATURES_CODE))
+    assert install(client, auth, settings_={"DEMO_HUB_URL": "https://demo.example.org"}).status_code == 200
+    plugin = plugin_registry.get("demo_hub")
+    assert [s.key for s in plugin.personal_settings] == ["DEMO_HUB_ME", "DEMO_HUB_KEY"]
+    assert plugin.personal_settings[1].secret is True and [p.id for p in plugin.pages] == ["main"]
+
+    form = client.get("/api/plugins/demo_hub/personal-settings", headers={**auth, "X-App-Language": "en"}).json()
+    assert [f["label"] for f in form["fields"]] == ["Me", "Key"]  # the manifest's English texts
+    saved = client.put("/api/plugins/demo_hub/personal-settings", headers=auth,
+                       json={"values": {"DEMO_HUB_ME": "anna", "DEMO_HUB_KEY": "geheim-1"}})
+    assert saved.status_code == 200 and "geheim-1" not in saved.text
+
+    pages = client.get("/api/plugin-pages", headers={**auth, "X-App-Language": "en"}).json()["items"]
+    assert [(p["plugin"], p["id"], p["title"], p["icon"]) for p in pages if p["plugin"] == "demo_hub"] == [
+        ("demo_hub", "main", "Main", "star")]
+    url = client.post("/api/plugin-pages/demo_hub/main/link", headers=auth, json={"path": "x.txt"}).json()["url"]
+    served = client.get(url)  # no login
+    assert served.status_code == 200 and served.text.endswith(" main x.txt")
+
+    assert client.delete("/api/plugins/demo_hub", headers=auth).status_code == 200
+    assert client.get(url).status_code == 404  # the link dies with the plugin
+    with SessionLocal() as db:
+        assert db.query(PluginUserSetting).filter(PluginUserSetting.plugin_id == "demo_hub").count() == 0
+
+
+def test_code_cannot_declare_personal_settings_or_pages_the_manifest_lacks(client, auth, gh):
+    gh.publish(SHA1, repo_files(manifest=manifest_dict("demo_hub", settings=[
+        {"key": "DEMO_HUB_URL", "label": "Adresse", "type": "url"}]), code=USER_FEATURES_CODE))
+    r = install(client, auth, settings_={"DEMO_HUB_URL": "https://demo.example.org"})
+    assert r.status_code == 422 and "DEMO_HUB_ME" in r.json()["detail"]
+    assert plugin_registry.get("demo_hub") is None
+    only_pages = manifest_dict("demo_hub", settings=[{"key": "DEMO_HUB_URL", "label": "Adresse", "type": "url"}],
+                               personal_settings=user_features_manifest()["personal_settings"])
+    gh.publish(SHA2, repo_files(manifest=only_pages, code=USER_FEATURES_CODE))
+    r = install(client, auth, sha=SHA2, settings_={"DEMO_HUB_URL": "https://demo.example.org"})
+    assert r.status_code == 422 and "main" in r.json()["detail"]
+
+
+def test_personal_settings_survive_the_stored_manifest_round_trip():
+    from app.plugins.manifest import load_stored_manifest
+
+    m = validate_manifest(user_features_manifest())
+    again = load_stored_manifest(json.dumps(m))
+    assert again["personal_settings"] == m["personal_settings"] and again["pages"] == m["pages"]

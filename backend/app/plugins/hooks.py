@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app.core.logging_config import get_logger
 from app.plugins.base import Plugin
@@ -22,6 +22,7 @@ TODAY_CARDS_TIMEOUT = 4.0
 SCHEDULED_TIMEOUT = 120.0
 REWARD_ACTION_TIMEOUT = 20.0
 TEST_SETTINGS_TIMEOUT = 15.0
+PAGE_TIMEOUT = 20.0
 
 # --- "Today" cards ---
 
@@ -213,6 +214,73 @@ async def run_test_settings(plugin: Plugin, values: Dict[str, str]) -> Optional[
     if raw is None:
         return None
     return _result(raw, "Der Test des Plugins ist fehlgeschlagen")
+
+
+async def run_test_personal_settings(plugin: Plugin, user, values: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    """The plugin's own test of one person's ``values``; None if it has none. Never raises."""
+    if not plugin.has_personal_test:
+        return None
+    try:
+        raw = await asyncio.wait_for(plugin.test_personal_settings(user, dict(values)), TEST_SETTINGS_TIMEOUT)
+    except asyncio.TimeoutError:
+        return {"ok": False, "level": "error", "message": "Zeitüberschreitung – Adresse und Netzwerk prüfen"}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Plugin %s: test_personal_settings failed: %s", plugin.id, type(exc).__name__)
+        return {"ok": False, "level": "error", "message": "Der Test des Plugins ist fehlgeschlagen"}
+    if raw is None:
+        return None
+    return _result(raw, "Der Test des Plugins ist fehlgeschlagen")
+
+
+# --- Plugin pages ---
+
+MAX_PAGE_BYTES = 20 * 1024 * 1024
+MAX_PAGE_PATH = 300
+CONTENT_TYPE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,60}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,60}"
+                             r"(; ?charset=[A-Za-z0-9_-]{1,30})?$")
+
+
+def clean_page_path(path: Any) -> Optional[str]:
+    """A relative path below a page ("" is the page itself), or None if it could escape or is malformed.
+
+    The caller passes the percent-decoded path. Dot segments, empty segments, backslashes, control characters and
+    leading slashes are refused rather than normalised, so what the plugin sees is what the person asked for.
+    """
+    if not isinstance(path, str) or len(path) > MAX_PAGE_PATH:
+        return None
+    if path == "":
+        return ""
+    if path.startswith("/") or "\\" in path or "%" in path or any(c < " " or c == "\x7f" for c in path):
+        return None
+    segments = path.split("/")
+    if segments[-1] == "":  # one trailing slash ("reports/") is fine
+        segments = segments[:-1]
+    if not segments or any(seg in ("", ".", "..") for seg in segments):
+        return None
+    return path
+
+
+def sanitize_page(raw: Any) -> Optional[Tuple[str, bytes]]:
+    """``(content_type, body)`` as the hub serves it, or None if the plugin returned nothing usable."""
+    if not isinstance(raw, tuple) or len(raw) != 2:
+        return None
+    content_type, body = raw
+    if isinstance(body, (bytearray, memoryview)):
+        body = bytes(body)
+    if not isinstance(content_type, str) or not CONTENT_TYPE_RE.match(content_type) or not isinstance(body, bytes):
+        return None
+    if len(body) > MAX_PAGE_BYTES:
+        return None
+    return content_type, body
+
+
+async def run_page(plugin: Plugin, user, page_id: str, path: str) -> Optional[Tuple[str, bytes]]:
+    """What ``plugin.page`` returns for this person, sanitised; None on "not found", error, timeout or oversize."""
+    raw = await call_safely(plugin, "page", lambda: plugin.page(user, page_id, path), PAGE_TIMEOUT)
+    result = sanitize_page(raw)
+    if raw is not None and result is None:
+        logger.warning("Plugin %s: page returned something unusable (type, size or content type)", plugin.id)
+    return result
 
 
 async def call_safely(plugin: Plugin, name: str, make: Callable[[], Awaitable[Any]], timeout: float) -> Any:

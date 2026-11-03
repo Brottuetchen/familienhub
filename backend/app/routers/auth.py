@@ -275,6 +275,9 @@ async def delete_user(user_id: int, db: Session = Depends(get_db), current_user:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    from app.services import personal_settings
+
+    personal_settings.delete_for_user(db, user.id)  # SQLite does not enforce the cascade
     db.delete(user)
     db.commit()
     return {"message": f"User {user.username} deleted"}

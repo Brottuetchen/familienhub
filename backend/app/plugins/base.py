@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import APIRouter
 
@@ -50,6 +50,19 @@ class Setting:
     secret: bool = False
     required: bool = True
     help: str = ""
+    # Form details for personal settings (and the manifest's settings): text | url | password | number | bool
+    type: str = "text"
+    default: Optional[str] = None
+    example: str = ""
+
+
+@dataclass(frozen=True)
+class Page:
+    """A page a plugin serves itself (``Plugin.page``); listed under *More* in the app."""
+
+    id: str  # ^[a-z][a-z0-9_-]{0,30}$
+    title: Union[str, Dict[str, str]]  # German text, or {"de": …, "en": …}
+    icon: str = "extension"  # one of ``hooks.CARD_ICONS``
 
 
 @dataclass
@@ -67,6 +80,10 @@ class Plugin:
     fallback: bool = False
     # Tasks only: this source can hold the shared family list and household rotation
     family_tasks: bool = False
+    # Settings every person fills in for themselves (accounts, tokens): same shape as ``settings``, stored per person
+    personal_settings: tuple = ()
+    # Pages the plugin serves through ``page()``
+    pages: tuple = ()
 
     # Scheduled jobs (see ``scheduled``): minutes between runs, at least 5. Deliberately not a dataclass field, so a
     # subclass may set it as a class attribute or in ``__init__`` after ``super().__init__``.
@@ -179,6 +196,20 @@ class Plugin:
     @property
     def has_test(self) -> bool:
         return type(self).test_settings is not Plugin.test_settings
+
+    async def test_personal_settings(self, user, values: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """"Test connection" for one person's not-yet-saved ``values`` of ``personal_settings`` (a secret left empty
+        arrives as the stored one). Same result shape as ``test_settings``. Default: no test."""
+        return None
+
+    @property
+    def has_personal_test(self) -> bool:
+        return type(self).test_personal_settings is not Plugin.test_personal_settings
+
+    async def page(self, user, page_id: str, path: str) -> Optional[Tuple[str, bytes]]:
+        """Serves ``path`` ("" for the page itself) of the declared page ``page_id`` for ``user`` as
+        ``(content_type, body)``, or ``None`` for "not found". Relative assets of the page arrive here too."""
+        return None
 
     def missing_settings(self) -> List[str]:
         return [s.key for s in self.settings if s.required and get_setting(s.key) in (None, "")]

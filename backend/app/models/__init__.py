@@ -26,6 +26,7 @@ from app.models.reminder import Reminder
 from app.models.theme import Theme
 from app.models.store_source import StoreSource
 from app.models.installed_plugin import InstalledPlugin
+from app.models.plugin_user_setting import PluginUserSetting
 from app.models.user import LoginAttempt, RefreshToken, User, UserAvatar
 
 __all__ = [
@@ -69,6 +70,7 @@ __all__ = [
     "Theme",
     "StoreSource",
     "InstalledPlugin",
+    "PluginUserSetting",
     "PaperlessAccount",
     "NotificationLog",
     "ServiceKey",

@@ -39,9 +39,10 @@ from app.models.installed_plugin import InstalledPlugin
 from app.plugins import archive, github
 from app.plugins.base import CAPABILITIES, as_plugin, get_setting
 from app.plugins.manifest import (MANIFEST_FILE, check_value, english, form_spec, german, hub_version_ok, localized,
-                                  load_stored_manifest, parse_manifest, settings_for)
+                                  load_stored_manifest, pages_for, parse_manifest, personal_settings_for,
+                                  settings_for)
 from app.plugins.registry import plugin_registry
-from app.services import config_store
+from app.services import config_store, personal_settings
 
 logger = get_logger("plugins.installer")
 # Install and remove events are logged as warnings on purpose: the in-app protocol (Administration → Log)
@@ -364,6 +365,14 @@ def load_plugin(app: FastAPI, manifest: Dict[str, Any], folder: Path) -> Any:
         undeclared = sorted({s.key for s in plugin.settings} - keys)
         if undeclared:
             raise InstallError(f"Einstellungen fehlen im Manifest: {', '.join(undeclared)}")
+        personal_keys = {s["key"] for s in manifest.get("personal_settings", [])}
+        undeclared = sorted({s.key for s in plugin.personal_settings} - personal_keys)
+        if undeclared:
+            raise InstallError(f"Persönliche Einstellungen fehlen im Manifest: {', '.join(undeclared)}")
+        page_ids = {p["id"] for p in manifest.get("pages", [])}
+        undeclared = sorted({p.id for p in plugin.pages} - page_ids)
+        if undeclared:
+            raise InstallError(f"Seiten fehlen im Manifest: {', '.join(undeclared)}")
         extra_caps = sorted(set(plugin.capabilities) - set(manifest["capabilities"]))
         if extra_caps:
             raise InstallError(f"Fähigkeiten fehlen im Manifest: {', '.join(extra_caps)}")
@@ -372,6 +381,8 @@ def load_plugin(app: FastAPI, manifest: Dict[str, Any], folder: Path) -> Any:
         plugin.version = manifest["version"]
         plugin.description = german(manifest["description"])
         plugin.settings = settings_for(manifest)
+        plugin.personal_settings = personal_settings_for(manifest)
+        plugin.pages = pages_for(manifest)
         plugin.builtin = False
         routes = _mount_checked(app, plugin)
     except BaseException:
@@ -379,10 +390,12 @@ def load_plugin(app: FastAPI, manifest: Dict[str, Any], folder: Path) -> Any:
         raise
     translations = {german(manifest["name"]): english(manifest["name"]),
                     german(manifest["description"]): english(manifest["description"])}
-    for s in manifest["settings"]:
+    for s in manifest["settings"] + manifest.get("personal_settings", []):
         translations[german(s["label"])] = english(s["label"])
         if s["help"]:
             translations[german(s["help"])] = english(s["help"])
+    for page in manifest.get("pages", []):
+        translations[german(page["title"])] = english(page["title"])
     i18n.add_runtime_translations(translations)
     _loaded[plugin_id] = _Loaded(folder, routes)
     _errors.pop(plugin_id, None)
@@ -547,6 +560,7 @@ async def _activate(app, db, user_id, row, manifest, link, sha, to_store, stagin
     row.manifest = json.dumps(manifest, ensure_ascii=False)
     row.installed_by, row.installed_at, row.enabled = user_id, datetime.utcnow(), plugin_id not in settings.disabled_plugins
     db.commit()
+    personal_settings.prune(db, plugin)  # an update may drop personal settings
     audit.warning("Plugin %s %s installiert (%s, Commit %s, Nutzer %s)", plugin_id, manifest["version"],
                   "Update" if update else "neu", short_sha(sha), user_id)
     return {"id": plugin_id, "version": manifest["version"], "sha": sha, "updated": update,
@@ -566,6 +580,7 @@ async def remove_plugin(app: FastAPI, db: Session, user_id: Optional[int], plugi
         native = unload_plugin(app, plugin_id)
         _errors.pop(plugin_id, None)
         config_store.delete_overrides(db, keys)
+        personal_settings.delete_for_plugin(db, plugin_id)
         if plugin_id in settings.disabled_plugins:
             config_store.set_plugin_enabled(db, plugin_id, True)  # a later install must not start switched off
         db.delete(row)
