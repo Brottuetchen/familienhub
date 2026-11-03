@@ -1,3 +1,4 @@
+import 'package:familienhub/models/account.dart';
 import 'package:familienhub/screens/more/api_tokens_screen.dart';
 import 'dart:async';
 
@@ -164,7 +165,7 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.textContaining('Voller Zugriff:'), findsNothing);
-    await tester.tap(find.descendant(of: find.byKey(const Key('access-type')), matching: find.text('Voller Zugriff')));
+    await tester.tap(find.byKey(const Key('access-full')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Voller Zugriff:'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Automation');
@@ -177,4 +178,84 @@ void main() {
     expect(find.textContaining('fhp_abcd… · Voller Zugriff'), findsOneWidget);
     expect(find.textContaining('fhp_wxyz… · Sprachassistent'), findsOneWidget);
   });
+
+  Future<ApiBackendHolder> openDialog(WidgetTester tester) async {
+    await setScreenSize(tester, const Size(400, 1000));
+    final backend = FakeBackend();
+    addDefaults(backend);
+    backend.on('GET', '/api/auth/api-tokens', (_) => jsonResponse([]));
+    backend.on('POST', '/api/auth/api-tokens',
+        (_) => jsonResponse({'id': 1, 'name': 'K', 'hint': 'fhp_abcd', 'token': 'fhp_abcdGEHEIM'}, status: 201));
+    await tester.pumpWidget(appWith(backend.api(), const ApiTokensScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    return ApiBackendHolder(backend);
+  }
+
+  testWidgets('read only preset sends the read preset', (tester) async {
+    final h = await openDialog(tester);
+    await tester.tap(find.byKey(const Key('access-read')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+    await tester.pumpAndSettle();
+    expect(bodyOf(h.backend.sent('POST', '/api/auth/api-tokens').single), {'name': 'Sprachassistent', 'scopes': ['read']});
+  });
+
+  testWidgets('custom: write implies read, needs a selection, warns, sends api scopes', (tester) async {
+    final h = await openDialog(tester);
+    await tester.tap(find.byKey(const Key('access-custom')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Anlegen')).onPressed, isNull);
+    expect(find.byKey(const Key('write-warning')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('write-tasks')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Checkbox>(find.byKey(const Key('read-tasks'))).value, isTrue);
+    expect(find.byKey(const Key('write-warning')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('read-today')));
+    await tester.pumpAndSettle();
+    // unchecking read removes write
+    await tester.tap(find.byKey(const Key('read-tasks')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Checkbox>(find.byKey(const Key('write-tasks'))).value, isFalse);
+    await tester.tap(find.byKey(const Key('write-shopping')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+    await tester.pumpAndSettle();
+    expect(bodyOf(h.backend.sent('POST', '/api/auth/api-tokens').single), {
+      'name': 'Sprachassistent',
+      'scopes': ['api:today:read', 'api:shopping:read', 'api:shopping:write'],
+    });
+  });
+
+  testWidgets('list names the preset or counts custom areas and shows them on tap', (tester) async {
+    await setScreenSize(tester, const Size(400, 900));
+    final backend = FakeBackend();
+    addDefaults(backend);
+    backend.on('GET', '/api/auth/api-tokens', (_) => jsonResponse([
+          {'id': 1, 'name': 'A', 'hint': 'fhp_aaaa', 'created_at': null, 'last_used_at': null, 'scopes': null},
+          {'id': 2, 'name': 'B', 'hint': 'fhp_bbbb', 'created_at': null, 'last_used_at': null, 'scopes': ['tasks:write', 'shopping:read']},
+          {'id': 3, 'name': 'C', 'hint': 'fhp_cccc', 'created_at': null, 'last_used_at': null,
+            'scopes': [for (final a in apiKeyAreas) 'api:$a:read']},
+          {'id': 4, 'name': 'D', 'hint': 'fhp_dddd', 'created_at': null, 'last_used_at': null,
+            'scopes': ['api:tasks:read', 'api:tasks:write', 'api:today:read']},
+        ]));
+    await tester.pumpWidget(appWith(backend.api(), const ApiTokensScreen()));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('fhp_aaaa… · Voller Zugriff'), findsOneWidget);
+    expect(find.textContaining('fhp_bbbb… · Sprachassistent'), findsOneWidget);
+    expect(find.textContaining('fhp_cccc… · Nur lesen'), findsOneWidget);
+    expect(find.textContaining('fhp_dddd… · Eigene Auswahl (2 Bereiche)'), findsOneWidget);
+    await tester.tap(find.text('D'));
+    await tester.pumpAndSettle();
+    expect(find.text('Aufgaben: Lesen + Schreiben'), findsOneWidget);
+    expect(find.text('Heute: Lesen'), findsOneWidget);
+  });
+}
+
+class ApiBackendHolder {
+  final FakeBackend backend;
+  ApiBackendHolder(this.backend);
 }

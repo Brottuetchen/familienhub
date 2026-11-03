@@ -25,7 +25,7 @@ class ApiTokensScreen extends ConsumerWidget {
       final created = await api.createApiToken(
         name,
         // Default is least privilege (voice endpoints only); full access is an explicit choice.
-        scopes: choice.fullAccess ? null : const ['voice'],
+        scopes: choice.scopes,
       );
       container.invalidate(apiTokensProvider);
       if (!context.mounted) return;
@@ -94,9 +94,10 @@ class ApiTokensScreen extends ConsumerWidget {
                 title: Text(t.name),
                 subtitle: Text([
                   '${t.hint}…',
-                  t.isFullAccess ? l10n.accessFull : l10n.accessVoice,
+                  _presetLabel(t),
                   if (t.lastUsedAt != null) l10n.lastUsed(fmt.format(t.lastUsedAt!)) else l10n.neverUsed,
                 ].join(' · ')),
+                onTap: t.preset == 'custom' ? () => _showScopes(context, t) : null,
                 trailing: IconButton(
                   tooltip: l10n.revoke,
                   icon: const Icon(Icons.delete_outline),
@@ -114,11 +115,48 @@ class ApiTokensScreen extends ConsumerWidget {
   }
 }
 
-/// Result of the create dialog.
+String _areaName(String a) => switch (a) {
+      'today' => l10n.areaKeyToday,
+      'tasks' => l10n.areaKeyTasks,
+      'shopping' => l10n.areaKeyShopping,
+      'calendar' => l10n.areaKeyCalendar,
+      'meals' => l10n.areaKeyMeals,
+      'reminders' => l10n.areaKeyReminders,
+      'notifications' => l10n.areaKeyNotifications,
+      'documents' => l10n.areaKeyDocuments,
+      'books' => l10n.areaKeyBooks,
+      _ => l10n.areaKeyMedia,
+    };
+
+String _presetLabel(ApiTokenInfo t) => switch (t.preset) {
+      'full' => l10n.accessFull,
+      'voice' => l10n.accessVoice,
+      'read' => l10n.accessReadOnly,
+      _ => l10n.accessCustomSummary(t.apiAreas.values.where((v) => v.read || v.write).length.toString()),
+    };
+
+void _showScopes(BuildContext context, ApiTokenInfo t) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.accessScopesTitle),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final e in t.apiAreas.entries)
+            if (e.value.read || e.value.write)
+              Text('${_areaName(e.key)}: ${[if (e.value.read) l10n.accessCanRead, if (e.value.write) l10n.accessCanWrite].join(' + ')}'),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.finished))],
+    ),
+  );
+}
+
+/// Result of the create dialog. [scopes] null = full access.
 class _NewKey {
   final String name;
-  final bool fullAccess;
-  const _NewKey(this.name, this.fullAccess);
+  final List<String>? scopes;
+  const _NewKey(this.name, this.scopes);
 }
 
 /// Asks for the name and the access type of the new key. Owns its controller and accepts only one submit, so a
@@ -133,7 +171,9 @@ class _NameDialog extends StatefulWidget {
 class _NameDialogState extends State<_NameDialog> {
   final _ctrl = TextEditingController(text: l10n.voiceAssistant);
   bool _done = false;
-  bool _full = false;
+  String _type = 'voice'; // voice | read | full | custom
+  final _read = <String>{};
+  final _write = <String>{};
 
   @override
   void dispose() {
@@ -147,39 +187,98 @@ class _NameDialogState extends State<_NameDialog> {
     Navigator.pop(context, result);
   }
 
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: Text(l10n.newAccess),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _ctrl,
-                autofocus: true,
-                decoration: InputDecoration(labelText: l10n.whatFor, helperText: l10n.egVoiceAssistant),
-              ),
-              const SizedBox(height: 16),
-              SegmentedButton<bool>(
-                key: const Key('access-type'),
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: false, label: Text(l10n.accessVoice)),
-                  ButtonSegment(value: true, label: Text(l10n.accessFull)),
-                ],
-                selected: {_full},
-                onSelectionChanged: (s) => setState(() => _full = s.first),
-              ),
-              const SizedBox(height: 8),
-              Text(_full ? l10n.accessFullWarning : l10n.accessVoiceHint,
-                  key: const Key('access-type-hint'), style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: _close, child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => _close(_NewKey(_ctrl.text.trim(), _full)), child: Text(l10n.create)),
-        ],
+  List<String>? get _scopes => switch (_type) {
+        'full' => null,
+        'read' => const ['read'],
+        'custom' => [
+            for (final a in apiKeyAreas) ...[
+              if (_read.contains(a) || _write.contains(a)) 'api:$a:read',
+              if (_write.contains(a)) 'api:$a:write',
+            ]
+          ],
+        _ => const ['voice'],
+      };
+
+  String get _hint => switch (_type) {
+        'full' => l10n.accessFullWarning,
+        'read' => l10n.accessReadHint,
+        'custom' => l10n.accessCustomHint,
+        _ => l10n.accessVoiceHint,
+      };
+
+  Widget _chip(String type, String label) => ChoiceChip(
+        key: Key('access-$type'),
+        label: Text(label),
+        selected: _type == type,
+        onSelected: (_) => setState(() => _type = type),
       );
+
+  @override
+  Widget build(BuildContext context) {
+    final canCreate = _type != 'custom' || _scopes!.isNotEmpty;
+    return AlertDialog(
+      title: Text(l10n.newAccess),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _ctrl,
+              autofocus: true,
+              decoration: InputDecoration(labelText: l10n.whatFor, helperText: l10n.egVoiceAssistant),
+            ),
+            const SizedBox(height: 16),
+            Wrap(spacing: 8, children: [
+              _chip('voice', l10n.accessVoice),
+              _chip('read', l10n.accessReadOnly),
+              _chip('full', l10n.accessFull),
+              _chip('custom', l10n.accessCustom),
+            ]),
+            const SizedBox(height: 8),
+            Text(_hint, key: const Key('access-type-hint'), style: Theme.of(context).textTheme.bodySmall),
+            if (_type == 'custom') ...[
+              const SizedBox(height: 8),
+              for (final a in apiKeyAreas)
+                Row(children: [
+                  Expanded(child: Text(_areaName(a))),
+                  Text(l10n.accessCanRead, style: Theme.of(context).textTheme.bodySmall),
+                  Checkbox(
+                    key: Key('read-$a'),
+                    value: _read.contains(a) || _write.contains(a),
+                    onChanged: (v) => setState(() {
+                      if (v == true) {
+                        _read.add(a);
+                      } else {
+                        _read.remove(a);
+                        _write.remove(a);
+                      }
+                    }),
+                  ),
+                  Text(l10n.accessCanWrite, style: Theme.of(context).textTheme.bodySmall),
+                  Checkbox(
+                    key: Key('write-$a'),
+                    value: _write.contains(a),
+                    onChanged: (v) => setState(() {
+                      if (v == true) {
+                        _write.add(a);
+                        _read.add(a);
+                      } else {
+                        _write.remove(a);
+                      }
+                    }),
+                  ),
+                ]),
+              if (_write.isNotEmpty)
+                Text(l10n.accessWriteWarning, key: const Key('write-warning'), style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: _close, child: Text(l10n.cancel)),
+        FilledButton(onPressed: canCreate ? () => _close(_NewKey(_ctrl.text.trim(), _scopes)) : null, child: Text(l10n.create)),
+      ],
+    );
+  }
 }
