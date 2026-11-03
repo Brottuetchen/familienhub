@@ -217,10 +217,40 @@ String? extractSharedUrl(Iterable<String?> parts) {
 }
 final taskViewProvider = StateProvider<TaskView>((ref) => TaskView.mine);
 
+/// A plugin page that a notification (or a link) asked for: `/plugin-page/<plugin>/<page>?path=…`. The main screen
+/// picks it up, asks the hub for a fresh link and opens it.
+class PluginPageRequest {
+  final String plugin;
+  final String page;
+  final String path;
+  const PluginPageRequest(this.plugin, this.page, [this.path = '']);
+
+  @override
+  bool operator ==(Object other) =>
+      other is PluginPageRequest && other.plugin == plugin && other.page == page && other.path == path;
+
+  @override
+  int get hashCode => Object.hash(plugin, page, path);
+}
+
+final pluginPageRequestProvider = StateProvider<PluginPageRequest?>((ref) => null);
+
+/// The page a route like `/plugin-page/recap/monthly?path=2026-10` points to, or null for any other route.
+PluginPageRequest? pluginPageFromRoute(String route) {
+  final uri = Uri.tryParse(route);
+  if (uri == null || uri.pathSegments.length != 3 || uri.pathSegments.first != 'plugin-page') return null;
+  return PluginPageRequest(uri.pathSegments[1], uri.pathSegments[2], uri.queryParameters['path'] ?? '');
+}
+
 /// Ziel aus einer Push-Mitteilung (`data.route`), z. B. `/tasks?view=for_me`.
 void openRoute(WidgetRef ref, String route) {
   final uri = Uri.tryParse(route);
   if (uri == null) return;
+  final pluginPage = pluginPageFromRoute(route);
+  if (pluginPage != null) {
+    ref.read(pluginPageRequestProvider.notifier).state = pluginPage;
+    return;
+  }
   final segment = uri.pathSegments.isEmpty ? '' : uri.pathSegments.first;
   final tab = switch (segment) {
     'tasks' => AppTab.tasks,

@@ -148,3 +148,13 @@ def test_delete_removes_target(client, ntfy_on):
 def test_guest_may_use_ntfy(client, ntfy_on):
     h = _auth(client, "ntfy_gast", role="guest")
     assert client.put("/api/me/ntfy", headers=h, json={"enabled": True}).status_code == 200
+
+
+def test_click_opens_the_web_app_on_a_plugin_page_route_only(ntfy_on):
+    from app.services.ntfy import build_message
+
+    route = "/plugin-page/recap/monthly?path=2026-10"
+    msg = build_message("t", "Recap", "Ready", {"route": route}, "plugins")
+    assert msg["click"] == "https://hub.example.test/?route=/plugin-page/recap/monthly%3Fpath%3D2026-10"
+    for other in ("/reminders", "//evil.example/plugin-page/x", "", None):
+        assert build_message("t", "T", "B", {"route": other}, "plugins")["click"] == "https://hub.example.test/"

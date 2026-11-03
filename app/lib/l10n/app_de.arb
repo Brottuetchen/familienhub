@@ -1937,5 +1937,13 @@
     "placeholders": {
       "name": {}
     }
-  }
+  },
+  "myConnections": "Meine Verbindungen",
+  "myConnectionsHint": "Eigene Zugänge für Plugins",
+  "myConnectionsEmpty": "Keines der aktiven Plugins braucht persönliche Angaben.",
+  "myConnectionNotSet": "Noch nicht eingerichtet",
+  "myConnectionSet": "Eingerichtet",
+  "pluginPagesHeading": "Seiten von Plugins",
+  "pluginPageOpenFailed": "Die Seite ließ sich nicht öffnen",
+  "pluginPageUnavailable": "Diese Seite gibt es nicht mehr"
 }

@@ -12,7 +12,7 @@ import json
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from app.plugins.base import CAPABILITIES, Setting
+from app.plugins.base import CAPABILITIES, Page, Setting
 
 MANIFEST_FILE = "familienhub-plugin.json"
 MAX_MANIFEST_BYTES = 64 * 1024
@@ -27,9 +27,13 @@ SETTING_TYPES = ("text", "url", "password", "number", "bool")
 LANGUAGES = ("de", "en")
 
 TOP_KEYS = {"id", "name", "version", "description", "author", "homepage", "license", "min_hub_version", "package",
-            "entry_point", "settings", "hosts", "capabilities"}
+            "entry_point", "settings", "personal_settings", "pages", "hosts", "capabilities"}
 REQUIRED_KEYS = ("id", "name", "version", "description", "author", "entry_point")
 SETTING_KEYS = {"key", "label", "help", "type", "secret", "required", "default", "example"}
+PAGE_KEYS = {"id", "title", "icon"}
+PAGE_ID_RE = re.compile(r"^[a-z][a-z0-9_-]{0,30}$")
+MAX_PAGES = 10
+MAX_PERSONAL_SETTINGS = 20
 
 # Words that belong to the core or to the built-in plugins; an installed plugin may not use them as its id
 # (its setting keys all start with "<ID>_", which must never reach a core or built-in setting).
@@ -151,8 +155,8 @@ def check_value(kind: str, value: str, field: str) -> str:
     return value
 
 
-def _setting(raw: Any, plugin_id: str, index: int) -> Dict[str, Any]:
-    where = f"settings[{index}]"
+def _setting(raw: Any, plugin_id: str, index: int, field: str = "settings") -> Dict[str, Any]:
+    where = f"{field}[{index}]"
     if not isinstance(raw, dict):
         raise ValueError(f"Manifest: {where} muss ein Objekt sein")
     unknown = set(raw) - SETTING_KEYS
@@ -180,6 +184,24 @@ def _setting(raw: Any, plugin_id: str, index: int) -> Dict[str, Any]:
         "default": default,
         "example": _string(raw.get("example"), f"{where}.example", max_len=100, required=False) or "",
     }
+
+
+def _page(raw: Any, index: int) -> Dict[str, Any]:
+    from app.plugins.hooks import CARD_ICONS, DEFAULT_ICON
+
+    where = f"pages[{index}]"
+    if not isinstance(raw, dict):
+        raise ValueError(f"Manifest: {where} muss ein Objekt sein")
+    unknown = set(raw) - PAGE_KEYS
+    if unknown:
+        raise ValueError(f"Manifest: {where} hat unbekannte Felder: {', '.join(sorted(map(str, unknown)))}")
+    page_id = raw.get("id")
+    if not isinstance(page_id, str) or not PAGE_ID_RE.match(page_id):
+        raise ValueError(f"Manifest: {where}: id muss kleingeschrieben sein, 1–31 Zeichen (a–z, 0–9, _ und -)")
+    icon = raw.get("icon", DEFAULT_ICON)
+    if icon not in CARD_ICONS:
+        raise ValueError(f"Manifest: {where}: icon ist einer von {', '.join(CARD_ICONS)}")
+    return {"id": page_id, "title": _text(raw.get("title"), f"{where}.title", max_len=60), "icon": icon}
 
 
 def _package_path(value: Any) -> str:
@@ -237,6 +259,21 @@ def validate_manifest(raw: Any) -> Dict[str, Any]:
     if len(set(keys)) != len(keys):
         raise ValueError("Manifest: settings enthält einen Schlüssel doppelt")
 
+    personal_raw = raw.get("personal_settings", [])
+    if not isinstance(personal_raw, list) or len(personal_raw) > MAX_PERSONAL_SETTINGS:
+        raise ValueError(f"Manifest: personal_settings ist eine Liste mit höchstens {MAX_PERSONAL_SETTINGS} Einträgen")
+    personal = [_setting(s, plugin_id, i, "personal_settings") for i, s in enumerate(personal_raw)]
+    personal_keys = [s["key"] for s in personal]
+    if len(set(personal_keys)) != len(personal_keys) or set(personal_keys) & set(keys):
+        raise ValueError("Manifest: personal_settings enthält einen Schlüssel doppelt oder aus settings")
+
+    pages_raw = raw.get("pages", [])
+    if not isinstance(pages_raw, list) or len(pages_raw) > MAX_PAGES:
+        raise ValueError(f"Manifest: pages ist eine Liste mit höchstens {MAX_PAGES} Einträgen")
+    pages = [_page(p, i) for i, p in enumerate(pages_raw)]
+    if len({p["id"] for p in pages}) != len(pages):
+        raise ValueError("Manifest: pages enthält eine id doppelt")
+
     hosts_raw = raw.get("hosts", [])
     if not isinstance(hosts_raw, list) or len(hosts_raw) > 20 or not all(isinstance(h, str) and HOST_RE.match(h.strip()) for h in hosts_raw):
         raise ValueError("Manifest: hosts ist eine Liste von Hostnamen ohne https://, höchstens 20")
@@ -256,6 +293,8 @@ def validate_manifest(raw: Any) -> Dict[str, Any]:
         "package": _package_path(raw.get("package")),
         "entry_point": entry_point,
         "settings": settings,
+        "personal_settings": personal,
+        "pages": pages,
         "hosts": list(dict.fromkeys(h.strip().lower() for h in hosts_raw)),
         "capabilities": list(dict.fromkeys(caps_raw)),
     }
@@ -278,7 +317,8 @@ def load_stored_manifest(text: str) -> Dict[str, Any]:
     would fail its own check on restart and update.
     """
     raw = json.loads(text)
-    for s in raw.get("settings", []) if isinstance(raw, dict) else []:
+    specs = (raw.get("settings", []) + raw.get("personal_settings", [])) if isinstance(raw, dict) else []
+    for s in specs:
         default = s.get("default") if isinstance(s, dict) else None
         if not isinstance(default, str):
             continue
@@ -327,12 +367,25 @@ def hub_version_ok(min_hub_version: str, hub_version: str) -> bool:
     return have_pre >= need_pre
 
 
+def _setting_objects(specs: List[Dict[str, Any]]) -> Tuple[Setting, ...]:
+    return tuple(
+        Setting(s["key"], german(s["label"]), secret=s["secret"], required=s["required"], help=german(s["help"]),
+                type=s["type"], default=s["default"], example=s["example"])
+        for s in specs
+    )
+
+
 def settings_for(manifest: Dict[str, Any]) -> Tuple[Setting, ...]:
     """The manifest's settings as the hub's own ``Setting`` objects (German label and help)."""
-    return tuple(
-        Setting(s["key"], german(s["label"]), secret=s["secret"], required=s["required"], help=german(s["help"]))
-        for s in manifest["settings"]
-    )
+    return _setting_objects(manifest["settings"])
+
+
+def personal_settings_for(manifest: Dict[str, Any]) -> Tuple[Setting, ...]:
+    return _setting_objects(manifest.get("personal_settings", []))
+
+
+def pages_for(manifest: Dict[str, Any]) -> Tuple[Page, ...]:
+    return tuple(Page(p["id"], p["title"], p["icon"]) for p in manifest.get("pages", []))
 
 
 def form_spec(manifest: Dict[str, Any], lang: str) -> List[Dict[str, Any]]:

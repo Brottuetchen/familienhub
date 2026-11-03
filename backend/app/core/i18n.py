@@ -537,6 +537,22 @@ EN: Dict[str, str] = {
     "Manifest: hosts ist eine Liste von Hostnamen ohne https://, höchstens 20":
         "Manifest: hosts is a list of host names without https://, at most 20",
     "Manifest: capabilities erlaubt nur {names}": "Manifest: capabilities only allows {names}",
+    # Personal settings and plugin pages
+    "Persönliche Einstellungen fehlen im Manifest: {names}": "Personal settings missing in the manifest: {names}",
+    "Seiten fehlen im Manifest: {names}": "Pages missing in the manifest: {names}",
+    "Manifest: personal_settings ist eine Liste mit höchstens {n} Einträgen":
+        "Manifest: personal_settings is a list of at most {n} entries",
+    "Manifest: pages ist eine Liste mit höchstens {n} Einträgen": "Manifest: pages is a list of at most {n} entries",
+    "Manifest: personal_settings enthält einen Schlüssel doppelt oder aus settings":
+        "Manifest: personal_settings contains a duplicate key or one from settings",
+    "Manifest: pages enthält eine id doppelt": "Manifest: pages contains a duplicate id",
+    "Manifest: {where}: id muss kleingeschrieben sein, 1–31 Zeichen (a–z, 0–9, _ und -)":
+        "Manifest: {where}: id must be lower case, 1–31 characters (a–z, 0–9, _ and -)",
+    "Manifest: {where}: icon ist einer von {names}": "Manifest: {where}: icon is one of {names}",
+    "Seite nicht gefunden": "Page not found",
+    "Ungültiger Pfad": "Invalid path",
+    "Der Link ist abgelaufen. Bitte die Seite in der App neu öffnen": "The link has expired. Please open the page again in the app",
+    "Dieses Plugin bietet keinen Test an": "This plugin offers no test",
     # --- kids mode: stars and rewards ---
     "Eintrag nicht gefunden": "Entry not found",
     "Eigene Sterne kannst du nicht selbst bestätigen": "You cannot confirm your own stars",

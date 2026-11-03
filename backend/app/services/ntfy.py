@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Optional
+from urllib.parse import quote
 
 import httpx
 
@@ -49,7 +50,9 @@ def build_message(topic: str, title: str, body: str, data: dict, category: str) 
         msg["tags"] = [TAGS[category]]
     hub = _public_url()
     if hub:
-        msg["click"] = f"{hub}/"
+        route = str(data.get("route") or "")
+        # A plugin page opens the web app on that route (the web app reads ``?route=`` at start); the rest opens the hub
+        msg["click"] = f"{hub}/?route={quote(route, safe='/')}" if route.startswith("/plugin-page/") else f"{hub}/"
         token, rid = data.get("action_token"), data.get("reminder_id")
         wanted = [a for a in str(data.get("actions") or "").split(",") if a in REMINDER_ACTIONS][:3]
         if token and rid and wanted:

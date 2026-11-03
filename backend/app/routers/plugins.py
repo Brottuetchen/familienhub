@@ -4,6 +4,9 @@
 - ``POST /api/plugins/inspect``: link → manifest, commit and settings form (nothing is installed).
 - ``POST /api/plugins/install``: install or update exactly the inspected commit.
 - ``DELETE /api/plugins/{id}``: remove an installed plugin and its settings.
+- ``GET /api/plugins/personal-settings``, ``GET|PUT /api/plugins/{id}/personal-settings`` and
+  ``POST /api/plugins/{id}/personal-settings/test``: the logged-in person's own settings of active plugins
+  (secrets only as set / not set).
 
 ``PLUGIN_INSTALL_ENABLED=false`` switches inspect and install off.
 """
@@ -22,13 +25,18 @@ from app.core.i18n import request_language
 from app.core.logging_config import get_logger
 from app.core.security import require_min_role
 from app.models.installed_plugin import InstalledPlugin
-from app.models.user import ROLE_ADMIN, User
+from app.models.user import ROLE_ADMIN, ROLE_CHILD, User
 from app.plugins import installer
+from app.plugins.hooks import run_test_personal_settings
 from app.plugins.manifest import ID_RE
+from app.plugins.registry import plugin_registry
+from app.services import personal_settings
 
 logger = get_logger("router.plugins")
 router = APIRouter(prefix="/api/plugins", tags=["plugins"])
 admin_only = require_min_role(ROLE_ADMIN)
+# Connecting an own account is for children and up, like the Nextcloud and Habitica accounts
+person_only = require_min_role(ROLE_CHILD)
 
 
 def _enabled() -> None:
@@ -79,6 +87,58 @@ async def install(data: InstallRequest, request: Request, db: Session = Depends(
         raise HTTPException(500, "Dateifehler bei der Installation. Einzelheiten stehen im Protokoll") from exc
     row = db.get(InstalledPlugin, result["id"])
     return {**result, "plugin": installer.installed_view(row, request_language(request))}
+
+
+def _personal_view(plugin, db: Session, user: User) -> Dict[str, Any]:
+    return {"id": plugin.id, "name": plugin.name, "description": plugin.description,
+            "has_test": plugin.has_personal_test, "fields": personal_settings.form(db, plugin, user.id)}
+
+
+def _personal_plugin(plugin_id: str):
+    plugin = plugin_registry.get(plugin_id) if ID_RE.match(plugin_id) else None
+    if plugin is None or not plugin.active or not plugin.personal_settings:
+        raise HTTPException(404, "Plugin nicht gefunden")
+    return plugin
+
+
+class PersonalValues(BaseModel):
+    values: Dict[str, Any] = Field(default_factory=dict, max_length=40)
+
+
+@router.get("/personal-settings")
+async def personal_overview(db: Session = Depends(get_db), user: User = Depends(person_only)):
+    """Active plugins with settings of their own for this person, with the form and their current values."""
+    return {"items": [_personal_view(p, db, user) for p in plugin_registry.all() if p.active and p.personal_settings]}
+
+
+@router.get("/{plugin_id}/personal-settings")
+async def personal_get(plugin_id: str, db: Session = Depends(get_db), user: User = Depends(person_only)):
+    return _personal_view(_personal_plugin(plugin_id), db, user)
+
+
+@router.put("/{plugin_id}/personal-settings")
+async def personal_put(plugin_id: str, data: PersonalValues, db: Session = Depends(get_db),
+                       user: User = Depends(person_only)):
+    """Saves the sent values for this person. A secret left empty keeps the stored one."""
+    plugin = _personal_plugin(plugin_id)
+    try:
+        personal_settings.save(db, plugin, user.id, data.values)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return _personal_view(plugin, db, user)
+
+
+@router.post("/{plugin_id}/personal-settings/test")
+async def personal_test(plugin_id: str, data: PersonalValues, db: Session = Depends(get_db),
+                        user: User = Depends(person_only)):
+    """The plugin's own test with the typed, not yet saved values (empty secret = stored one)."""
+    plugin = _personal_plugin(plugin_id)
+    try:
+        values = personal_settings.resolve(db, plugin, user.id, data.values)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    result = await run_test_personal_settings(plugin, user, values)
+    return result or {"ok": True, "level": "info", "message": "Dieses Plugin bietet keinen Test an"}
 
 
 @router.delete("/{plugin_id}")

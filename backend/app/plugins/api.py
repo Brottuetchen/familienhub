@@ -146,6 +146,35 @@ async def notify(plugin_id: str, *, user_ids: Optional[Iterable[int]] = None, ro
         logger.warning("Plugin %s: notify failed: %s", plugin_id, type(exc).__name__)
         return skipped("error")
 
+def get_personal_setting(user_id: int, key: str, *, plugin_id: Optional[str] = None, db=None) -> Optional[str]:
+    """One person's value of a ``personal_settings`` key of a plugin (secrets decrypted), or ``None`` when it is not
+    set, not declared, or the plugin is not active. Synchronous, like ``get_setting``.
+
+    The plugin is the one that declares ``key``. Keys start with the plugin id, so that is unambiguous except in
+    the rare case that two plugins declare the same key (a plugin ``foo`` may declare ``FOO_BAR_TOKEN`` while
+    ``foo_bar`` declares it too): pass ``plugin_id`` then. Pass ``db`` to reuse a session (a hook's ``db``).
+    """
+    from app.core.database import SessionLocal
+    from app.plugins.registry import plugin_registry
+    from app.services import personal_settings
+
+    if isinstance(user_id, bool) or not isinstance(user_id, int) or not isinstance(key, str):
+        return None
+    if plugin_id is not None:
+        candidates = [plugin_registry.get(plugin_id)]
+    else:
+        candidates = [p for p in plugin_registry.all() if any(s.key == key for s in p.personal_settings)]
+    candidates = [p for p in candidates if p is not None and p.active and personal_settings.spec_of(p, key)]
+    if len(candidates) != 1:
+        if len(candidates) > 1:
+            logger.warning("get_personal_setting: %s is declared by several plugins, pass plugin_id", key)
+        return None
+    if db is not None:
+        return personal_settings.get_value(db, candidates[0], user_id, key)
+    with SessionLocal() as own:
+        return personal_settings.get_value(own, candidates[0], user_id, key)
+
+
 DEFAULT_IMAGE_TYPES = ("image/jpeg", "image/png", "image/webp")
 
 

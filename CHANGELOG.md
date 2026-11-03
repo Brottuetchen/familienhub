@@ -4,6 +4,11 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 
 ## [Unreleased]
 
+### Added
+- Plugins can ask every person for settings of their own (`personal_settings` in the manifest). They show up under *More → My connections*; secrets are stored encrypted. Plugins read them with `get_personal_setting(user_id, key)` and can test them with `test_personal_settings`.
+- Plugins can serve their own pages (`pages` in the manifest and the `page()` hook): HTML, scripts, images, audio and video, opened from *More* through a signed link that is valid for 15 minutes. A notification can open such a page with the route `/plugin-page/<plugin>/<page>`.
+- Database: new table `plugin_user_settings` (migration at startup). Removing a plugin or deleting a person deletes their personal plugin settings.
+
 ### Changed
 - Habitica tasks show up in Meine without ticking each one in the account screen.
 - Named lists sit in the shopping and task overview, with the person filter on that screen.
