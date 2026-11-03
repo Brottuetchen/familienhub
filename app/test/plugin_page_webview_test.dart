@@ -17,6 +17,9 @@ import 'helpers.dart';
 class _FakeController extends PlatformWebViewController with MockPlatformInterfaceMixin {
   _FakeController(super.params) : super.implementation();
   final loaded = <Uri>[];
+  final scripts = <String>[];
+  // Decisions of the navigation delegate for our own about:blank loads (iOS asks for programmatic loads, too).
+  final blankDecisions = <NavigationDecision>[];
   bool canGoBackNow = false;
   int goBackCalls = 0;
   JavaScriptMode? mode;
@@ -29,7 +32,15 @@ class _FakeController extends PlatformWebViewController with MockPlatformInterfa
   @override
   Future<void> setPlatformNavigationDelegate(PlatformNavigationDelegate handler) async => delegate = handler as _FakeDelegate;
   @override
-  Future<void> loadRequest(LoadRequestParams params) async => loaded.add(params.uri);
+  Future<void> loadRequest(LoadRequestParams params) async {
+    loaded.add(params.uri);
+    if (params.uri.toString() == 'about:blank' && delegate?.onRequest != null) {
+      blankDecisions.add(await delegate!.onRequest!(NavigationRequest(url: 'about:blank', isMainFrame: true)));
+    }
+  }
+
+  @override
+  Future<void> runJavaScript(String javaScript) async => scripts.add(javaScript);
   @override
   Future<bool> canGoBack() async => canGoBackNow;
   @override
@@ -217,6 +228,66 @@ void main() {
       await tester.tap(find.byKey(const Key('plugin-page-close')));
       await _settle(tester);
       expect(find.byType(PluginPageScreen), findsNothing);
+    });
+
+    void expectStopped(_FakeController c) {
+      expect(c.scripts, hasLength(1));
+      expect(c.scripts.single, contains('pause()'));
+      expect(c.scripts.single, contains("new CustomEvent('familienhub:close')"));
+      expect(c.loaded.last, Uri.parse('about:blank'));
+      expect(c.loaded.where((u) => u.toString() == 'about:blank'), hasLength(1));
+      // our own about:blank load is allowed and never handed to the system (the rule would prevent + launch)
+      expect(c.blankDecisions, [NavigationDecision.navigate]);
+    }
+
+    testWidgets('the close button pauses the media and unloads the page', (tester) async {
+      final b = _backend();
+      await openScreen(tester, b);
+      final c = platform.controller!;
+      expect(c.scripts, isEmpty);
+      await tester.tap(find.byKey(const Key('plugin-page-close')));
+      await _settle(tester);
+      expect(find.byType(PluginPageScreen), findsNothing);
+      expectStopped(c);
+      expect(b.sent('POST', '/api/plugin-pages/recap/monthly/link'), isEmpty); // no expired-link refresh
+    });
+
+    testWidgets('back stops the page only when it cannot go back', (tester) async {
+      await openScreen(tester, _backend());
+      final c = platform.controller!;
+      c.canGoBackNow = true;
+      await tester.binding.handlePopRoute();
+      await _settle(tester);
+      expect(c.scripts, isEmpty);
+      expect(c.loaded, [_link]);
+      c.canGoBackNow = false;
+      await tester.binding.handlePopRoute();
+      await _settle(tester);
+      expect(find.byType(PluginPageScreen), findsNothing);
+      expectStopped(c);
+    });
+
+    testWidgets('a route popped from outside stops the page on dispose', (tester) async {
+      final b = _backend();
+      await openScreen(tester, b);
+      final c = platform.controller!;
+      final nav = tester.state<NavigatorState>(find.byType(Navigator));
+      nav.pushReplacement(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('other'))));
+      await _settle(tester);
+      expect(find.byType(PluginPageScreen), findsNothing);
+      expectStopped(c);
+      expect(b.sent('POST', '/api/plugin-pages/recap/monthly/link'), isEmpty);
+    });
+
+    testWidgets('a load error while closing does not trigger a link refresh', (tester) async {
+      final b = _backend();
+      await openScreen(tester, b);
+      final c = platform.controller!;
+      await tester.tap(find.byKey(const Key('plugin-page-close')));
+      c.delegate!.onError!(const WebResourceError(
+          errorCode: -1, description: 'cancelled', errorType: WebResourceErrorType.unknown, isForMainFrame: true));
+      await _settle(tester);
+      expect(b.sent('POST', '/api/plugin-pages/recap/monthly/link'), isEmpty);
     });
 
     testWidgets('back goes back in the page history first, then closes', (tester) async {
