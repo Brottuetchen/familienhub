@@ -6,6 +6,9 @@ import '../today/today_widgets.dart' show PersonAvatar;
 import 'api_tokens_screen.dart';
 import '../admin/admin_screen.dart';
 import 'books_screen.dart';
+import 'connections_screen.dart';
+import 'plugin_pages.dart';
+import '../../models/plugin_card.dart' show pluginCardIcon;
 import 'documents_screen.dart';
 import 'feedback_screen.dart';
 import 'media_screen.dart';
@@ -31,6 +34,8 @@ class MoreScreen extends ConsumerWidget {
     final unread = ref.watch(todayProvider).valueOrNull?.data.notificationsUnread ?? 0;
     final isAdmin = session.user?.isAdmin ?? false;
     final canAct = ref.watch(canActProvider); // eigene Konten und Listen ab Kind
+    final pluginPages = ref.watch(pluginPagesProvider).valueOrNull ?? const [];
+    final connections = ref.watch(personalPluginsProvider).valueOrNull ?? const [];
     void open(Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 
     return Scaffold(
@@ -112,7 +117,26 @@ class MoreScreen extends ConsumerWidget {
               subtitle: Text(l10n.booksHint),
               onTap: () => open(const BooksScreen()),
             ),
+          if (pluginPages.isNotEmpty) ...[
+            _Header(l10n.pluginPagesHeading),
+            for (final p in pluginPages)
+              ListTile(
+                key: Key('more-page-${p.plugin}-${p.id}'),
+                leading: Icon(pluginCardIcon(p.icon)),
+                title: Text(p.title),
+                subtitle: Text(p.pluginName),
+                onTap: () => openPluginPage(context, ref, p.plugin, p.id),
+              ),
+          ],
           _Header(l10n.settings),
+          if (canAct && connections.isNotEmpty)
+            ListTile(
+              key: const Key('more-connections'),
+              leading: const Icon(Icons.link),
+              title: Text(l10n.myConnections),
+              subtitle: Text(l10n.myConnectionsHint),
+              onTap: () => open(const ConnectionsScreen()),
+            ),
           if (canAct && (modules.has('tasks') || modules.has('calendar')))
             ListTile(
               leading: const Icon(Icons.cloud_outlined),

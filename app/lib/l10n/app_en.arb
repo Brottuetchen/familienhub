@@ -1184,5 +1184,13 @@
   "mainList": "General",
   "namedListHeading": "-List {name} (from {person})",
   "namedListHeadingPlain": "-List {name}",
-  "assignedItem": "(assigned to {name})"
+  "assignedItem": "(assigned to {name})",
+  "myConnections": "My connections",
+  "myConnectionsHint": "Your own logins for plugins",
+  "myConnectionsEmpty": "None of the active plugins needs personal details.",
+  "myConnectionNotSet": "Not set up yet",
+  "myConnectionSet": "Set up",
+  "pluginPagesHeading": "Plugin pages",
+  "pluginPageOpenFailed": "The page could not be opened",
+  "pluginPageUnavailable": "This page no longer exists"
 }

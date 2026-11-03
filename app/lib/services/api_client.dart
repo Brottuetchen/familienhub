@@ -29,6 +29,7 @@ import '../models/today.dart';
 import '../models/timetable.dart';
 import '../models/today_layout.dart';
 import '../models/plugin_card.dart';
+import '../models/plugin_user.dart';
 import '../models/stars.dart';
 import 'offline_queue.dart';
 import 'api_exceptions.dart';
@@ -49,6 +50,7 @@ part 'api_notifications.dart';
 part 'api_profile.dart';
 part 'api_library.dart';
 part 'api_admin.dart';
+part 'api_plugins.dart';
 
 List<Map<String, dynamic>> _maps(dynamic json) =>
     json is List ? json.whereType<Map<String, dynamic>>().toList() : const [];
@@ -724,7 +726,8 @@ class ApiClient extends ApiClientBase
         NotificationsApi,
         ProfileApi,
         LibraryApi,
-        AdminApi {
+        AdminApi,
+        PluginUserApi {
   ApiClient({
     super.httpClient,
     required super.store,
