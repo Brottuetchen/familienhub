@@ -59,3 +59,20 @@ def test_token_of_disabled_user_rejected(client):
         db.query(User).filter(User.username == "tok_d").update({"is_active": False})
         db.commit()
     assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {raw}"}).status_code == 401
+
+
+def test_full_access_key_reaches_normal_api_but_voice_key_does_not(client):
+    a = _auth(client, "tok_full")
+    full = client.post("/api/auth/api-tokens", headers=a, json={"name": "Full"}).json()
+    voice = client.post("/api/auth/api-tokens", headers=a, json={"name": "Voice", "scopes": ["voice"]}).json()
+    assert full["scopes"] is None and voice["scopes"]
+
+    full_h = {"Authorization": f"Bearer {full['token']}"}
+    voice_h = {"Authorization": f"Bearer {voice['token']}"}
+    assert client.get("/api/tasks", headers=full_h).status_code == 200
+    assert client.get("/api/today", headers=full_h).status_code == 200
+    assert client.get("/api/tasks", headers=voice_h).status_code == 403
+    assert client.get("/api/today", headers=voice_h).status_code == 403
+
+    listed = {t["name"]: t["scopes"] for t in client.get("/api/auth/api-tokens", headers=a).json()}
+    assert listed["Full"] is None and listed["Voice"] == voice["scopes"]

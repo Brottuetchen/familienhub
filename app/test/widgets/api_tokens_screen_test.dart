@@ -142,4 +142,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('full access can be chosen, warns, is sent unrestricted and shown in the list', (tester) async {
+    await setScreenSize(tester, const Size(400, 900));
+    final backend = FakeBackend();
+    addDefaults(backend);
+    var created = false;
+    backend.on('GET', '/api/auth/api-tokens', (_) => jsonResponse(created
+        ? [
+            {'id': 1, 'name': 'Automation', 'hint': 'fhp_abcd', 'created_at': null, 'last_used_at': null, 'scopes': null},
+            {'id': 2, 'name': 'Sprachassistent', 'hint': 'fhp_wxyz', 'created_at': null, 'last_used_at': null, 'scopes': ['tasks:write']},
+          ]
+        : []));
+    backend.on('POST', '/api/auth/api-tokens', (_) {
+      created = true;
+      return jsonResponse({'id': 1, 'name': 'Automation', 'hint': 'fhp_abcd', 'token': 'fhp_abcdGEHEIM', 'scopes': null}, status: 201);
+    });
+
+    await tester.pumpWidget(appWith(backend.api(), const ApiTokensScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Voller Zugriff:'), findsNothing);
+    await tester.tap(find.descendant(of: find.byKey(const Key('access-type')), matching: find.text('Voller Zugriff')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Voller Zugriff:'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Automation');
+    await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+    await tester.pumpAndSettle();
+
+    expect(bodyOf(backend.sent('POST', '/api/auth/api-tokens').single), {'name': 'Automation'});
+    await tester.tap(find.widgetWithText(FilledButton, 'Fertig'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('fhp_abcd… · Voller Zugriff'), findsOneWidget);
+    expect(find.textContaining('fhp_wxyz… · Sprachassistent'), findsOneWidget);
+  });
 }
