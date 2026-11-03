@@ -645,15 +645,13 @@ async def create_api_token(data: ApiTokenCreate, db: Session = Depends(get_db), 
         raise HTTPException(status_code=400, detail="Name fehlt")
     scopes = None
     if data.scopes is not None:
-        from app.models.api_token import SCOPE_PRESETS, VOICE_SCOPES
+        from app.models.api_token import ALL_SCOPES, normalize_scopes
 
-        wanted = []
-        for s in data.scopes:
-            wanted.extend(SCOPE_PRESETS.get(s, (s,)))
-        unknown = [s for s in wanted if s not in VOICE_SCOPES]
+        wanted = normalize_scopes(data.scopes)
+        unknown = [s for s in wanted if s not in ALL_SCOPES]
         if unknown or not wanted:
             raise HTTPException(status_code=400, detail=f"Unknown scope: {', '.join(unknown) or '(none)'}")
-        scopes = " ".join(dict.fromkeys(wanted))
+        scopes = " ".join(wanted)
     raw = ApiToken.generate()
     token = ApiToken(user_id=current_user.id, name=name, token_hash=ApiToken.hash(raw), hint=raw[:8], scopes=scopes)
     db.add(token)

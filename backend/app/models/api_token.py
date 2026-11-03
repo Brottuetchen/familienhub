@@ -18,7 +18,62 @@ TOKEN_PREFIX = "fhp_"
 
 # Scopes for the voice endpoints (``/api/voice``); the preset "voice" stands for all of them.
 VOICE_SCOPES = ("shopping:read", "shopping:write", "tasks:write", "meals:read", "calendar:read", "reminders:write")
-SCOPE_PRESETS = {"voice": VOICE_SCOPES}
+
+# Scopes for the normal API, one read and one write scope per area. They live in their own ``api:`` namespace so
+# that existing voice keys (``shopping:read`` ...) do not suddenly reach the normal API.
+API_AREAS = ("today", "tasks", "shopping", "calendar", "meals", "reminders", "notifications", "documents", "books", "media")
+API_READ_SCOPES = tuple(f"api:{a}:read" for a in API_AREAS)
+API_WRITE_SCOPES = tuple(f"api:{a}:write" for a in API_AREAS)
+API_SCOPES = API_READ_SCOPES + API_WRITE_SCOPES
+ALL_SCOPES = VOICE_SCOPES + API_SCOPES
+SCOPE_PRESETS = {"voice": VOICE_SCOPES, "read": API_READ_SCOPES}
+
+# Explicit allow-list of normal-API routes a scoped key may call: (method, route template) -> scope.
+# Everything not listed (admin, key management, profile, accounts, webhooks ...) is closed to scoped keys.
+_R = {
+    "today": [("GET", "/api/today")],
+    "tasks": [("GET", "/api/tasks"), ("GET", "/api/tasks/lists"), ("GET", "/api/tasks/providers")],
+    "shopping": [("GET", "/api/shopping"), ("GET", "/api/shopping/recent")],
+    "calendar": [("GET", "/api/calendar/today"), ("GET", "/api/calendar/events"), ("GET", "/api/calendar/calendars"),
+                 ("GET", "/api/calendar/holidays")],
+    "meals": [("GET", "/api/meals"), ("GET", "/api/meals/plan")],
+    "reminders": [("GET", "/api/reminders")],
+    "notifications": [("GET", "/api/me/notifications")],
+    "documents": [("GET", "/api/paperless/recent"), ("GET", "/api/paperless/search"), ("GET", "/api/paperless/deadlines")],
+    "books": [("GET", "/api/books/search"), ("GET", "/api/books/discover"), ("GET", "/api/books/requests")],
+    "media": [("GET", "/api/media/search"), ("GET", "/api/media/requests")],
+}
+_W = {
+    "tasks": [("POST", "/api/tasks"), ("PATCH", "/api/tasks/{uid}"), ("POST", "/api/tasks/{uid}/complete"),
+              ("DELETE", "/api/tasks/{uid}")],
+    "shopping": [("POST", "/api/shopping"), ("PATCH", "/api/shopping/{uid}"), ("DELETE", "/api/shopping/{uid}")],
+    "calendar": [("POST", "/api/calendar/events"), ("PUT", "/api/calendar/events/{event_id}"),
+                 ("DELETE", "/api/calendar/events/{event_id}")],
+    "meals": [("POST", "/api/meals/plan"), ("DELETE", "/api/meals/plan/{entry_id}"), ("PATCH", "/api/meals/{meal_id}"),
+              ("DELETE", "/api/meals/{meal_id}")],
+    "reminders": [("POST", "/api/reminders"), ("PATCH", "/api/reminders/{reminder_id}"),
+                  ("POST", "/api/reminders/{reminder_id}/snooze"), ("POST", "/api/reminders/{reminder_id}/action"),
+                  ("DELETE", "/api/reminders/{reminder_id}")],
+    "notifications": [("POST", "/api/me/notifications/read")],
+    "documents": [("POST", "/api/paperless/deadlines/{doc_id}/remind")],
+    "books": [("POST", "/api/books/requests"), ("DELETE", "/api/books/requests/{request_id}")],
+    "media": [("POST", "/api/media/requests"), ("DELETE", "/api/media/requests/{request_id}")],
+}
+API_ROUTE_SCOPES = {
+    **{r: f"api:{a}:read" for a, routes in _R.items() for r in routes},
+    **{r: f"api:{a}:write" for a, routes in _W.items() for r in routes},
+}
+
+
+def normalize_scopes(wanted):
+    """Expand presets, add the read scope to every write scope (write implies read), drop duplicates."""
+    out = []
+    for s in wanted:
+        out.extend(SCOPE_PRESETS.get(s, (s,)))
+    for s in list(out):
+        if s.startswith("api:") and s.endswith(":write"):
+            out.append(s[:-len("write")] + "read")
+    return list(dict.fromkeys(out))
 
 
 class ApiToken(Base):

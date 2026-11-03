@@ -28,6 +28,10 @@ Run them locally with `.forgejo/ci/security.sh`. A full manual review was done o
 - **First admin:** on a new hub, the first person to open it creates the admin account, and only while no active admin exists. Until then, anyone who can reach the hub could claim it. If the hub is reachable from the internet before setup, set `SETUP_REQUIRE_CODE=true`: the hub then logs a setup code at start (`docker compose logs familienhub`) that is needed to create the admin. The startup log says which mode is active.
 - **Secret key:** if `SECRET_KEY` is empty, the hub generates one and stores it in the `familienhub_data` volume. Treat that volume like the database: it is part of the backup, and anyone who can read it can forge sign-in tokens. An explicitly set `SECRET_KEY` always wins.
 
+## Access keys and scopes
+
+A personal access key (`fhp_...`) acts as its owner, with the owner's role. Besides unrestricted keys, a key can carry scopes: the `voice` preset (voice assistant endpoints), the `read` preset (read-only) or a custom `api:<area>:read|write` selection. Scoped keys are default-deny: only routes listed in `backend/app/models/api_token.py` (`API_ROUTE_SCOPES`) and the voice endpoints are reachable. Administration, account/profile routes and key management are never reachable with a scoped key, so a key cannot mint other keys. Details and the route table: [voice assistant](voice-assistant.md#scopes-for-the-normal-api).
+
 ## Roles
 
 | | Guest | Child | Partner | Admin |

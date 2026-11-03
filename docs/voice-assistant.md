@@ -19,12 +19,17 @@ you ──► Assist ──► custom sentence ──► intent_script ──►
 ## 1. Create an access key in the app
 
 1. Open the app: **More → Access for assistants → New access**.
-2. Name it, for example "Home Assistant", and choose the access type. **Voice assistant** (default) uses the **voice** preset, which grants exactly the six scopes below and nothing else. **Full access** creates an unrestricted key that can do everything you can do in the app (with your role); use it only for services you trust. The key list shows the type of each key.
+2. Name it, for example "Home Assistant", and choose the access type:
+   - **Voice assistant** (default): the **voice** preset, exactly the six voice scopes below and nothing else.
+   - **Read only**: the **read** preset, every `api:<area>:read` scope; the key can read but never change anything.
+   - **Full access**: an unrestricted key that can do everything you can do in the app (with your role). Use it only for services you trust.
+   - **Custom**: per area a read and a write checkbox (write includes read).
+   The key list shows the preset, or "Custom (n areas)" (tap it to see the areas).
 3. Copy the key (`fhp_...`). It is shown **once**. The hub stores only a hash.
 
 A key acts as the person who created it: reminders and tasks belong to that person, and the same roles apply as in the app. Use a separate key (and ideally a separate account) per household member if you want "my" reminders for each. Revoke a key in the same screen; it stops working immediately.
 
-A key with scopes can **only** call `/api/voice/...`. Everything else (`/api/tasks`, `/api/today`, ...) answers `403` for it.
+A key with scopes can only call `/api/voice/...` (checked against the voice scopes) and the explicitly listed normal-API routes below (checked against the `api:` scopes). Everything else answers `403` for it: administration, profile and account routes, webhooks and the key management itself (a key can never create or revoke keys). Roles still apply: the key can do no more than its owner.
 
 You can also create a key through the API (for example to grant fewer scopes):
 
@@ -45,7 +50,26 @@ curl -X POST https://hub.example.org/api/auth/api-tokens \
 | `calendar:read` | `GET /api/voice/events` | any |
 | `reminders:write` | `POST /api/voice/reminders` | any (always a private reminder for the key's owner) |
 
-Keys created before scopes existed keep working as before (unrestricted). Prefer a scoped key for assistants.
+Keys created before scopes existed keep working as before (unrestricted). Voice scopes and `api:` scopes are separate, so a voice key does not reach the normal API.
+
+### Scopes for the normal API
+
+Scopes are named `api:<area>:read` and `api:<area>:write`; the presets `voice` and `read` (all `api:*:read`) can be used in the `scopes` list too. A write scope adds the matching read scope automatically. Areas and routes:
+
+| Area | Read | Write |
+|---|---|---|
+| `today` | `GET /api/today` | |
+| `tasks` | `GET /api/tasks`, `/lists`, `/providers` | `POST /api/tasks`, `PATCH`, `DELETE`, `POST .../complete` |
+| `shopping` | `GET /api/shopping`, `/recent` | `POST`, `PATCH`, `DELETE` |
+| `calendar` | `GET /api/calendar/today`, `/events`, `/calendars`, `/holidays` | `POST /events`, `PUT`/`DELETE /events/{id}` |
+| `meals` | `GET /api/meals`, `/plan` | `POST /plan`, `DELETE /plan/{id}`, `PATCH`/`DELETE /{id}` |
+| `reminders` | `GET /api/reminders` | `POST`, `PATCH`, snooze, action, `DELETE` |
+| `notifications` | `GET /api/me/notifications` | `POST /api/me/notifications/read` |
+| `documents` | `GET /api/paperless/recent`, `/search`, `/deadlines` | `POST /api/paperless/deadlines/{id}/remind` |
+| `books` | `GET /api/books/search`, `/discover`, `/requests` | `POST`/`DELETE /api/books/requests` |
+| `media` | `GET /api/media/search`, `/requests` | `POST`/`DELETE /api/media/requests` |
+
+There is no `admin` scope: administration routes are never reachable with a scoped key. Prefer a scoped key for assistants.
 
 ## 2. Store the key in Home Assistant
 

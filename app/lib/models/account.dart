@@ -284,6 +284,9 @@ class CalDavAccountInfo {
 }
 
 /// Persönlicher Zugangsschlüssel (z. B. für einen Sprachassistenten). Klartext gibt es nur beim Anlegen.
+/// Areas of the normal API an access key can be limited to (scopes `api:<area>:read|write`).
+const apiKeyAreas = ['today', 'tasks', 'shopping', 'calendar', 'meals', 'reminders', 'notifications', 'documents', 'books', 'media'];
+
 class ApiTokenInfo {
   final int id;
   final String name;
@@ -306,6 +309,21 @@ class ApiTokenInfo {
   });
 
   bool get isFullAccess => scopes == null;
+
+  /// Which areas of the normal API the scopes cover: area -> (read, write).
+  Map<String, ({bool read, bool write})> get apiAreas => {
+        for (final a in apiKeyAreas)
+          a: (read: scopes?.contains('api:$a:read') ?? false, write: scopes?.contains('api:$a:write') ?? false)
+      };
+
+  /// 'full', 'voice', 'read' or 'custom'.
+  String get preset {
+    final sc = scopes;
+    if (sc == null) return 'full';
+    if (sc.isNotEmpty && sc.every((e) => !e.startsWith('api:'))) return 'voice';
+    if (sc.length == apiKeyAreas.length && apiKeyAreas.every((a) => sc.contains('api:$a:read'))) return 'read';
+    return 'custom';
+  }
 
   factory ApiTokenInfo.fromJson(Map<String, dynamic> json) => ApiTokenInfo(
         id: parseInt(json['id']) ?? 0,
