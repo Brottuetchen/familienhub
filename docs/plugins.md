@@ -115,6 +115,12 @@ The `package` field of the manifest points to the folder with `pyproject.toml` (
      "example": "http://grocy.lan:9283"},
     {"key": "GROCY_API_KEY", "label": "API key", "type": "password", "required": true}
   ],
+  "personal_settings": [
+    {"key": "GROCY_USER", "label": {"de": "Dein Benutzername", "en": "Your user name"}}
+  ],
+  "pages": [
+    {"id": "stock", "title": {"de": "Vorrat", "en": "Stock"}, "icon": "shopping_cart"}
+  ],
   "hosts": ["grocy.lan"],
   "capabilities": ["shopping"]
 }
@@ -133,6 +139,8 @@ The `package` field of the manifest points to the folder with `pyproject.toml` (
 | `package` | optional | Folder with the `pyproject.toml` (or `setup.py`), relative to the manifest, default `.`. No `..`, no absolute path. |
 | `entry_point` | required | `module:Class`, e.g. `fh_plugin_grocy.plugin:GrocyPlugin`. The class, or a function that returns a `Plugin`. |
 | `settings` | optional | The settings the admin fills in, at most 20, see below. |
+| `personal_settings` | optional | Settings every person fills in for themselves (their own account or token), at most 20, same format as `settings`, see [Personal settings](#personal-settings). |
+| `pages` | optional | Pages the plugin serves itself, at most 10: `{"id", "title", "icon"}`, see [Plugin pages](#plugin-pages). |
 | `hosts` | optional | Host names the plugin contacts (`grocy.lan`, `api.example.org:8443`), without `https://`. Shown to the admin before installing. **Information only, the hub does not enforce it**, so keep it honest. |
 | `capabilities` | optional | What the plugin provides, from the list in [Rules](#rules). The class may declare no capability that is not listed here. |
 
@@ -232,12 +240,12 @@ include = ["fh_plugin_grocy*"]
 - **Active** means all required settings are set and the id is not in `PLUGINS_DISABLED`. Override `is_configured()` if your plugin works with per-person accounts instead.
 - **Fail softly.** Lists from external systems use `{status: ok | unavailable | not_configured, error, items}`. An external system that is down must never break the app: catch `httpx.HTTPError` and parse errors, set a timeout (6 s is a good default), return `unavailable` plus a short message. An exception in your code becomes an error page for the user, so catch what you can foresee.
 - **Never log secrets, tokens, passwords or full addresses with credentials.** The admin log shows what you log at warning level or above.
-- **Personal data only with personal access.** If data belongs to a person (documents, tasks, requests), each person connects their own account. There is no shared admin login that reads everyone's data.
+- **Personal data only with personal access.** If data belongs to a person (documents, tasks, requests), each person connects their own account (see [Personal settings](#personal-settings)). There is no shared admin login that reads everyone's data.
 - **Roles:** protect write endpoints with `require_min_role(ROLE_PARTNER)` (`ROLE_CHILD`, `ROLE_PARTNER`, `ROLE_ADMIN` from `app.models.user`; `require_min_role` from `app.core.security`) as a dependency: `Depends(require_min_role(ROLE_PARTNER))`. Guests mostly read: see the role table in [security](security.md).
 - **Notifications:** use `app.plugins.api.notify` (category `plugins`, switchable per person, rate limited, see [Extension points](#push-notifications-from-plugins)). Calling `await notify(user_id, title, body, category=…, data={"route": "/…"})` from `app.services.notify` directly still works for plugins in a custom image. Quiet hours and channels are handled for you, and the text is translated for the recipient when it is a known hub text; texts from your plugin stay as you write them, so write them in the language you want or pick one per recipient yourself.
 - **Texts in two languages.** In the manifest, `name`, `description`, `label` and `help` can be `{"de": …, "en": …}`; the app shows the text in its language (the admin's choice, else the phone's), and falls back to German, then English. For texts your endpoints return (`error` and the like), use `request_language(request)` from `app.core.i18n` (it returns `"de"` or `"en"` from `X-App-Language` / `Accept-Language`) and pick the text yourself, as in the example above. Texts that are only a single string are shown as they are in every language.
 - **Database tables:** installed plugins cannot ship migrations and must not create tables in the hub's database themselves. Keep state in the service you connect to, or in settings. If you need tables, open an issue; built-in plugins use Alembic migrations in the main repository.
-- **App screens:** a plugin can only extend the server. If it needs its own screens in the app, open an issue first: app screens are part of the main repository.
+- **App screens:** a plugin can only extend the server. It can add [Today cards](#today-cards), a form for [personal settings](#personal-settings) and full [pages](#plugin-pages) (HTML in the browser). If it needs native screens in the app, open an issue first: app screens are part of the main repository.
 
 ### Test it
 
@@ -287,6 +295,8 @@ Besides endpoints and capabilities, a plugin can hook into the hub. Every hook i
 | `schedule_minutes` + `async scheduled(db)` | Periodic job | by the scheduler, every `schedule_minutes` | 120 s | [Scheduled jobs](#scheduled-jobs) |
 | `reward_actions()` + `async run_reward_action(...)` | Action when a parent approves a reward (kids mode) | on approval | 20 s | [Reward actions](#reward-actions-kids-mode) |
 | `async test_settings(values) -> dict` | "Test connection" with values that are not saved yet | install and settings screens | 15 s | [Credentials and test](#credentials-and-connection-test) |
+| `personal_settings` + `async test_personal_settings(user, values) -> dict` | Settings per person, with an optional test | *More → My connections* | 15 s | [Personal settings](#personal-settings) |
+| `pages` + `async page(user, page_id, path) -> (content_type, bytes) \| None` | A page (HTML, JS, images, media) the app opens in the browser | when a person opens the page or one of its files | 20 s | [Plugin pages](#plugin-pages) |
 | Calendar events from plugins | Plugin events in the family calendar | – | – | see [Calendar plugins](#calendar-plugins) |
 | Data sources: `shopping_connector`, `recipe_search` / `recipe`, `timetable`, `proxy_image` | Plugin data for shopping, recipes and timetable; images from internal servers | – | – | see [Data sources](#data-sources) |
 
@@ -425,6 +435,62 @@ Settings in the manifest drive the install screen. When an admin installs a plug
 ```
 
 The [plugin template](https://github.com/Brottuetchen/familienhub/tree/main/examples/plugin-template) shows `today_cards` and `test_settings` working with tests.
+
+## Personal settings
+
+Some plugins show **personal** data (a person's own media history, photos, listening statistics). The rule "personal data only with personal access" means each person connects their own account, not the admin's. A plugin declares the settings a person fills in under `personal_settings`: the same format as `settings`, with the same checks (key prefix `<ID>_`, at most 20, `type`, `secret`, `required`, `default`, `example`). A key must not appear in both lists.
+
+```json
+"personal_settings": [
+  {"key": "RECAP_USER", "label": {"de": "Dein Benutzername", "en": "Your user name"}},
+  {"key": "RECAP_TOKEN", "label": "Your access token", "type": "password"}
+]
+```
+
+A built-in plugin or a plugin in a custom image declares them as `Plugin(personal_settings=(Setting("RECAP_USER", "Benutzername"), …))`; `Setting` also takes `type=`, `default=` and `example=`. For a plugin installed from GitHub the manifest is the source of truth, as with `settings`.
+
+- **In the app:** *More → My connections* lists the *active* plugins that have personal settings (from child up, like the Nextcloud and Habitica accounts) and renders the form from the manifest with the same widgets as the install form. A secret is stored **encrypted** (like the admin's secrets) and is never sent back: the app only learns *saved, leave empty to keep it*.
+- **API:** `GET /api/plugins/personal-settings` lists the forms with the person's values, `GET|PUT /api/plugins/<id>/personal-settings` reads and saves one form. `PUT` takes `{"values": {KEY: value}}`: keys that are not sent stay as they are, a secret left empty keeps the stored value, any other empty value is cleared (the default applies again). Unknown keys and missing required values are refused (422).
+- **Test connection:** override `async test_personal_settings(self, user, values) -> {"ok", "level", "message"}` (same result as `test_settings`, 15 s timeout, exceptions caught). `values` maps each of your personal keys to the value as typed, **not yet saved**; a secret left empty arrives as the stored one. The app offers the button when the hook exists (`POST /api/plugins/<id>/personal-settings/test`).
+- **Reading a value in your plugin:** `from app.plugins.api import get_personal_setting`, then `get_personal_setting(user.id, "RECAP_TOKEN")`. It is **synchronous**, like `get_setting`, returns the decrypted value or the default, and `None` when nothing is set, the key is not declared or the plugin is not active. Pass `db=db` to reuse a hook's session. If two plugins declare the same key (a plugin `foo` may declare `FOO_BAR_X` while `foo_bar` exists), pass `plugin_id="foo"`.
+- **Cleanup:** removing the plugin deletes everyone's personal settings of it; deleting a person deletes theirs; an update that no longer declares a key drops its stored values.
+- **Data you must treat as secret:** never log a personal value, and do not return one from your own endpoints.
+
+## Plugin pages
+
+A plugin can serve whole pages (HTML, JavaScript, images, audio, video) that the app opens in the browser: a monthly recap, a photo story, a statistics page. The page cannot use the app's login, so the hub hands out a **signed, short-lived link**.
+
+```json
+"pages": [{"id": "monthly", "title": {"de": "Monatsrückblick", "en": "Monthly recap"}, "icon": "star"}]
+```
+
+`id` is `^[a-z][a-z0-9_-]{0,30}$`, `title` text or `{"de", "en"}` (60 characters), `icon` one of the Material icons of the [Today cards](#today-cards) (default `extension`). Built-in plugins use `pages=(Page("monthly", {"de": …, "en": …}, "star"),)` (`from app.plugins import Page`). Pages of active plugins are listed under *More* in the app.
+
+You serve the page with one hook:
+
+```python
+async def page(self, user, page_id, path):
+    # path is "" for the page itself, else a relative file such as "app.js" or "2026-10/cover.jpg"
+    if page_id != "monthly":
+        return None
+    if path == "":
+        return "text/html; charset=utf-8", render_recap(user).encode()
+    if path == "recap.js":
+        return "application/javascript", RECAP_JS
+    return None   # not found -> 404
+```
+
+- **Result:** `(content_type, bytes)` or `None` (404). The content type must look like `type/subtype` (an optional `; charset=…`); anything else, a non-`bytes` body, more than **20 MB**, an exception, or no answer within **20 s** is a 404 for the person (logged by type only). `Range` requests are answered by the hub, so audio and video can seek.
+- **Relative assets:** the page lives at `/plugin-pages/<token>/`, so a page can load `app.js` or `cover/1.jpg` with relative URLs (no leading slash); they come to `page()` with that `path`. Use `fetch("data.json")` for data, not `/api/...`: the page has no bearer token.
+- **Link:** the app calls `POST /api/plugin-pages/<plugin>/<page>/link` (logged in; optional body `{"path": "2026-10/index.html"}`), which returns `{"url": "/plugin-pages/<token>/<path>", "expires_in": 900}`. Only active plugins and declared pages get a link. The token is an HMAC-SHA256 (key derived from the hub secret, separate from the login tokens) over person, plugin, page and expiry, valid for **15 minutes**, checked in constant time. A link is **bound to the person** it was made for: `page()` receives that person, and a link stops working when the plugin is switched off or removed or the person is deactivated. After expiry the response is 410; the app opens a fresh link on every tap.
+- **Path rules:** `..`, `.`, empty segments, backslashes, control characters and percent-encoded separators or dots (`%2f`, `%5c`, `%2e`, `%25`, `%00`) are refused with 400 before your hook is called.
+- **Headers (fixed by the hub):** `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store`. A page cannot load scripts, styles or pictures from other servers by default; bring everything through `page()`. A plugin can only tighten this by what its content does, not relax it.
+- **Security notes:** the token is part of the URL, so it appears in the hub's access log and the browser history for its 15 minutes; do not put secrets into page content that the person may not see, and remember that the page is served from the hub's origin. Installed plugins run with full access anyway (see [Security notes](#security-notes)); the checks above keep an honest plugin's pages contained, they do not sandbox hostile code.
+- **Web app and reverse proxy:** `/plugin-pages/` is served by the hub itself, before the web app's static files, so nothing needs to change in the usual setups. A reverse proxy that forwards only `/api/...` and `/` to the hub must forward `/plugin-pages/` as well.
+
+### Opening a page from a notification
+
+A plugin notification can open its page: `notify(..., data={"route": "/plugin-page/monthly-plugin-id/monthly?path=2026-10"})` (route form: `/plugin-page/<plugin>/<page>` with an optional `path` query). Tapping the notification (Firebase push, Web Push and, when the hub has a public URL, the ntfy click, which opens the web app) asks the hub for a fresh link and opens it in the browser. The route has to stay within 100 characters.
 
 ## Calendar plugins
 
