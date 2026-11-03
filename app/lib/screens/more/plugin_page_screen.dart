@@ -36,6 +36,14 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
   bool _retried = false;
   bool _failed = false;
   bool _loadHadError = false;
+  bool _tornDown = false;
+
+  static const _blank = 'about:blank';
+  // Courtesy for the page: pause every media element, then tell the page it is being closed. Audio created with
+  // `new Audio()` is not in the DOM, so unloading the page (about:blank) is what reliably stops it.
+  static const _pauseScript =
+      "try{document.querySelectorAll('audio,video').forEach(function(m){m.pause();});"
+      "window.dispatchEvent(new CustomEvent('familienhub:close'));}catch(e){}";
 
   @override
   void initState() {
@@ -96,6 +104,10 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
   FutureOr<NavigationDecision> _onNavigationRequest(NavigationRequest request) {
     final target = Uri.tryParse(request.url);
     if (target == null) return NavigationDecision.prevent;
+    if (_tornDown) {
+      // closing: only our own about:blank load goes through; never open anything externally
+      return request.url == _blank ? NavigationDecision.navigate : NavigationDecision.prevent;
+    }
     if (isPluginPageNavigationAllowed(target, hub: _hub, link: _link)) return NavigationDecision.navigate;
     if (request.isMainFrame) {
       unawaited(launchUrl(target, mode: LaunchMode.externalApplication).catchError((_) => false));
@@ -106,7 +118,7 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
 
   /// The signed link was refused or the load failed: ask for a fresh one once and keep the sub-path.
   Future<void> _linkFailed() async {
-    if (!mounted) return;
+    if (!mounted || _tornDown) return;
     _loadHadError = true;
     if (_retried) {
       setState(() => _failed = true); // the fresh link failed as well: show the retry button
@@ -116,7 +128,7 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
     try {
       final sub = pluginPageSubPath(_current, _link);
       final fresh = await ref.read(apiClientProvider).pluginPageLink(widget.plugin, widget.page, path: sub);
-      if (!mounted) return;
+      if (!mounted || _tornDown) return;
       _link = fresh;
       _current = fresh;
       setState(() {
@@ -129,16 +141,39 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
     }
   }
 
+  /// Stops the page (and its audio) before the screen goes away. Both calls are issued synchronously one after the
+  /// other so they also work from [dispose]; platform messages are delivered in order. Safe to call repeatedly.
+  Future<void> _tearDown() {
+    if (_tornDown) return Future.value();
+    _tornDown = true;
+    Future<void> guarded(Future<void> Function() f) async {
+      try {
+        await f();
+      } catch (_) {}
+    }
+
+    final js = guarded(() => _controller.runJavaScript(_pauseScript));
+    final blank = guarded(() => _controller.loadRequest(Uri.parse(_blank)));
+    return Future.wait([js, blank]).then((_) {});
+  }
+
+  Future<void> _close() async {
+    await _tearDown();
+    if (mounted) Navigator.of(context).pop();
+  }
+
   Future<void> _back() async {
     if (await _controller.canGoBack()) {
       await _controller.goBack();
     } else if (mounted) {
-      Navigator.of(context).pop();
+      await _close();
     }
   }
 
   @override
   void dispose() {
+    // The route can also vanish without our buttons (replaced or popped from outside): unload the page here.
+    unawaited(_tearDown());
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -189,7 +224,7 @@ class _PluginPageScreenState extends ConsumerState<PluginPageScreen> {
                   tooltip: l10n.pluginPageClose,
                   style: IconButton.styleFrom(backgroundColor: Colors.black54, foregroundColor: Colors.white),
                   icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => unawaited(_close()),
                 ),
               ),
             ),

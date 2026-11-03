@@ -9,6 +9,9 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 - Plugins can serve their own pages (`pages` in the manifest and the `page()` hook): HTML, scripts, images, audio and video, opened from *More* through a signed link that is valid for 15 minutes. A notification can open such a page with the route `/plugin-page/<plugin>/<page>`.
 - Database: new table `plugin_user_settings` (migration at startup). Removing a plugin or deleting a person deletes their personal plugin settings.
 
+### Fixed
+- Closing a plugin page in the app now stops its audio and video: the page gets a `familienhub:close` event and is unloaded.
+
 ### Changed
 - Plugin pages open inside the app (full-screen WebView on Android and iOS) instead of the external browser, so a page such as the monthly recap can autoplay its soundtrack. Other links open in the browser; an expired link is renewed automatically. The web app still opens a new tab.
 - Habitica tasks show up in Meine without ticking each one in the account screen.
