@@ -19,7 +19,7 @@ you ──► Assist ──► custom sentence ──► intent_script ──►
 ## 1. Create an access key in the app
 
 1. Open the app: **More → Access for assistants → New access**.
-2. Name it, for example "Home Assistant". The key is created with the **voice** preset, which grants exactly the six scopes below and nothing else.
+2. Name it, for example "Home Assistant", and choose the access type. **Voice assistant** (default) uses the **voice** preset, which grants exactly the six scopes below and nothing else. **Full access** creates an unrestricted key that can do everything you can do in the app (with your role); use it only for services you trust. The key list shows the type of each key.
 3. Copy the key (`fhp_...`). It is shown **once**. The hub stores only a hash.
 
 A key acts as the person who created it: reminders and tasks belong to that person, and the same roles apply as in the app. Use a separate key (and ideally a separate account) per household member if you want "my" reminders for each. Revoke a key in the same screen; it stops working immediately.

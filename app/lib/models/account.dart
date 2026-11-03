@@ -292,6 +292,9 @@ class ApiTokenInfo {
   final DateTime? lastUsedAt;
   final String? token;
 
+  /// Granted scopes; null = unrestricted (full access as the person).
+  final List<String>? scopes;
+
   const ApiTokenInfo({
     required this.id,
     required this.name,
@@ -299,7 +302,10 @@ class ApiTokenInfo {
     this.createdAt,
     this.lastUsedAt,
     this.token,
+    this.scopes,
   });
+
+  bool get isFullAccess => scopes == null;
 
   factory ApiTokenInfo.fromJson(Map<String, dynamic> json) => ApiTokenInfo(
         id: parseInt(json['id']) ?? 0,
@@ -308,6 +314,7 @@ class ApiTokenInfo {
         createdAt: parseDate(json['created_at']),
         lastUsedAt: parseDate(json['last_used_at']),
         token: json['token'] as String?,
+        scopes: (json['scopes'] as List?)?.map((e) => e.toString()).toList(),
       );
 }
 
