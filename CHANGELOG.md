@@ -10,6 +10,7 @@ All notable changes per release. Versions follow the Git tags (`v1.0.1` → imag
 - Database: new table `plugin_user_settings` (migration at startup). Removing a plugin or deleting a person deletes their personal plugin settings.
 
 ### Changed
+- Plugin pages open inside the app (full-screen WebView on Android and iOS) instead of the external browser, so a page such as the monthly recap can autoplay its soundtrack. Other links open in the browser; an expired link is renewed automatically. The web app still opens a new tab.
 - Habitica tasks show up in Meine without ticking each one in the account screen.
 - Named lists sit in the shopping and task overview, with the person filter on that screen.
 - A named list is one line: name, person, and a menu to add, assign, rename or delete. Items are not numbered.

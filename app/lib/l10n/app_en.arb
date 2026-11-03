@@ -1220,5 +1220,8 @@
   "myConnectionSet": "Set up",
   "pluginPagesHeading": "Plugin pages",
   "pluginPageOpenFailed": "The page could not be opened",
-  "pluginPageUnavailable": "This page no longer exists"
+  "pluginPageUnavailable": "This page no longer exists",
+  "pluginPageLoadFailed": "The page could not be loaded",
+  "pluginPageRetry": "Try again",
+  "pluginPageClose": "Close"
 }
