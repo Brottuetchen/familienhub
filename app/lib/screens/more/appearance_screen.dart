@@ -1,86 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/themes.dart';
-import '../../providers/providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/common.dart';
 import '../../l10n/l10n.dart';
 
-/// Farbschema wählen (pro Gerät). Admins können Themes aus GitHub installieren und wieder entfernen.
+/// Choose mode, colour scheme and language (per device). Managing themes is admin-only: see AdminThemesScreen.
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
-
-  Future<void> _install(BuildContext context, WidgetRef ref) async {
-    final url = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        final c = TextEditingController();
-        return AlertDialog(
-          title: Text(l10n.themeFromGithub),
-          content: TextField(
-            controller: c,
-            autofocus: true,
-            keyboardType: TextInputType.url,
-            decoration: InputDecoration(
-              labelText: l10n.githubAddress,
-              hintText: 'https://github.com/name/repo',
-              helperText: l10n.themeRepoNeedsJson,
-            ),
-            onSubmitted: (v) => Navigator.pop(ctx, v),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-            FilledButton(onPressed: () => Navigator.pop(ctx, c.text), child: Text(l10n.install)),
-          ],
-        );
-      },
-    );
-    if (url == null || url.trim().isEmpty || !context.mounted) return;
-    if (await runAction(context, () => ref.read(apiClientProvider).installTheme(url.trim()))) {
-      ref.invalidate(themesProvider);
-    }
-  }
-
-  Future<void> _delete(BuildContext context, WidgetRef ref, ThemeSpec spec) async {
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.themeRemoveQuestion),
-        content: Text(l10n.themeRemoveHint(spec.name)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.remove)),
-        ],
-      ),
-    );
-    if (sure != true || !context.mounted) return;
-    if (await runAction(context, () => ref.read(apiClientProvider).deleteTheme(spec.id))) {
-      if (ref.read(themeChoiceProvider)?.id == spec.id) await ref.read(themeChoiceProvider.notifier).select(null);
-      ref.invalidate(themesProvider);
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(themesProvider);
     final chosen = ref.watch(themeChoiceProvider);
-    final isAdmin = ref.watch(sessionProvider).user?.isAdmin ?? false;
     final choice = ref.read(themeChoiceProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.appearance)),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () => _install(context, ref),
-              icon: const Icon(Icons.download_outlined),
-              label: Text(l10n.fromGithub),
-            )
-          : null,
       body: HubRefresh(
         onRefresh: () => ref.refresh(themesProvider.future),
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 96),
+          padding: const EdgeInsets.only(bottom: 24),
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -136,7 +76,6 @@ class AppearanceScreen extends ConsumerWidget {
                     ],
                     selected: chosen?.id == t.id,
                     onTap: () => choice.select(t),
-                    onDelete: isAdmin && !t.builtin ? () => _delete(context, ref, t) : null,
                   ),
               ],
             ),
@@ -153,7 +92,6 @@ class _ThemeTile extends StatelessWidget {
   final List<Color> swatches;
   final bool selected;
   final VoidCallback onTap;
-  final VoidCallback? onDelete;
 
   const _ThemeTile({
     super.key,
@@ -162,7 +100,6 @@ class _ThemeTile extends StatelessWidget {
     required this.swatches,
     required this.selected,
     required this.onTap,
-    this.onDelete,
   });
 
   @override
@@ -188,8 +125,6 @@ class _ThemeTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (onDelete != null)
-            IconButton(tooltip: l10n.themeRemove, onPressed: onDelete, icon: const Icon(Icons.delete_outline)),
           Icon(selected ? Icons.check_circle : Icons.circle_outlined,
               color: selected ? scheme.primary : scheme.onSurfaceVariant),
         ],

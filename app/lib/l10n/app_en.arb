@@ -1223,5 +1223,21 @@
   "pluginPageUnavailable": "This page no longer exists",
   "pluginPageLoadFailed": "The page could not be loaded",
   "pluginPageRetry": "Try again",
-  "pluginPageClose": "Close"
+  "pluginPageClose": "Close",
+  "settingsHint": "Profile, notifications, appearance, accounts",
+  "settingsGroupMe": "Me",
+  "settingsGroupNotifications": "Notifications",
+  "settingsGroupAppearance": "Appearance",
+  "settingsGroupAccounts": "Accounts & connections",
+  "taskPlaceTitle": "Where my tasks are stored",
+  "appVersionLine": "App version {version}",
+  "@appVersionLine": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "adminGroupFamily": "Family",
+  "adminGroupData": "Data",
+  "adminGroupExtensions": "Extensions",
+  "adminGroupSystem": "System"
 }

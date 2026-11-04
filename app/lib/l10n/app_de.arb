@@ -1948,5 +1948,21 @@
   "pluginPageUnavailable": "Diese Seite gibt es nicht mehr",
   "pluginPageLoadFailed": "Die Seite ließ sich nicht laden",
   "pluginPageRetry": "Erneut versuchen",
-  "pluginPageClose": "Schließen"
+  "pluginPageClose": "Schließen",
+  "settingsHint": "Profil, Benachrichtigungen, Darstellung, Konten",
+  "settingsGroupMe": "Ich",
+  "settingsGroupNotifications": "Benachrichtigungen",
+  "settingsGroupAppearance": "Darstellung",
+  "settingsGroupAccounts": "Konten & Verbindungen",
+  "taskPlaceTitle": "Wo meine Aufgaben liegen",
+  "appVersionLine": "App-Version {version}",
+  "@appVersionLine": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "adminGroupFamily": "Familie",
+  "adminGroupData": "Daten",
+  "adminGroupExtensions": "Erweiterungen",
+  "adminGroupSystem": "System"
 }

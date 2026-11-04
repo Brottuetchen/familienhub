@@ -1,4 +1,5 @@
 import 'package:familienhub/screens/more/profile_screen.dart';
+import 'package:familienhub/screens/more/task_place_screen.dart';
 import 'package:familienhub/screens/tasks/tasks_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -121,20 +122,20 @@ void main() {
     expect(find.textContaining('Status unbekannt'), findsOneWidget);
   });
 
-  group('profile: task place', () {
-    Future<FakeBackend> pumpProfile(WidgetTester tester, {Object? info, int status = 200}) async {
+  group('settings: task place', () {
+    Future<FakeBackend> pumpScreen(WidgetTester tester, {Object? info, int status = 200}) async {
       await setScreenSize(tester, const Size(420, 1400));
       final b = FakeBackend();
       addDefaults(b);
       if (info != null) b.json('GET', '/api/tasks/me/place', info, status: status);
-      await tester.pumpWidget(appWith(b.api(), const ProfileScreen()));
+      await tester.pumpWidget(appWith(b.api(), const TaskPlaceScreen()));
       await tester.pumpAndSettle();
       return b;
     }
 
     testWidgets('shows the derived default and saves an explicit choice', (tester) async {
       String? stored; // server state: the place chosen so far
-      final b = await pumpProfile(tester, info: place());
+      final b = await pumpScreen(tester, info: place());
       b.on('GET', '/api/tasks/me/place', (_) => jsonResponse(place(explicit: stored)));
       b.on('PUT', '/api/tasks/me/place', (r) {
         stored = bodyOf(r)['place'] as String?;
@@ -155,7 +156,7 @@ void main() {
     });
 
     testWidgets('a place without a connected account cannot be chosen', (tester) async {
-      final b = await pumpProfile(tester, info: place(habitica: false));
+      final b = await pumpScreen(tester, info: place(habitica: false));
       await tester.ensureVisible(find.byKey(const Key('task-place-habitica')));
       await tester.tap(find.byKey(const Key('task-place-habitica')));
       await tester.pumpAndSettle();
@@ -163,7 +164,17 @@ void main() {
     });
 
     testWidgets('hidden when the server does not know the setting', (tester) async {
-      await pumpProfile(tester, info: {'detail': 'Not Found'}, status: 404);
+      await pumpScreen(tester, info: {'detail': 'Not Found'}, status: 404);
+      expect(find.byKey(const Key('task-place-section')), findsNothing);
+    });
+
+    testWidgets('no longer part of the profile screen', (tester) async {
+      await setScreenSize(tester, const Size(420, 1400));
+      final b = FakeBackend();
+      addDefaults(b);
+      b.json('GET', '/api/tasks/me/place', place());
+      await tester.pumpWidget(appWith(b.api(), const ProfileScreen()));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('task-place-section')), findsNothing);
       expect(find.byKey(const Key('profile-save')), findsOneWidget);
     });

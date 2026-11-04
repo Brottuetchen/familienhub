@@ -62,7 +62,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('More'), findsOneWidget);
     expect(find.text('Reminders'), findsOneWidget);
-    expect(find.text('Sign out'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Sign out'), findsNothing);
     expect(find.text('Erinnerungen'), findsNothing);
   });
 
