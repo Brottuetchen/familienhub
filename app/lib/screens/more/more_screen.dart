@@ -2,26 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/providers.dart';
+import '../../widgets/common.dart' show SectionHeader;
 import '../today/today_widgets.dart' show PersonAvatar;
-import 'api_tokens_screen.dart';
 import '../admin/admin_screen.dart';
 import 'books_screen.dart';
-import 'connections_screen.dart';
 import 'plugin_pages.dart';
 import '../../models/plugin_card.dart' show pluginCardIcon;
 import 'documents_screen.dart';
 import 'feedback_screen.dart';
 import 'media_screen.dart';
 import 'notifications_screen.dart';
-import 'appearance_screen.dart';
 import 'profile_screen.dart';
-import 'caldav_account_screen.dart';
-import 'notification_settings_screen.dart';
 import 'birthdays_screen.dart';
 import 'reminders_screen.dart';
+import 'settings_screen.dart';
 import '../timetable/timetable_screen.dart';
 import '../stars/stars_screen.dart';
-import 'task_lists_screen.dart';
 import '../../l10n/l10n.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -35,7 +31,6 @@ class MoreScreen extends ConsumerWidget {
     final isAdmin = session.user?.isAdmin ?? false;
     final canAct = ref.watch(canActProvider); // eigene Konten und Listen ab Kind
     final pluginPages = ref.watch(pluginPagesProvider).valueOrNull ?? const [];
-    final connections = ref.watch(personalPluginsProvider).valueOrNull ?? const [];
     void open(Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 
     return Scaffold(
@@ -118,7 +113,7 @@ class MoreScreen extends ConsumerWidget {
               onTap: () => open(const BooksScreen()),
             ),
           if (pluginPages.isNotEmpty) ...[
-            _Header(l10n.pluginPagesHeading),
+            SectionHeader(l10n.pluginPagesHeading),
             for (final p in pluginPages)
               ListTile(
                 key: Key('more-page-${p.plugin}-${p.id}'),
@@ -128,45 +123,13 @@ class MoreScreen extends ConsumerWidget {
                 onTap: () => openPluginPage(context, ref, p.plugin, p.id),
               ),
           ],
-          _Header(l10n.settings),
-          if (canAct && connections.isNotEmpty)
-            ListTile(
-              key: const Key('more-connections'),
-              leading: const Icon(Icons.link),
-              title: Text(l10n.myConnections),
-              subtitle: Text(l10n.myConnectionsHint),
-              onTap: () => open(const ConnectionsScreen()),
-            ),
-          if (canAct && (modules.has('tasks') || modules.has('calendar')))
-            ListTile(
-              leading: const Icon(Icons.cloud_outlined),
-              title: Text(l10n.nextcloudAccount),
-              subtitle: Text(l10n.nextcloudAccountHint),
-              onTap: () => open(const CalDavAccountScreen()),
-            ),
-          if (canAct && modules.has('tasks'))
-            ListTile(
-              leading: const Icon(Icons.list_alt),
-              title: Text(l10n.taskLists),
-              subtitle: Text(l10n.taskListsHint),
-              onTap: () => open(const TaskListsScreen()),
-            ),
+          const Divider(),
           ListTile(
-            leading: const Icon(Icons.key),
-            title: Text(l10n.assistantAccess),
-            subtitle: Text(l10n.assistantAccessHint),
-            onTap: () => open(const ApiTokensScreen()),
-          ),
-          ListTile(
-            leading: const Icon(Icons.tune),
-            title: Text(l10n.notificationsDevices),
-            onTap: () => open(const NotificationSettingsScreen()),
-          ),
-          ListTile(
-            leading: const Icon(Icons.palette_outlined),
-            title: Text(l10n.appearance),
-            subtitle: Text(l10n.appearanceHint),
-            onTap: () => open(const AppearanceScreen()),
+            key: const Key('more-settings'),
+            leading: const Icon(Icons.settings_outlined),
+            title: Text(l10n.settings),
+            subtitle: Text(l10n.settingsHint),
+            onTap: () => open(const SettingsScreen()),
           ),
           if (isAdmin)
             ListTile(
@@ -183,49 +146,8 @@ class MoreScreen extends ConsumerWidget {
             subtitle: Text(l10n.sendFeedbackHint),
             onTap: () => open(const FeedbackScreen()),
           ),
-          FutureBuilder<String?>(
-            future: ref.read(apiClientProvider).store.baseUrl(),
-            builder: (context, snap) => ListTile(
-              leading: const Icon(Icons.dns_outlined),
-              title: Text(l10n.server),
-              subtitle: Text(snap.data ?? ''),
-            ),
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-            title: Text(l10n.logout),
-            onTap: () async {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(l10n.logoutQuestion),
-                  content: ref.read(apiClientProvider).pending.isEmpty
-                      ? null
-                      : Text(l10n.logoutPendingWarning(ref.read(apiClientProvider).pending.length), key: const Key('logout-pending-warning')),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.logout)),
-                  ],
-                ),
-              );
-              if (ok == true) await ref.read(sessionProvider.notifier).logout();
-            },
-          ),
         ],
       ),
     );
   }
-}
-
-class _Header extends StatelessWidget {
-  final String text;
-  const _Header(this.text);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-        child: Text(text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
-      );
 }

@@ -5,6 +5,7 @@ import 'package:familienhub/screens/main_shell.dart';
 import 'package:familienhub/screens/more/connections_screen.dart';
 import 'package:familienhub/screens/more/more_screen.dart';
 import 'package:familienhub/screens/more/plugin_pages.dart';
+import 'package:familienhub/screens/more/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -167,6 +168,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('more-page-recap-monthly')), findsOneWidget);
     expect(find.text('Monatsrückblick'), findsOneWidget);
+    expect(find.byKey(const Key('more-connections')), findsNothing, reason: 'moved to Settings');
+  });
+
+  testWidgets('Settings lists My connections', (tester) async {
+    await setScreenSize(tester, const Size(420, 1800));
+    await tester.pumpWidget(_app(_backend(), const SettingsScreen()));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('more-connections')), findsOneWidget);
   });
 
@@ -174,9 +182,11 @@ void main() {
     await setScreenSize(tester, const Size(420, 1800));
     final b = _backend(withPages: false);
     b.json('GET', '/api/plugins/personal-settings', {'items': []});
-    await tester.pumpWidget(_app(b, const MoreScreen()));
+    await tester.pumpWidget(_app(b, const SettingsScreen()));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('more-connections')), findsNothing);
+    await tester.pumpWidget(_app(b, const MoreScreen()));
+    await tester.pumpAndSettle();
     expect(find.text('Seiten von Plugins'), findsNothing);
   });
 
@@ -184,9 +194,11 @@ void main() {
     await setScreenSize(tester, const Size(420, 1800));
     final b = FakeBackend();
     addDefaults(b);
-    await tester.pumpWidget(_app(b, const MoreScreen()));
+    await tester.pumpWidget(_app(b, const SettingsScreen()));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('more-connections')), findsNothing);
+    await tester.pumpWidget(_app(b, const MoreScreen()));
+    await tester.pumpAndSettle();
     expect(find.text('Mehr'), findsOneWidget);
   });
 
