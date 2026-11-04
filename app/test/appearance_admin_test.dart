@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:familienhub/core/theme/app_theme.dart';
 import 'package:familienhub/models/themes.dart';
+import 'package:familienhub/screens/admin/admin_themes_screen.dart';
 import 'package:familienhub/screens/more/appearance_screen.dart';
 import 'package:familienhub/screens/more/more_screen.dart';
 import 'package:familienhub/screens/more/plugins_admin_screen.dart';
@@ -75,7 +76,7 @@ void main() {
     backend.json('GET', '/api/themes', {'items': [_cards, _custom]});
     backend.json('POST', '/api/themes', _custom, status: 201);
     backend.json('DELETE', '/api/themes/custom%3A7', {'deleted': true});
-    await tester.pumpWidget(appWith(backend.api(), const AppearanceScreen()));
+    await tester.pumpWidget(appWith(backend.api(), const AdminThemesScreen()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Aus GitHub'));
@@ -94,20 +95,21 @@ void main() {
     expect(backend.requests.where((r) => r.method == 'DELETE'), hasLength(1));
   });
 
-  testWidgets('ohne Admin: kein Installieren, kein Löschen, kein Plugin-Menü', (tester) async {
+  testWidgets('persönliche Darstellung: nur Auswahl, kein Installieren, kein Löschen (auch für Admins)', (tester) async {
     await setScreenSize(tester, const Size(420, 1600));
     final backend = FakeBackend();
     addDefaults(backend);
-    backend.json('GET', '/api/auth/me', {...meJson, 'is_admin': false});
     backend.json('GET', '/api/themes', {'items': [_cards, _custom]});
     await tester.pumpWidget(appWith(backend.api(), const AppearanceScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Aus GitHub'), findsNothing);
     expect(find.byTooltip('Theme entfernen'), findsNothing);
 
+    expect(find.byKey(const Key('theme-install')), findsNothing);
+
     await tester.pumpWidget(appWith(backend.api(), const MoreScreen()));
     await tester.pumpAndSettle();
-    expect(find.text('Darstellung'), findsOneWidget);
+    expect(find.byKey(const Key('more-settings')), findsOneWidget);
     expect(find.text('Plugins & Zugänge'), findsNothing);
   });
 
