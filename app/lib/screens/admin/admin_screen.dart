@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/admin.dart';
 import '../../providers/providers.dart';
 import '../../widgets/common.dart';
-import '../more/appearance_screen.dart';
 import '../more/plugins_admin_screen.dart';
 import '../more/service_keys_screen.dart';
 import '../setup/setup_wizard_screen.dart';
@@ -12,6 +11,7 @@ import 'admin_backup_screen.dart';
 import 'admin_feedback_screen.dart';
 import 'admin_house_screen.dart';
 import 'admin_log_screen.dart';
+import 'admin_themes_screen.dart';
 import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
 import '../../l10n/l10n.dart';
@@ -66,20 +66,7 @@ class AdminScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            _Area(
-              key: const Key('admin-wizard'),
-              icon: Icons.auto_fix_high_outlined,
-              title: l10n.setupWizard,
-              subtitle: l10n.setupWizardHint,
-              onTap: () => open(const SetupWizardScreen(standalone: true)),
-            ),
-            _Area(
-              key: const Key('admin-sources'),
-              icon: Icons.alt_route,
-              title: l10n.sourcesAdmin,
-              subtitle: l10n.sourcesAdminHint,
-              onTap: () => open(const SourcesScreen()),
-            ),
+            SectionHeader(l10n.adminGroupFamily),
             _Area(
               key: const Key('admin-users'),
               icon: Icons.people_outline,
@@ -94,6 +81,22 @@ class AdminScreen extends ConsumerWidget {
               subtitle: l10n.houseAdminHint,
               onTap: () => open(const AdminHouseScreen()),
             ),
+            SectionHeader(l10n.adminGroupData),
+            _Area(
+              key: const Key('admin-sources'),
+              icon: Icons.alt_route,
+              title: l10n.sourcesAdmin,
+              subtitle: l10n.sourcesAdminHint,
+              onTap: () => open(const SourcesScreen()),
+            ),
+            _Area(
+              key: const Key('admin-wizard'),
+              icon: Icons.auto_fix_high_outlined,
+              title: l10n.setupWizard,
+              subtitle: l10n.setupWizardHint,
+              onTap: () => open(const SetupWizardScreen(standalone: true)),
+            ),
+            SectionHeader(l10n.adminGroupExtensions),
             _Area(
               key: const Key('admin-plugins'),
               icon: Icons.extension_outlined,
@@ -109,23 +112,25 @@ class AdminScreen extends ConsumerWidget {
               onTap: () => open(const StoreScreen()),
             ),
             _Area(
+              key: const Key('admin-themes'),
+              icon: Icons.palette_outlined,
+              title: l10n.themes,
+              subtitle: l10n.themesHint,
+              onTap: () => open(const AdminThemesScreen()),
+            ),
+            _Area(
               icon: Icons.vpn_key_outlined,
               title: l10n.serviceKeys,
               subtitle: l10n.serviceKeysHint,
               onTap: () => open(const ServiceKeysScreen()),
             ),
+            SectionHeader(l10n.adminGroupSystem),
             _Area(
-              icon: Icons.palette_outlined,
-              title: l10n.themes,
-              subtitle: l10n.themesHint,
-              onTap: () => open(const AppearanceScreen()),
-            ),
-            _Area(
-              key: const Key('admin-feedback'),
-              icon: Icons.chat_bubble_outline,
-              title: l10n.feedback,
-              subtitle: l10n.feedbackAdminHint,
-              onTap: () => open(const AdminFeedbackScreen()),
+              key: const Key('admin-updates'),
+              icon: Icons.system_update_alt,
+              title: l10n.updateTitle,
+              subtitle: update == null ? l10n.updateHint : updateStatusText(update),
+              onTap: () => open(const AdminUpdateScreen()),
             ),
             _Area(
               key: const Key('admin-backup'),
@@ -139,18 +144,27 @@ class AdminScreen extends ConsumerWidget {
               onTap: () => open(const AdminBackupScreen()),
             ),
             _Area(
-              key: const Key('admin-updates'),
-              icon: Icons.system_update_alt,
-              title: l10n.updateTitle,
-              subtitle: update == null ? l10n.updateHint : updateStatusText(update),
-              onTap: () => open(const AdminUpdateScreen()),
-            ),
-            _Area(
               key: const Key('admin-log'),
               icon: Icons.receipt_long_outlined,
               title: l10n.log,
               subtitle: l10n.logHint,
               onTap: () => open(const AdminLogScreen()),
+            ),
+            _Area(
+              key: const Key('admin-feedback'),
+              icon: Icons.chat_bubble_outline,
+              title: l10n.feedback,
+              subtitle: l10n.feedbackAdminHint,
+              onTap: () => open(const AdminFeedbackScreen()),
+            ),
+            FutureBuilder<String?>(
+              key: const Key('admin-server'),
+              future: ref.read(apiClientProvider).store.baseUrl(),
+              builder: (context, snap) => ListTile(
+                leading: const Icon(Icons.dns_outlined),
+                title: Text(l10n.server),
+                subtitle: Text(snap.data ?? ''),
+              ),
             ),
           ],
         ),
